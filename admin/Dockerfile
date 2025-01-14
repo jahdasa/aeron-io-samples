@@ -13,16 +13,17 @@ RUN mkdir /home/aeron && chown aeron:aeron /home/aeron
 RUN mkdir /home/aeron/jar && chown aeron:aeron /home/aeron/jar
 
 # Copy files and change ownership to aeron
-COPY --chown=aeron:aeron --chmod=755 setup-docker.sh /home/aeron/dockerbuild/setup-docker.sh
+COPY --chown=aeron:aeron --chmod=755 ./setup-docker.sh /home/aeron/dockerbuild/setup-docker.sh
 RUN /home/aeron/dockerbuild/setup-docker.sh && rm --recursive --force "/home/aeron/dockerbuild"
 
 # Grab a copy of aeron-all to run aeronstat and other tools
-RUN apt-get install wget --quiet --assume-yes
-RUN wget https://repo1.maven.org/maven2/io/aeron/aeron-all/1.42.1/aeron-all-1.42.1.jar -P /home/aeron/jar/
-RUN apt-get remove wget --quiet --assume-yes
-RUN apt-get clean --quiet --assume-yes
+#RUN apt-get install wget --quiet --assume-yes
+#RUN wget https://repo1.maven.org/maven2/io/aeron/aeron-all/1.42.1/aeron-all-1.42.1.jar -P /home/aeron/jar/
+#RUN apt-get remove wget --quiet --assume-yes
+#RUN apt-get clean --quiet --assume-yes
 
 WORKDIR /home/aeron/jar/
+COPY --chown=aeron:aeron --chmod=755 /lib/aeron-all-1.43.0.jar /home/aeron/jar/aeron-all-1.43.0.jar
 COPY --chown=aeron:aeron --chmod=755 /build/libs/admin-uber.jar /home/aeron/jar/admin-uber.jar
 COPY --chown=aeron:aeron --chmod=755 run-admin.sh /home/aeron/jar/run-admin.sh
 

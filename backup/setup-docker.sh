@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "start setup-docker"
 echo "debconf debconf/frontend select noninteractive" | debconf-set-selections
 
 apt-get update \

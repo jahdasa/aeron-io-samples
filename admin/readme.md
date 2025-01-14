@@ -22,7 +22,7 @@ Sample happy path script:
 
 ```
 connect
-add-auction created-by=500 name=Tulips
+add-auction created-by=500 name=Tulips duration=10000000
 <assumes auction ID 1 is logged>
 add-bid auction-id=1 created-by=501 price=1000
 disconnect

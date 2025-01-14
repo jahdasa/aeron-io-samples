@@ -119,7 +119,7 @@ public class ClusterBackupApp
             .aeronDirectoryName(aeronDirectoryName)
             .clusterArchiveContext(clusterArchiveClientContext)
             .clusterDirectoryName("backup/cluster")
-            .sourceType(ClusterBackup.SourceType.LEADER) // What kind of node(s) to connect to.
+            .sourceType(ClusterBackup.SourceType.FOLLOWER) // What kind of node(s) to connect to.
             .clusterBackupIntervalNs(CLUSTER_BACKUP_INTERVAL_NS) // How frequently to check for snapshots.
             .deleteDirOnStart(true);
 

@@ -19,6 +19,8 @@ package io.aeron.samples.admin.cluster;
 import org.agrona.concurrent.EpochClock;
 import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Deque;
 import java.util.LinkedList;
@@ -29,6 +31,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class PendingMessageManager
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PendingMessageManager.class);
+
     private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(5);
     private final Deque<PendingMessage> trackedMessages = new LinkedList<>();
     private final EpochClock current;
@@ -50,6 +54,8 @@ public class PendingMessageManager
      */
     public void addMessage(final String correlationId, final String messageType)
     {
+        LOGGER.info("addMessage to trackedMessages correlationId: {}, messageType: {}", correlationId, messageType);
+
         final long timeoutAt = current.time() + TIMEOUT_MS;
         trackedMessages.add(new PendingMessage(timeoutAt, correlationId, messageType));
     }
@@ -60,7 +66,14 @@ public class PendingMessageManager
      */
     public void markMessageAsReceived(final String correlationId)
     {
-        trackedMessages.removeIf(pendingMessage -> pendingMessage.correlationId().equals(correlationId));
+        trackedMessages.removeIf(pendingMessage ->
+        {
+            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+
+            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+
+            return exist;
+        });
     }
 
     /**

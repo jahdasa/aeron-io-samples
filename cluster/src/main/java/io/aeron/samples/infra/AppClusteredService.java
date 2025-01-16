@@ -35,13 +35,19 @@ import org.slf4j.LoggerFactory;
 public class AppClusteredService implements ClusteredService
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppClusteredService.class);
+
     private final ClientSessions clientSessions = new ClientSessions();
     private final SessionMessageContextImpl context = new SessionMessageContextImpl(clientSessions);
     private final ClusterClientResponder clusterClientResponder = new ClusterClientResponderImpl(context);
     private final TimerManager timerManager = new TimerManager(context);
+
     private final Participants participants = new Participants(clusterClientResponder);
-    private final Auctions auctions = new Auctions(context, participants, clusterClientResponder,
+    private final Auctions auctions = new Auctions(
+        context,
+        participants,
+        clusterClientResponder,
         timerManager);
+
     private final SnapshotManager snapshotManager = new SnapshotManager(auctions, participants, context);
     private final SbeDemuxer sbeDemuxer = new SbeDemuxer(participants, auctions, clusterClientResponder);
 
@@ -60,7 +66,7 @@ public class AppClusteredService implements ClusteredService
     @Override
     public void onSessionOpen(final ClientSession session, final long timestamp)
     {
-        LOGGER.info("Client session opened");
+        LOGGER.info("Client session opened, session: {}, timestamp: {}", session, timestamp);
         context.setClusterTime(timestamp);
         clientSessions.addSession(session);
     }
@@ -68,6 +74,12 @@ public class AppClusteredService implements ClusteredService
     @Override
     public void onSessionClose(final ClientSession session, final long timestamp, final CloseReason closeReason)
     {
+        LOGGER.info(
+            "Client session closed, session: {}, timestamp: {}, closeReason: {}",
+            session,
+            timestamp,
+            closeReason);
+
         context.setClusterTime(timestamp);
         clientSessions.removeSession(session);
     }
@@ -81,6 +93,11 @@ public class AppClusteredService implements ClusteredService
         final int length,
         final Header header)
     {
+        LOGGER.info(
+            "Client message received, session: {}, timestamp: {}",
+            session,
+            timestamp);
+
         context.setSessionContext(session, timestamp);
         sbeDemuxer.dispatch(buffer, offset, length);
     }

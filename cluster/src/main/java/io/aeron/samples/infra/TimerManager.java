@@ -83,6 +83,8 @@ public class TimerManager
      */
     public void onTimerEvent(final long correlationId, final long timestamp)
     {
+        LOGGER.info("onTimerEvent correlationId: {} timestamp: {}", correlationId, timestamp);
+
         context.setClusterTime(timestamp);
         if (correlationIdToRunnable.containsKey(correlationId))
         {

@@ -41,19 +41,35 @@ import java.util.List;
 public class ClusterClientResponderImpl implements ClusterClientResponder
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterClientResponderImpl.class);
+
     private final SessionMessageContextImpl context;
+
     private final CreateAuctionCommandResultEncoder createAuctionResultEncoder =
         new CreateAuctionCommandResultEncoder();
-    private final NewAuctionEventEncoder newAuctionEventEncoder = new NewAuctionEventEncoder();
+
+    private final NewAuctionEventEncoder newAuctionEventEncoder =
+        new NewAuctionEventEncoder();
+
     private final AddAuctionBidCommandResultEncoder addAuctionBidResultEncoder =
         new AddAuctionBidCommandResultEncoder();
+
     private final AddParticipantCommandResultEncoder addParticipantResultEncoder =
         new AddParticipantCommandResultEncoder();
-    private final AuctionUpdateEventEncoder auctionUpdateEncoder = new AuctionUpdateEventEncoder();
-    private final MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
-    private final ExpandableDirectByteBuffer buffer = new ExpandableDirectByteBuffer(1024);
-    private final AuctionListEncoder auctionListEncoder = new AuctionListEncoder();
-    private final ParticipantListEncoder participantListEncoder = new ParticipantListEncoder();
+
+    private final AuctionUpdateEventEncoder auctionUpdateEncoder =
+        new AuctionUpdateEventEncoder();
+
+    private final MessageHeaderEncoder messageHeaderEncoder =
+        new MessageHeaderEncoder();
+
+    private final ExpandableDirectByteBuffer buffer =
+        new ExpandableDirectByteBuffer(1024);
+
+    private final AuctionListEncoder auctionListEncoder =
+        new AuctionListEncoder();
+
+    private final ParticipantListEncoder participantListEncoder =
+        new ParticipantListEncoder();
     /**
      * Constructor
      *

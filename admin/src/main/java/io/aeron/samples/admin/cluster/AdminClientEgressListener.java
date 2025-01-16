@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 public class AdminClientEgressListener implements EgressListener
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminClientEgressListener.class);
+
     private final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
     private final AuctionUpdateEventDecoder auctionUpdateEventDecoder = new AuctionUpdateEventDecoder();
     private final AddParticipantCommandResultDecoder addParticipantDecoder = new AddParticipantCommandResultDecoder();

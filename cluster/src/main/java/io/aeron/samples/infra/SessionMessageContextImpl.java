@@ -96,6 +96,11 @@ public class SessionMessageContextImpl implements SessionMessageContext
     @Override
     public void reply(final DirectBuffer buffer, final int offset, final int length)
     {
+        LOGGER.info(
+            "reply, session: {}, timestamp: {}",
+            session,
+            timestamp);
+
         offerToSession(session, buffer, offset, length);
     }
 
@@ -109,6 +114,11 @@ public class SessionMessageContextImpl implements SessionMessageContext
     @Override
     public void broadcast(final DirectBuffer buffer, final int offset, final int length)
     {
+        LOGGER.info(
+            "broadcast to {} sessions, timestamp: {}",
+            clientSessions.getAllSessions().size(),
+            timestamp);
+
         clientSessions.getAllSessions().forEach(clientSession -> offerToSession(clientSession, buffer, offset, length));
     }
 
@@ -132,6 +142,11 @@ public class SessionMessageContextImpl implements SessionMessageContext
             final long result = targetSession.offer(buffer, offset, length);
             if (result > 0L)
             {
+                LOGGER.info(
+                    "offer message to session: {}, timestamp: {}",
+                    targetSession,
+                    timestamp);
+
                 return;
             }
             else if (result == Publication.ADMIN_ACTION || result == Publication.BACK_PRESSURED)
@@ -149,7 +164,7 @@ public class SessionMessageContextImpl implements SessionMessageContext
         }
         while (retries < RETRY_COUNT);
 
-        LOGGER.error("failed to offer snapshot within {} retries. Closing client session.", RETRY_COUNT);
+        LOGGER.error("failed to offer a message within {} retries. Closing client session.", RETRY_COUNT);
         session.close();
     }
 }

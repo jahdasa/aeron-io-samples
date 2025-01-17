@@ -24,6 +24,11 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.aeron.archive.client.AeronArchive;
+import io.aeron.archive.codecs.SourceLocation;
+import io.aeron.samples.eventarchive.ArchiveClientAgent;
+import org.agrona.concurrent.AgentRunner;
+import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.agrona.concurrent.SystemEpochClock;
 import org.slf4j.Logger;
@@ -65,14 +70,33 @@ public class ClusterApp
         hostAddresses.forEach(ClusterApp::awaitDnsResolution);
 
         try (
-            ClusteredMediaDriver ignored = ClusteredMediaDriver.launch(
+            ClusteredMediaDriver clusteredMediaDriver = ClusteredMediaDriver.launch(
                 clusterConfig.mediaDriverContext(),
                 clusterConfig.archiveContext(),
                 clusterConfig.consensusModuleContext());
+
             ClusteredServiceContainer ignored1 = ClusteredServiceContainer.launch(
                 clusterConfig.clusteredServiceContext()))
         {
             LOGGER.info("Started Cluster Node...");
+
+            final AeronArchive archive = AeronArchive.connect(clusterConfig.aeronArchiveContext());
+
+            final long subscriptionId = archive.startRecording(
+                "aeron:ipc",
+                17,
+                SourceLocation.LOCAL
+            );
+
+            LOGGER.info("startRecording aeron:ipc stream 17, subscriptionId: {}", subscriptionId);
+
+            final IdleStrategy idleStrategy = archive.context().idleStrategy();
+            final ArchiveClientAgent hostAgent =
+                new ArchiveClientAgent(archive.context().aeron(), archive, idleStrategy);
+            final var runner =
+                new AgentRunner(idleStrategy, ClusterApp::errorHandler, null, hostAgent);
+            AgentRunner.startOnThread(runner);
+
             barrier.await();
             LOGGER.info("Exiting");
         }
@@ -203,5 +227,10 @@ public class ClusterApp
             return false;
         }
         return Boolean.parseBoolean(dnsDelay);
+    }
+
+    private static void errorHandler(final Throwable throwable)
+    {
+        LOGGER.error("agent error {}", throwable.getMessage(), throwable);
     }
 }

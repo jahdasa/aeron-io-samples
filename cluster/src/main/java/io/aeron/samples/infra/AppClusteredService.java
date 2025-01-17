@@ -51,6 +51,8 @@ public class AppClusteredService implements ClusteredService
     private final SnapshotManager snapshotManager = new SnapshotManager(auctions, participants, context);
     private final SbeDemuxer sbeDemuxer = new SbeDemuxer(participants, auctions, clusterClientResponder);
 
+    private ExclusivePublication eventPublication;
+
     @Override
     public void onStart(final Cluster cluster, final Image snapshotImage)
     {
@@ -61,6 +63,15 @@ public class AppClusteredService implements ClusteredService
         {
             snapshotManager.loadSnapshot(snapshotImage);
         }
+
+        eventPublication = cluster.aeron().addExclusivePublication("aeron:ipc", 17);
+        while (!eventPublication.isConnected())
+        {
+            cluster.idleStrategy().idle();
+        }
+        LOGGER.info("eventPublication isConnected");
+
+        context.setEventPublication(eventPublication);
     }
 
     @Override
@@ -125,5 +136,6 @@ public class AppClusteredService implements ClusteredService
     public void onTerminate(final Cluster cluster)
     {
         LOGGER.info("Terminating");
+        eventPublication.close();
     }
 }

@@ -22,5 +22,6 @@ package io.aeron.samples.eventarchive;
 public enum State
 {
     AERON_READY,
+    SEQUENCE_ID_READY,
     POLLING_SUBSCRIPTION
 }

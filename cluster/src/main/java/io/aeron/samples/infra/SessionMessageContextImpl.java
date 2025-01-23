@@ -192,12 +192,14 @@ public class SessionMessageContextImpl implements SessionMessageContext
         final int offset,
         final int length)
     {
+        LOGGER.info("eventPublication.offer offset: {}", offset);
+
         while (eventPublication.offer(buffer, offset, length) < 0)
         {
             idleStrategy.idle();
         }
         LOGGER.info(
-            "writeEvents offset: {}, length: {}, eventPublication position: {}",
+            "writeEvents to archive offset: {}, length: {}, eventPublication position: {}",
             offset,
             length,
             eventPublication.position());

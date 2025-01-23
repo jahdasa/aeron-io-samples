@@ -123,4 +123,12 @@ public interface ClusterClientResponder
      * @param correlationId
      */
     void returnParticipantList(List<Participant> participantList, String correlationId);
+
+    /**
+     * set last sequence id
+     *
+     * @param lastSequenceId
+     */
+    void setLastSequenceId(long lastSequenceId);
+
 }

@@ -108,7 +108,7 @@ public class EventSequenceTool
             }
         }
 
-        LOGGER.info("lastSequenceId: {}", latestSequenceId[0]);
+        LOGGER.info("recordingId: {}, lastSequenceId: {}", recordingId, latestSequenceId[0]);
 
         return latestSequenceId[0];
     }

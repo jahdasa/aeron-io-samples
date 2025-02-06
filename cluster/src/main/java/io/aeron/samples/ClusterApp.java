@@ -79,8 +79,22 @@ public class ClusterApp
                 clusterConfig.clusteredServiceContext()))
         {
             LOGGER.info("Started Cluster Node...");
+            LOGGER.info("mediaDriver directory is: {}", clusteredMediaDriver.mediaDriver().aeronDirectoryName());
+            LOGGER.info("Cluster directory is: {}", clusterConfig.consensusModuleContext().clusterDir());
 
-            final AeronArchive archive = AeronArchive.connect(clusterConfig.aeronArchiveContext());
+            final AeronArchive.AsyncConnect asyncConnect =
+                AeronArchive.asyncConnect(clusterConfig.aeronArchiveContext());
+
+            AeronArchive archive = null;
+
+            LOGGER.info("connecting to AeronArchive");
+
+            while (archive == null)
+            {
+                archive = asyncConnect.poll();
+            }
+
+            LOGGER.info("connected to AeronArchive");
 
             final long subscriptionId = archive.startRecording(
                 "aeron:ipc",

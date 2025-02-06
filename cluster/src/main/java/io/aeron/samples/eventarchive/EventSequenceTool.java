@@ -75,7 +75,7 @@ public class EventSequenceTool
         };
 
         final long stopPosition = archive.getStopPosition(recordingId);
-        if (stopPosition < 0)
+        if (stopPosition <= 0)
         {
             return 0L;
         }

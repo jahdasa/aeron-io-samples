@@ -18,7 +18,6 @@ package io.aeron.samples.infra;
 
 import io.aeron.ExclusivePublication;
 import io.aeron.Image;
-import io.aeron.archive.client.AeronArchive;
 import io.aeron.cluster.codecs.CloseReason;
 import io.aeron.cluster.service.ClientSession;
 import io.aeron.cluster.service.Cluster;
@@ -26,7 +25,6 @@ import io.aeron.cluster.service.ClusteredService;
 import io.aeron.logbuffer.Header;
 import io.aeron.samples.domain.auctions.Auctions;
 import io.aeron.samples.domain.participants.Participants;
-import io.aeron.samples.eventarchive.EventSequenceTool;
 import org.agrona.DirectBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +38,7 @@ public class AppClusteredService implements ClusteredService
 
     private final ClientSessions clientSessions = new ClientSessions();
     private final SessionMessageContextImpl context = new SessionMessageContextImpl(clientSessions);
-    private ClusterClientResponder clusterClientResponder = new ClusterClientResponderImpl(context);
-
+    private final ClusterClientResponder clusterClientResponder = new ClusterClientResponderImpl(context);
     private final TimerManager timerManager = new TimerManager(context);
 
     private final Participants participants = new Participants(clusterClientResponder);
@@ -75,14 +72,6 @@ public class AppClusteredService implements ClusteredService
         LOGGER.info("eventPublication isConnected");
 
         context.setEventPublication(eventPublication);
-
-        final AeronArchive archive = AeronArchive.connect(cluster.context().archiveContext());
-        final long lastSequenceId = new EventSequenceTool().findLastSequenceId(archive);
-        archive.close();
-
-        LOGGER.info("lastSequenceId: {}", lastSequenceId);
-
-        clusterClientResponder.setLastSequenceId(lastSequenceId);
     }
 
     @Override

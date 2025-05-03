@@ -30,7 +30,6 @@ import io.aeron.samples.domain.auctions.Auction;
 import io.aeron.samples.domain.auctions.AuctionStatus;
 import io.aeron.samples.domain.participants.Participant;
 import org.agrona.ExpandableDirectByteBuffer;
-import org.agrona.collections.MutableLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,10 +70,6 @@ public class ClusterClientResponderImpl implements ClusterClientResponder
 
     private final ParticipantListEncoder participantListEncoder =
         new ParticipantListEncoder();
-
-    private final MutableLong sequenceIdGenerator = new MutableLong(0);
-    private long lastSentSequenceId = 0L;
-
     /**
      * Constructor
      *
@@ -84,18 +79,6 @@ public class ClusterClientResponderImpl implements ClusterClientResponder
     {
         this.context = context;
     }
-
-    /**
-     * set last seq. id
-     *
-     * @param lastSequenceId the last sequence id
-     */
-    @Override
-    public void setLastSequenceId(final long lastSequenceId)
-    {
-        this.lastSentSequenceId = lastSequenceId;
-    }
-
 
     /**
      * Responds to the client that an auction has been added with a result code and the auction id
@@ -124,28 +107,16 @@ public class ClusterClientResponderImpl implements ClusterClientResponder
 
         context.reply(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + createAuctionResultEncoder.encodedLength());
 
-        final var sequenceId = sequenceIdGenerator.incrementAndGet();
-
         newAuctionEventEncoder.wrapAndApplyHeader(buffer, 0, messageHeaderEncoder)
-            .sequenceId(sequenceId)
             .auctionId(auctionId)
             .startTime(startTime)
             .endTime(endTime)
             .name(name)
             .description(description);
 
-        final int length = MessageHeaderEncoder.ENCODED_LENGTH + newAuctionEventEncoder.encodedLength();
-        if (sequenceId > lastSentSequenceId)
-        {
-            context.writeEvents(buffer, 0, length);
-            lastSentSequenceId = sequenceId;
-        }
-        else
-        {
-            LOGGER.warn("try to send sequenceId: {}, lastSentSequenceId: {}", sequenceId, lastSentSequenceId);
-        }
+        context.writeEvents(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + newAuctionEventEncoder.encodedLength());
 
-        context.broadcast(buffer, 0, length);
+        context.broadcast(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + newAuctionEventEncoder.encodedLength());
     }
 
     /**
@@ -207,10 +178,6 @@ public class ClusterClientResponderImpl implements ClusterClientResponder
         final long winningParticipantId)
     {
         auctionUpdateEncoder.wrapAndApplyHeader(buffer, 0, messageHeaderEncoder);
-
-        final long sequenceId = sequenceIdGenerator.incrementAndGet();
-
-        auctionUpdateEncoder.sequenceId(sequenceId);
         auctionUpdateEncoder.auctionId(auctionId);
         auctionUpdateEncoder.status(mapAuctionStatus(auctionStatus));
         auctionUpdateEncoder.currentPrice(currentPrice);
@@ -218,19 +185,8 @@ public class ClusterClientResponderImpl implements ClusterClientResponder
         auctionUpdateEncoder.lastUpdate(lastUpdateTime);
         auctionUpdateEncoder.winningParticipantId(winningParticipantId);
 
-        final int length = MessageHeaderEncoder.ENCODED_LENGTH + auctionUpdateEncoder.encodedLength();
-
-        if (sequenceId > lastSentSequenceId)
-        {
-            context.writeEvents(buffer, 0, length);
-            lastSentSequenceId = sequenceId;
-        }
-        else
-        {
-            LOGGER.warn("try to send sequenceId: {}, lastSentSequenceId: {}", sequenceId, lastSentSequenceId);
-        }
-
-        context.broadcast(buffer, 0, length);
+        context.writeEvents(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + auctionUpdateEncoder.encodedLength());
+        context.broadcast(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + auctionUpdateEncoder.encodedLength());
     }
 
     @Override

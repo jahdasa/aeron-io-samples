@@ -25,9 +25,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Admin client egress listener
  */
-public class EventsLoggerSubscriber
+public class EventsSubscriber
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(EventsLoggerSubscriber.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(EventsSubscriber.class);
 
     private final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
     private final AuctionUpdateEventDecoder auctionUpdateEventDecoder = new AuctionUpdateEventDecoder();
@@ -57,59 +57,14 @@ public class EventsLoggerSubscriber
             case NewAuctionEventDecoder.TEMPLATE_ID ->
             {
                 newAuctionEventDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-                final long sequenceId = newAuctionEventDecoder.sequenceId();
                 final long auctionId = newAuctionEventDecoder.auctionId();
                 final String auctionName = newAuctionEventDecoder.name();
 
-                LOGGER.info(
-                    "EventsLoggerSubscriber sequenceId: {} New auction, auctionName: {}, auctionId: {}",
-                    sequenceId,
-                    auctionName,
-                    auctionId);
+                LOGGER.info("EventsSubscriber New auction: " + "'" + auctionName + "' (" + auctionId + ")");
             }
             case AuctionUpdateEventDecoder.TEMPLATE_ID -> displayAuctionUpdate(buffer, offset);
-            default -> LOGGER.info("EventsSubscriber unknown message type: {}", messageHeaderDecoder.templateId());
+            default -> LOGGER.info("EventsSubscriber unknown message type: " + messageHeaderDecoder.templateId());
         }
-    }
-
-    /**
-     * Create an agent runner and initialise it.
-     *
-     * @param buffer buffer
-     * @param offset offset
-     * @param length  length
-     * @return sequenceId of the message
-     */
-    public long findSequenceIdOfMessage(
-        final DirectBuffer buffer,
-        final int offset,
-        final int length)
-    {
-        if (length < MessageHeaderDecoder.ENCODED_LENGTH)
-        {
-            LOGGER.warn("Message too short");
-            return 0;
-        }
-        messageHeaderDecoder.wrap(buffer, offset);
-
-        switch (messageHeaderDecoder.templateId())
-        {
-            case NewAuctionEventDecoder.TEMPLATE_ID ->
-            {
-                newAuctionEventDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-                return newAuctionEventDecoder.sequenceId();
-            }
-            case AuctionUpdateEventDecoder.TEMPLATE_ID ->
-            {
-                auctionUpdateEventDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-                return auctionUpdateEventDecoder.sequenceId();
-            }
-            default ->
-            {
-            }
-        }
-
-        return 0L;
     }
 
     /**
@@ -121,7 +76,6 @@ public class EventsLoggerSubscriber
     private void displayAuctionUpdate(final DirectBuffer buffer, final int offset)
     {
         auctionUpdateEventDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        final long sequenceId = auctionUpdateEventDecoder.sequenceId();
         final long auctionId = auctionUpdateEventDecoder.auctionId();
         final AuctionStatus auctionStatus = auctionUpdateEventDecoder.status();
         final int bidCount = auctionUpdateEventDecoder.bidCount();
@@ -132,19 +86,13 @@ public class EventsLoggerSubscriber
         {
             if (auctionStatus.equals(AuctionStatus.CLOSED))
             {
-                LOGGER.info(
-                    "EventsLoggerSubscriber sequenceId: {} Auction {} has ended. There were no bids.",
-                    sequenceId,
-                    auctionId);
+                LOGGER.info("EventsSubscriber Auction " + auctionId + " has ended. There were no bids.");
             }
             else
             {
-                LOGGER.info(
-                    "EventsLoggerSubscriber sequenceId: {} Auction {} is now in state {}. There have been {}  bids.",
-                    sequenceId,
-                    auctionId,
-                    auctionStatus.name(),
-                    auctionUpdateEventDecoder.bidCount());
+                LOGGER.info("EventsSubscriber Auction " + auctionId + " is now in state " +
+                    auctionStatus.name() + ". There have been " +
+                    auctionUpdateEventDecoder.bidCount() + " bids.");
 
             }
         }
@@ -153,8 +101,7 @@ public class EventsLoggerSubscriber
             if (auctionStatus.equals(AuctionStatus.CLOSED))
             {
                 LOGGER.info(
-                    "EventsLoggerSubscriber sequenceId: {} Auction {} won! Total {} bids. Winning price was {}",
-                    sequenceId,
+                    "EventsSubscriber Auction {} won! Total {} bids. Winning price was {}",
                     auctionId,
                     bidCount,
                     currentPrice);
@@ -162,17 +109,9 @@ public class EventsLoggerSubscriber
             }
             else
             {
-                LOGGER.info(
-                    """
-                    EventsLoggerSubscriber sequenceId: {} Auction update event: auction {} is now in state {}.
-                    Total {} bids. Current price is {}. The winning bidder is {}
-                    """,
-                    sequenceId,
-                    auctionId,
-                    auctionStatus.name(),
-                    bidCount,
-                    currentPrice,
-                    winningParticipantId);
+                LOGGER.info("EventsSubscriber Auction update event: auction " + auctionId + " is now in state " +
+                    auctionStatus.name() + ". Total " + bidCount + " bids. Current price is " +
+                    currentPrice + ". The winning bidder is " + winningParticipantId);
 
             }
         }

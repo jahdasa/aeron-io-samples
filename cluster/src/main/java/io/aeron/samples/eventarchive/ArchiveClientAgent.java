@@ -20,16 +20,12 @@ import io.aeron.Aeron;
 import io.aeron.Subscription;
 import io.aeron.archive.client.AeronArchive;
 import io.aeron.archive.client.RecordingDescriptorConsumer;
-import io.aeron.logbuffer.ControlledFragmentHandler;
 import io.aeron.logbuffer.FragmentHandler;
 import org.agrona.CloseHelper;
 import org.agrona.concurrent.Agent;
 import org.agrona.concurrent.IdleStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Create an agent runner and initialise it.
@@ -43,7 +39,7 @@ public class ArchiveClientAgent implements Agent
     private final AeronArchive archive;
     private State currentState;
     private Subscription replayDestinationSubs;
-    final EventsLoggerSubscriber eventsSubscriber = new EventsLoggerSubscriber();
+    final EventsSubscriber eventsSubscriber = new EventsSubscriber();
     final FragmentHandler fragmentHandler;
     /**
      * Create an agent runner and initialise it.
@@ -76,8 +72,7 @@ public class ArchiveClientAgent implements Agent
     {
         switch (currentState)
         {
-            case AERON_READY -> findLastSequenceId();
-            case SEQUENCE_ID_READY -> connectToArchive();
+            case AERON_READY -> connectToArchive();
             case POLLING_SUBSCRIPTION -> replayDestinationSubs.poll(fragmentHandler, 1);
             default -> LOGGER.error("unknown state {}", currentState);
         }
@@ -86,29 +81,7 @@ public class ArchiveClientAgent implements Agent
     }
 
     /**
-     * findLastSequenceId
-     */
-    public void findLastSequenceId()
-    {
-
-        // Replay from the beginning of the recording
-        final long sequenceId = findLastSequenceId(archive);
-        if (sequenceId < 0)
-        {
-            LOGGER.error("No sequenceId {} found for stream ID: {}", sequenceId, 17);
-
-            return;
-        }
-        else
-        {
-            LOGGER.info("last sequenceId: {} found for stream ID: {}", sequenceId, 17);
-        }
-
-        currentState = State.SEQUENCE_ID_READY;
-    }
-
-    /**
-     * connectToArchive
+     * Connect
      */
     private void connectToArchive()
     {
@@ -119,6 +92,7 @@ public class ArchiveClientAgent implements Agent
         if (recordingId < 0)
         {
             LOGGER.error("No recording found for stream ID: {}", 17);
+
             return;
         }
 
@@ -144,95 +118,13 @@ public class ArchiveClientAgent implements Agent
     }
 
     /**
-     * findLastSequenceId
-     *
-     * @param archive to find latest recording
-     * @return last sequenceId
-     */
-    public long findLastSequenceId(final AeronArchive archive)
-    {
-        long lastSequenceId = -1;
-
-        final List<Long> allRecording = findAllRecording(archive);
-
-        for (final long recordingId: allRecording)
-        {
-            final long sequenceId = findLastSequenceId(archive, recordingId);
-
-            if (sequenceId > lastSequenceId)
-            {
-                lastSequenceId = sequenceId;
-            }
-        }
-
-        return lastSequenceId;
-    }
-
-    /**
-     * findLastSequenceId
-     *
-     * @param archive to find latest recording
-     * @param recordingId to find sequence in
-     * @return last sequenceId
-     */
-    private long findLastSequenceId(final AeronArchive archive, final long recordingId)
-    {
-        final long[] latestSequenceId =
-        {
-            -1
-        };
-
-
-
-        final long stopPosition = archive.getStopPosition(recordingId);
-        if (stopPosition < 0)
-        {
-            return 0;
-        }
-
-        try (Subscription replaySession = archive.replay(
-            recordingId,
-            0,
-            stopPosition,
-            "aeron:ipc",
-            21))
-        {
-
-            while (latestSequenceId[0] < 0)
-            {
-                replaySession.controlledPoll((buffer, offset, length, header) ->
-                {
-                    final long sequenceId =
-                        eventsSubscriber.findSequenceIdOfMessage(buffer, offset, length);
-
-                    LOGGER.info("recordingId: {}, last sequenceId: {}", recordingId, sequenceId);
-
-                    if (stopPosition == header.position())
-                    {
-                        latestSequenceId[0] = sequenceId;
-                        return ControlledFragmentHandler.Action.BREAK;
-                    }
-
-                    return ControlledFragmentHandler.Action.CONTINUE;
-                }, 1);
-            }
-        }
-
-        LOGGER.info("lastSequenceId: {}", latestSequenceId[0]);
-
-        return latestSequenceId[0];
-    }
-
-    /**
      * Connect then poll
      *
      * @param archive to find latest recording
      * @return recodingId
      */
-    private long findRecording(final AeronArchive archive)
+    private static long findRecording(final AeronArchive archive)
     {
-        final List<Long> recordingIds17StreamId = new ArrayList<>();
-
         final long[] latestRecordingId =
         {
             -1
@@ -266,64 +158,13 @@ public class ArchiveClientAgent implements Agent
                     if (streamId == 17)
                     {
                         latestRecordingId[0] = recordingId;
-                        recordingIds17StreamId.add(recordingId);
                     }
                 }
             }
         );
 
-        LOGGER.info("streamId 17 recordingIds: {}", recordingIds17StreamId);
         LOGGER.info("latestRecordingId: {}", latestRecordingId[0]);
-
         return latestRecordingId[0];
-    }
-
-    /**
-     * find all recodingIds
-     *
-     * @param archive to find latest recording
-     * @return recodingId
-     */
-    private List<Long> findAllRecording(final AeronArchive archive)
-    {
-        final List<Long> recordingIds17StreamId = new ArrayList<>();
-
-        archive.listRecordings(
-            0, // Start from the first recording
-            Integer.MAX_VALUE, // Search all recordings
-            new RecordingDescriptorConsumer()
-            {
-                @Override
-                public void onRecordingDescriptor(
-                    final long controlSessionId,
-                    final long correlationId,
-                    final long recordingId,
-                    final long startTimestamp,
-                    final long stopTimestamp,
-                    final long startPosition,
-                    final long stopPosition,
-                    final int initialTermId,
-                    final int segmentFileLength,
-                    final int termBufferLength,
-                    final int mtuLength,
-                    final int sessionId,
-                    final int streamId,
-                    final String strippedChannel,
-                    final String originalChannel,
-                    final String sourceIdentity
-                )
-                {
-                    if (streamId == 17)
-                    {
-                        recordingIds17StreamId.add(recordingId);
-                    }
-                }
-            }
-        );
-
-        LOGGER.info("streamId 17 recordingIds: {}", recordingIds17StreamId);
-
-        return recordingIds17StreamId;
     }
 
     /**

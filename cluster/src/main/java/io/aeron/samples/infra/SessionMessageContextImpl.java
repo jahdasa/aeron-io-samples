@@ -16,11 +16,9 @@
 
 package io.aeron.samples.infra;
 
-import io.aeron.ExclusivePublication;
 import io.aeron.Publication;
 import io.aeron.cluster.service.ClientSession;
 import org.agrona.DirectBuffer;
-import org.agrona.ExpandableDirectByteBuffer;
 import org.agrona.concurrent.IdleStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +36,6 @@ public class SessionMessageContextImpl implements SessionMessageContext
     private final ClientSessions clientSessions;
     private long timestamp;
     private ClientSession session;
-
-    private ExclusivePublication eventPublication;
 
     /**
      * Constructor
@@ -170,36 +166,5 @@ public class SessionMessageContextImpl implements SessionMessageContext
 
         LOGGER.error("failed to offer a message within {} retries. Closing client session.", RETRY_COUNT);
         session.close();
-    }
-
-    /**
-     * To set event publication
-     * @param publication the publication to offer events
-     */
-    public void setEventPublication(final ExclusivePublication publication)
-    {
-        this.eventPublication = publication;
-    }
-
-    /**
-     * Offer events to save into archive
-     * @param buffer the buffer to read data from
-     * @param offset the offset to read from
-     * @param length the length to read
-     */
-    public void writeEvents(
-        final ExpandableDirectByteBuffer buffer,
-        final int offset,
-        final int length)
-    {
-        while (eventPublication.offer(buffer, offset, length) < 0)
-        {
-            idleStrategy.idle();
-        }
-        LOGGER.info(
-            "writeEvents offset: {}, length: {}, eventPublication position: {}",
-            offset,
-            length,
-            eventPublication.position());
     }
 }

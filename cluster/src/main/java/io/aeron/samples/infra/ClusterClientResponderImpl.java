@@ -114,8 +114,6 @@ public class ClusterClientResponderImpl implements ClusterClientResponder
             .name(name)
             .description(description);
 
-        context.writeEvents(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + newAuctionEventEncoder.encodedLength());
-
         context.broadcast(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + newAuctionEventEncoder.encodedLength());
     }
 
@@ -184,8 +182,6 @@ public class ClusterClientResponderImpl implements ClusterClientResponder
         auctionUpdateEncoder.bidCount(bidCount);
         auctionUpdateEncoder.lastUpdate(lastUpdateTime);
         auctionUpdateEncoder.winningParticipantId(winningParticipantId);
-
-        context.writeEvents(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + auctionUpdateEncoder.encodedLength());
         context.broadcast(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + auctionUpdateEncoder.encodedLength());
     }
 

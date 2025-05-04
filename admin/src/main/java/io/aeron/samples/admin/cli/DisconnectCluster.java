@@ -18,6 +18,7 @@ package io.aeron.samples.admin.cli;
 
 import io.aeron.samples.cluster.admin.protocol.DisconnectClusterEncoder;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderEncoder;
+import lombok.Setter;
 import org.agrona.ExpandableArrayBuffer;
 import picocli.CommandLine;
 
@@ -28,8 +29,12 @@ import picocli.CommandLine;
     description = "Disconnects from the cluster")
 public class DisconnectCluster implements Runnable
 {
+    @Setter
     @CommandLine.ParentCommand
     CliCommands parent;
+
+    @Setter
+    String correlationId;
 
     private final ExpandableArrayBuffer buffer = new ExpandableArrayBuffer(1024);
     private final MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
@@ -41,9 +46,9 @@ public class DisconnectCluster implements Runnable
     public void run()
     {
         disconnectClusterEncoder.wrapAndApplyHeader(buffer, 0, messageHeaderEncoder);
+        disconnectClusterEncoder.correlationId(correlationId);
+
         parent.offerRingBufferMessage(
             buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH + disconnectClusterEncoder.encodedLength());
     }
-
-
 }

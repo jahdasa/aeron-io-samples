@@ -19,6 +19,8 @@ package io.aeron.samples.admin.cluster;
 import io.aeron.cluster.client.EgressListener;
 import io.aeron.cluster.codecs.EventCode;
 import io.aeron.logbuffer.Header;
+import io.aeron.samples.admin.model.ActionDTO;
+import io.aeron.samples.admin.model.ParticipantDTO;
 import io.aeron.samples.admin.util.EnvironmentUtil;
 import io.aeron.samples.cluster.protocol.AddAuctionBidCommandResultDecoder;
 import io.aeron.samples.cluster.protocol.AddAuctionBidResult;
@@ -36,6 +38,9 @@ import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -98,7 +103,9 @@ public class AdminClientEgressListener implements EgressListener
                 final long auctionId = createAuctionResultDecoder.auctionId();
                 final AddAuctionResult result = createAuctionResultDecoder.result();
                 final String correlationId = createAuctionResultDecoder.correlationId();
-                pendingMessageManager.markMessageAsReceived(correlationId);
+
+                pendingMessageManager.markCreateAuctionMessageAsReceived(correlationId, auctionId, result);
+
                 if (result.equals(AddAuctionResult.SUCCESS))
                 {
                     log("Auction added with id: " + auctionId,
@@ -123,7 +130,7 @@ public class AdminClientEgressListener implements EgressListener
                 final AddAuctionBidResult result = addBidResultDecoder.result();
                 final String correlationId = addBidResultDecoder.correlationId();
 
-                pendingMessageManager.markMessageAsReceived(correlationId);
+                pendingMessageManager.markAddAuctionBidMessageAsReceived(correlationId, auctionId, result);
                 if (result.equals(AddAuctionBidResult.SUCCESS))
                 {
                     log("Bid added to auction " + auctionId, AttributedStyle.GREEN);
@@ -192,7 +199,8 @@ public class AdminClientEgressListener implements EgressListener
     private void displayParticipants(final DirectBuffer buffer, final int offset)
     {
         participantListDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        pendingMessageManager.markMessageAsReceived(participantListDecoder.correlationId());
+
+        final List<ParticipantDTO> participantsList = new ArrayList<>();
         final ParticipantListDecoder.ParticipantsDecoder participants = participantListDecoder.participants();
         final int count = participants.count();
         if (0 == count)
@@ -208,16 +216,21 @@ public class AdminClientEgressListener implements EgressListener
                 participants.next();
                 final long participantId = participants.participantId();
                 final String name = participants.name();
+
+                participantsList.add(new ParticipantDTO(participantId, name));
                 log("Participant: id " + participantId + " name: '" + name + "'", AttributedStyle.YELLOW);
             }
         }
+
+        pendingMessageManager.markListParticipantsMessageAsReceived(participantListDecoder.correlationId(), participantsList);
     }
 
     private void displayAuctions(final DirectBuffer buffer, final int offset)
     {
         auctionListDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        pendingMessageManager.markMessageAsReceived(auctionListDecoder.correlationId());
         final AuctionListDecoder.AuctionsDecoder auction = auctionListDecoder.auctions();
+
+        final List<ActionDTO> actions = new ArrayList<>();
         final int count = auction.count();
         if (0 == count)
         {
@@ -254,8 +267,20 @@ public class AdminClientEgressListener implements EgressListener
                     log(" Current winning participant " + winningParticipantId + " with price " +
                         currentPrice, AttributedStyle.YELLOW);
                 }
+
+                final ActionDTO action = new ActionDTO(
+                    auctionId,
+                    name,
+                    createdBy,
+                    startTime,
+                    endTime,
+                    winningParticipantId,
+                    currentPrice,
+                    status);
+                actions.add(action);
             }
         }
+        pendingMessageManager.markListAuctionsMessageAsReceived(auctionListDecoder.correlationId(), actions);
     }
 
     @Override

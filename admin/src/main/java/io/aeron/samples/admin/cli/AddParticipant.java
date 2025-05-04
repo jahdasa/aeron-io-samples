@@ -18,6 +18,7 @@ package io.aeron.samples.admin.cli;
 
 import io.aeron.samples.cluster.admin.protocol.AddParticipantEncoder;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderEncoder;
+import lombok.Setter;
 import org.agrona.ExpandableArrayBuffer;
 import picocli.CommandLine;
 
@@ -28,11 +29,19 @@ import picocli.CommandLine;
     description = "Adds a participant to the cluster")
 public class AddParticipant implements Runnable
 {
+    @Setter
     @CommandLine.ParentCommand
     CliCommands parent;
+
+    @Setter
+    String correlationId;
+
+    @Setter
     @SuppressWarnings("all")
     @CommandLine.Option(names = "id", description = "Participant id")
     private Integer participantId = -1;
+
+    @Setter
     @SuppressWarnings("all")
     @CommandLine.Option(names = "name", description = "Participant name")
     private String participantName = "";
@@ -46,6 +55,8 @@ public class AddParticipant implements Runnable
     public void run()
     {
         addParticipantEncoder.wrapAndApplyHeader(buffer, 0, messageHeaderEncoder);
+
+        addParticipantEncoder.correlationId(correlationId);
         addParticipantEncoder.participantId(participantId);
         addParticipantEncoder.name(participantName);
         parent.offerRingBufferMessage(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH +

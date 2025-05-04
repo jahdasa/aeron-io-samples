@@ -14,24 +14,26 @@
  * limitations under the License.
  */
 
-pluginManagement {
-    // Include 'plugins build' to define convention plugins.
-    includeBuild("build-logic")
-}
+package io.aeron.samples.admin;
 
-plugins {
-    // Apply plugin to allow automatic download of JDKs
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.7.0"
-}
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-rootProject.name = "aeron-io-samples"
-include(
-    "cluster",
-    "cluster-protocol",
-    "admin",
-    "backup")
+/**
+ * Main class for the Spring boot Admin application.
+ */
 
-val standby: String? by settings
-if (true == standby?.toBoolean()) {
-    include("standby")
+@SpringBootApplication
+public class AdminApp
+{
+
+    /**
+     * Main method
+     *
+     * @param args command line arguments
+     */
+    public static void main(final String[] args)
+    {
+        SpringApplication.run(AdminApp.class, args);
+    }
 }

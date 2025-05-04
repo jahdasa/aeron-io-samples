@@ -18,6 +18,7 @@ package io.aeron.samples.admin.cli;
 
 import io.aeron.samples.cluster.admin.protocol.ConnectClusterEncoder;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderEncoder;
+import lombok.Setter;
 import org.agrona.ExpandableArrayBuffer;
 import picocli.CommandLine;
 
@@ -35,8 +36,14 @@ public class ConnectCluster implements Runnable
     private final ExpandableArrayBuffer buffer = new ExpandableArrayBuffer(1024);
     private final MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
     private final ConnectClusterEncoder connectClusterEncoder = new ConnectClusterEncoder();
+
+    @Setter
     @CommandLine.ParentCommand
     CliCommands parent;
+
+    @Setter
+    String correlationId;
+
     @SuppressWarnings("all")
     @CommandLine.Option(names = "baseport", description = "The base port to connect to")
     private Integer baseport = 9000;
@@ -57,6 +64,8 @@ public class ConnectCluster implements Runnable
     public void run()
     {
         connectClusterEncoder.wrapAndApplyHeader(buffer, 0, messageHeaderEncoder);
+
+        connectClusterEncoder.correlationId(correlationId);
         connectClusterEncoder.baseport(baseport);
         connectClusterEncoder.port(port);
         connectClusterEncoder.clusterHosts(hostnames);

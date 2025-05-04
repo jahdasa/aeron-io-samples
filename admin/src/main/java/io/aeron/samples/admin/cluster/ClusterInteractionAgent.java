@@ -20,6 +20,7 @@ import io.aeron.Publication;
 import io.aeron.cluster.client.AeronCluster;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
+import io.aeron.samples.admin.model.ResponseWrapper;
 import io.aeron.samples.cluster.ClusterConfig;
 import io.aeron.samples.cluster.admin.protocol.AddAuctionBidDecoder;
 import io.aeron.samples.cluster.admin.protocol.AddAuctionDecoder;
@@ -49,6 +50,7 @@ import org.jline.utils.AttributedStyle;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -76,6 +78,8 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private final AddAuctionDecoder addAuctionDecoder = new AddAuctionDecoder();
     private final AddParticipantDecoder addParticipantDecoder = new AddParticipantDecoder();
     private final AddAuctionBidDecoder addAuctionBidDecoder = new AddAuctionBidDecoder();
+    private final ListParticipantsDecoder listParticipantsDecoder = new ListParticipantsDecoder();
+    private final ListAuctionsDecoder listAuctionsDecoder = new ListAuctionsDecoder();
 
     private final MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
     private final CreateAuctionCommandEncoder createAuctionCommandEncoder = new CreateAuctionCommandEncoder();
@@ -148,8 +152,8 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             case AddAuctionDecoder.TEMPLATE_ID -> processAddAuction(messageHeaderDecoder, buffer, offset);
             case AddParticipantDecoder.TEMPLATE_ID -> processAddParticipant(messageHeaderDecoder, buffer, offset);
             case AddAuctionBidDecoder.TEMPLATE_ID -> processAddAuctionBid(messageHeaderDecoder, buffer, offset);
-            case ListAuctionsDecoder.TEMPLATE_ID -> processListAuctions();
-            case ListParticipantsDecoder.TEMPLATE_ID -> processListParticipants();
+            case ListAuctionsDecoder.TEMPLATE_ID -> processListAuctions(messageHeaderDecoder, buffer, offset);
+            case ListParticipantsDecoder.TEMPLATE_ID -> processListParticipants(messageHeaderDecoder, buffer, offset);
             default -> log("Unknown message type: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
         }
     }
@@ -190,9 +194,11 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         final MutableDirectBuffer buffer,
         final int offset)
     {
-        final String correlationId = UUID.randomUUID().toString();
+//        final String correlationId = UUID.randomUUID().toString();
 
         addAuctionDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+        final String correlationId = addAuctionDecoder.correlationId();
+
         createAuctionCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
 
         createAuctionCommandEncoder.createdByParticipantId(addAuctionDecoder.createdByParticipantId());
@@ -219,11 +225,15 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         final MutableDirectBuffer buffer,
         final int offset)
     {
-        final String correlationId = UUID.randomUUID().toString();
+//        final String correlationId = UUID.randomUUID().toString();
+
         addParticipantDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+        final String correlationId = addParticipantDecoder.correlationId();
+
         addParticipantCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
 
         pendingMessageManager.addMessage(correlationId, "add-participant");
+
         addParticipantCommandEncoder.participantId(addParticipantDecoder.participantId());
         addParticipantCommandEncoder.correlationId(correlationId);
         addParticipantCommandEncoder.name(addParticipantDecoder.name());
@@ -243,8 +253,11 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         final MutableDirectBuffer buffer,
         final int offset)
     {
-        final String correlationId = UUID.randomUUID().toString();
+//        final String correlationId = UUID.randomUUID().toString();
+
         addAuctionBidDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+        final String correlationId = addAuctionBidDecoder.correlationId();
+
         addAuctionBidCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
 
         addAuctionBidCommandEncoder.auctionId(addAuctionBidDecoder.auctionId());
@@ -260,9 +273,16 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     /**
      * Marshals the CLI protocol to cluster protocol for Listing all participants
      */
-    private void processListParticipants()
+    private void processListParticipants(
+        final MessageHeaderDecoder messageHeaderDecoder,
+        final MutableDirectBuffer buffer,
+        final int offset)
     {
-        final String correlationId = UUID.randomUUID().toString();
+//        final String correlationId = UUID.randomUUID().toString();
+
+        listParticipantsDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+        final String correlationId = listParticipantsDecoder.correlationId();
+
         listParticipantsCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
         listParticipantsCommandEncoder.correlationId(correlationId);
         pendingMessageManager.addMessage(correlationId, "list-participants");
@@ -273,10 +293,18 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     /**
      * Marshals the CLI protocol to cluster protocol for Listing all auctions
      */
-    private void processListAuctions()
+    private void processListAuctions(
+        final MessageHeaderDecoder messageHeaderDecoder,
+        final MutableDirectBuffer buffer,
+        final int offset)
     {
-        final String correlationId = UUID.randomUUID().toString();
+//        final String correlationId = UUID.randomUUID().toString();
+
+        listAuctionsDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
+        final String correlationId = listAuctionsDecoder.correlationId();
+
         listAuctionsCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
+
         listAuctionsCommandEncoder.correlationId(correlationId);
         pendingMessageManager.addMessage(correlationId, "list-auctions");
         retryingClusterOffer(sendBuffer, 0, MessageHeaderEncoder.ENCODED_LENGTH +
@@ -420,5 +448,10 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             mediaDriver.close();
         }
         runningFlag.set(false);
+    }
+
+    public void onComplete(final String correlationId, final CompletableFuture<ResponseWrapper> future)
+    {
+        pendingMessageManager.onComplete(correlationId, future);
     }
 }

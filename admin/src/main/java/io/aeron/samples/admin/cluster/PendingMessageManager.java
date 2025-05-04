@@ -16,14 +16,19 @@
 
 package io.aeron.samples.admin.cluster;
 
+import io.aeron.samples.admin.model.*;
+import io.aeron.samples.cluster.protocol.AddAuctionBidResult;
+import io.aeron.samples.cluster.protocol.AddAuctionResult;
 import org.agrona.concurrent.EpochClock;
 import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 
-import java.util.Deque;
-import java.util.LinkedList;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,6 +37,8 @@ import java.util.concurrent.TimeUnit;
 public class PendingMessageManager
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(PendingMessageManager.class);
+
+    private final Map<String, CompletableFuture<ResponseWrapper>> futures = new ConcurrentHashMap<>();
 
     private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(5);
     private final Deque<PendingMessage> trackedMessages = new LinkedList<>();
@@ -71,7 +78,94 @@ public class PendingMessageManager
             final boolean exist = pendingMessage.correlationId().equals(correlationId);
 
             LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+            if (exist)
+            {
+                replySuccess(correlationId, new AddParticipantResponse(correlationId, Collections.emptyList()));
+            }
+            return exist;
+        });
+    }
 
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markCreateAuctionMessageAsReceived(final String correlationId, final long auctionId, final AddAuctionResult result)
+    {
+        trackedMessages.removeIf(pendingMessage ->
+        {
+            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+
+            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+            if (exist)
+            {
+                replySuccess(correlationId, new CreateAuctionResponse(correlationId, auctionId, result));
+            }
+            return exist;
+        });
+    }
+
+
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markListParticipantsMessageAsReceived(
+        final String correlationId,
+        final List<ParticipantDTO> participantsList)
+    {
+        trackedMessages.removeIf(pendingMessage ->
+        {
+            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+
+            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+            if (exist)
+            {
+                replySuccess(correlationId, new AddParticipantResponse(correlationId, participantsList));
+            }
+            return exist;
+        });
+    }
+
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markAddAuctionBidMessageAsReceived(
+            final String correlationId,
+            final long auctionId,
+            final AddAuctionBidResult result)
+    {
+        trackedMessages.removeIf(pendingMessage ->
+        {
+            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+
+            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+            if (exist)
+            {
+                replySuccess(correlationId, new AddAuctionBidResponse(correlationId, auctionId, result));
+            }
+            return exist;
+        });
+    }
+
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markListAuctionsMessageAsReceived(
+            final String correlationId,
+            final List<ActionDTO> actions)
+    {
+        trackedMessages.removeIf(pendingMessage ->
+        {
+            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+
+            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+            if (exist)
+            {
+                replySuccess(correlationId, new ListActionsResponse(correlationId, actions));
+            }
             return exist;
         });
     }
@@ -128,5 +222,38 @@ public class PendingMessageManager
     private void log(final String message, final int color)
     {
         LineReaderHelper.log(lineReader, message, color);
+    }
+
+    public void onComplete(String correlationId, CompletableFuture<ResponseWrapper> future)
+    {
+        futures.put(correlationId, future);
+    }
+
+    public void replySuccess(String correlationId, BaseResponse responseData) {
+        var future = futures.remove(correlationId);
+        if (future == null)
+        {
+            return;
+        }
+
+        var response = new ResponseWrapper();
+        response.setData(responseData);
+        response.setStatus(HttpStatus.OK.value());
+        future.complete(response);
+    }
+
+    public void replyFail(final String correlationId, final BaseError error)
+    {
+        var future = futures.remove(correlationId);
+
+        if (future == null)
+        {
+            return;
+        }
+
+        var response = new ResponseWrapper();
+        response.setError(error);
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        future.complete(response);
     }
 }

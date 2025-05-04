@@ -18,6 +18,7 @@ package io.aeron.samples.admin.cli;
 
 import io.aeron.samples.cluster.admin.protocol.AddAuctionBidEncoder;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderEncoder;
+import lombok.Setter;
 import org.agrona.ExpandableArrayBuffer;
 import picocli.CommandLine;
 
@@ -30,17 +31,24 @@ import static io.aeron.samples.admin.util.EnvironmentUtil.tryGetParticipantId;
     description = "Adds a bid to an auction in the cluster")
 public class AddAuctionBid implements Runnable
 {
+    @Setter
     @CommandLine.ParentCommand
     CliCommands parent;
 
+    @Setter
+    String correlationId;
+
+    @Setter
     @SuppressWarnings("all")
     @CommandLine.Option(names = "auction-id", description = "Auction ID")
     private Long auctionId = Long.MIN_VALUE;
 
+    @Setter
     @SuppressWarnings("all")
     @CommandLine.Option(names = "created-by", description = "Created by participant id")
     private Integer participantId = tryGetParticipantId();
 
+    @Setter
     @SuppressWarnings("all")
     @CommandLine.Option(names = "price", description = "Bid price")
     private Long price = 0L;
@@ -54,6 +62,8 @@ public class AddAuctionBid implements Runnable
     public void run()
     {
         addAuctionBidEncoder.wrapAndApplyHeader(buffer, 0, messageHeaderEncoder);
+
+        addAuctionBidEncoder.correlationId(correlationId);
         addAuctionBidEncoder.auctionId(auctionId);
         addAuctionBidEncoder.addedByParticipantId(participantId);
         addAuctionBidEncoder.price(price);

@@ -1,0 +1,92 @@
+package io.aeron.samples.admin.controller;
+
+import io.aeron.samples.admin.model.ResponseWrapper;
+import io.aeron.samples.admin.service.AdminService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
+
+/**
+ * Admin controller for the cluster main class, working on a direct connection to the cluster
+ */
+
+@RestController
+@RequestMapping(path = "/api")
+@RequiredArgsConstructor
+public class AdminController
+{
+    private final AdminService adminService;
+
+    /**
+     * method to handle the command execution
+     */
+    @PostMapping(path = "/v1/connect")
+    public void connect()
+    {
+        adminService.connect();
+    }
+
+    /**
+     * method to handle the command execution
+     */
+    @PostMapping(path = "/v1/disconnect")
+    public void disconnect()
+    {
+        adminService.disconnect();
+    }
+
+    /**
+     * method to handle the command execution
+     *
+     * @param id command name
+     * @param name command input
+     */
+    @PostMapping(path = "/v1/add-participant")
+    public void addParticipant(
+            @RequestParam(defaultValue = "0") final int id,
+            @RequestParam final String name)
+    {
+        adminService.addParticipant(id, name);
+    }
+
+    /**
+     * method to handle the command execution
+     */
+    @GetMapping(path = "/v1/list-participants", produces = "application/json")
+    public ResponseWrapper addParticipant()
+    {
+        return adminService.listParticipants();
+    }
+
+    /**
+     * method to handle the command execution
+     */
+    @PostMapping(path = "/v1/add-auction", produces = "application/json")
+    public ResponseWrapper addAuction(
+        @RequestParam final String name,
+        @RequestParam(defaultValue = "0") final int participantId,
+        @RequestParam(defaultValue = "25") final int duration)
+    {
+        return adminService.addAuction(name, participantId, duration);
+    }
+
+    /**
+     * method to handle the command execution
+     */
+    @GetMapping(path = "/v1/list-auctions", produces = "application/json")
+    public ResponseWrapper listAuctions()
+    {
+        return adminService.listActions();
+    }
+
+    /**
+     * method to handle the command execution
+     */
+    @PostMapping(path = "/v1/add-auction-bid", produces = "application/json")
+    public ResponseWrapper addAuctionBid(
+            @RequestParam final long auctionId,
+            @RequestParam final int participantId,
+            @RequestParam final long price)
+    {
+        return adminService.addAuctionBid(auctionId, participantId, price);
+    }
+}

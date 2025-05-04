@@ -70,5 +70,5 @@ This approach is typical for gateways, for example you may have a web socket gat
 
 ## Uber Jar Manifest notes
 
-- `Main-Class: io.aeron.samples.admin.Admin`
+- `Main-Class: io.aeron.samples.admin.AdminApi`
 - `Add-Opens: java.base/sun.nio.ch`

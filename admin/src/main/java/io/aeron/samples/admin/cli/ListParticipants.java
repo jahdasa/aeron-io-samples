@@ -18,6 +18,7 @@ package io.aeron.samples.admin.cli;
 
 import io.aeron.samples.cluster.admin.protocol.ListParticipantsEncoder;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderEncoder;
+import lombok.Setter;
 import org.agrona.ExpandableArrayBuffer;
 import picocli.CommandLine;
 
@@ -28,8 +29,13 @@ import picocli.CommandLine;
     description = "Lists all participants in the cluster")
 public class ListParticipants implements Runnable
 {
+    @Setter
     @CommandLine.ParentCommand
     CliCommands parent;
+
+    @Setter
+    String correlationId;
+
     private final ExpandableArrayBuffer buffer = new ExpandableArrayBuffer(1024);
     private final MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder(); //cluster protocol header
     private final ListParticipantsEncoder listCommandEncoder = new ListParticipantsEncoder();
@@ -39,6 +45,8 @@ public class ListParticipants implements Runnable
     public void run()
     {
         listCommandEncoder.wrapAndApplyHeader(buffer, 0, messageHeaderEncoder);
+        listCommandEncoder.correlationId(correlationId);
+
         parent.offerRingBufferMessage(buffer, 0, MessageHeaderEncoder.ENCODED_LENGTH +
             listCommandEncoder.encodedLength());
     }

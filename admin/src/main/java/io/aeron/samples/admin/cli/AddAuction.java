@@ -18,6 +18,7 @@ package io.aeron.samples.admin.cli;
 
 import io.aeron.samples.cluster.admin.protocol.AddAuctionEncoder;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderEncoder;
+import lombok.Setter;
 import org.agrona.ExpandableArrayBuffer;
 import org.agrona.concurrent.SystemEpochClock;
 import picocli.CommandLine;
@@ -33,17 +34,24 @@ import static io.aeron.samples.admin.util.EnvironmentUtil.tryGetParticipantId;
     description = "Adds an auction to the cluster, starting in 0.1 seconds and ending 25 seconds later")
 public class AddAuction implements Runnable
 {
+    @Setter
     @CommandLine.ParentCommand
     CliCommands parent;
 
+    @Setter
+    String correlationId;
+
+    @Setter
     @SuppressWarnings("all")
     @CommandLine.Option(names = "name", description = "Auction name")
     private String auctionName = "New Auction";
 
+    @Setter
     @SuppressWarnings("all")
     @CommandLine.Option(names = "created-by", description = "Created by participant id")
     private Integer participantId = tryGetParticipantId();
 
+    @Setter
     @SuppressWarnings("all")
     @CommandLine.Option(names = "duration", description = "Auction duration in seconds (default: 25 seconds)")
     private Integer duration = 25;
@@ -57,6 +65,8 @@ public class AddAuction implements Runnable
     public void run()
     {
         addAuctionEncoder.wrapAndApplyHeader(buffer, 0, messageHeaderEncoder);
+
+        addAuctionEncoder.correlationId(correlationId);
         addAuctionEncoder.createdByParticipantId(participantId);
         addAuctionEncoder.startTime(SystemEpochClock.INSTANCE.time() + TimeUnit.MILLISECONDS.toMillis(100));
         addAuctionEncoder.endTime(SystemEpochClock.INSTANCE.time() + TimeUnit.SECONDS.toMillis(duration));

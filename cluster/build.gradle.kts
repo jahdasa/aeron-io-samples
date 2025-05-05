@@ -16,6 +16,7 @@
 
 plugins {
     id("java-application-conventions")
+    id("me.champeau.jmh") version "0.7.3"
 }
 
 dependencies {
@@ -24,7 +25,24 @@ dependencies {
     implementation(libs.slf4j)
     implementation(libs.logback)
     implementation(project(":cluster-protocol"))
+    implementation(project(":limit-order-book"))
+    implementation(project(":messages"))
+    implementation(project(":socket"))
     testImplementation(libs.bundles.testing)
+
+    // https://mvnrepository.com/artifact/com.carrotsearch/hppc
+    implementation("com.carrotsearch:hppc:0.10.0")
+
+    // https://mvnrepository.com/artifact/joda-time/joda-time
+    implementation("joda-time:joda-time:2.14.0")
+
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-csv
+    implementation("org.apache.commons:commons-csv:1.14.0")
+
+    testImplementation("org.apache.commons:commons-lang3:3.17.0")
+    testImplementation("com.itextpdf:itextpdf:5.5.13.4")
+
+    jmh("commons-io:commons-io:2.19.0")
 }
 
 tasks {
@@ -51,4 +69,19 @@ tasks {
         })
     }
 
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (requested.group == "org.objectlayout" && requested.name == "objectlayout") {
+                useTarget("org.objectlayout:ObjectLayout:${requested.version}")
+            }
+        }
+    }
 }

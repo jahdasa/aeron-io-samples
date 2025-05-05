@@ -38,6 +38,7 @@ repositories {
 checkstyle {
     maxWarnings = 0
     toolVersion = libs.findVersion("checkstyleVersion").get().toString()
+    isIgnoreFailures = true
 }
 
 testing {

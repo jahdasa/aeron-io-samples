@@ -29,7 +29,10 @@ include(
     "cluster",
     "cluster-protocol",
     "admin",
-    "backup")
+    "backup",
+    "limit-order-book",
+    "messages"
+    )
 
 val standby: String? by settings
 if (true == standby?.toBoolean()) {

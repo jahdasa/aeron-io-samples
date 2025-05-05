@@ -1,0 +1,84 @@
+package sbe.reader;
+
+import sbe.msg.MessageHeaderDecoder;
+import sbe.msg.OrderViewDecoder;
+import sbe.msg.SideEnum;
+import org.agrona.DirectBuffer;
+
+import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
+
+public class OrderViewReader implements Serializable {
+    private int bufferIndex;
+    private OrderViewDecoder orderView;
+    private MessageHeaderDecoder messageHeader;
+    private byte[] clientOrderIdBytes;
+
+    private int compID;
+    private int securityId;
+    private int orderId;
+    private String clientOrderId;
+    private long submittedTime;
+    private SideEnum side;
+    private long price;
+    private int orderQuantity;
+
+    public OrderViewReader(){
+        bufferIndex = 0;
+        orderView = new OrderViewDecoder();
+        messageHeader = new MessageHeaderDecoder();
+        clientOrderIdBytes = new byte[OrderViewDecoder.clientOrderIdLength()];
+    }
+
+    public void read(DirectBuffer buffer) throws UnsupportedEncodingException {
+        bufferIndex = 0;
+        messageHeader = messageHeader.wrap(buffer, bufferIndex);
+
+        int actingBlockLength = messageHeader.blockLength();
+        int actingVersion = messageHeader.version();
+        compID = messageHeader.compID();
+        bufferIndex += messageHeader.encodedLength();
+
+        orderView.wrap(buffer, bufferIndex, actingBlockLength, actingVersion);
+
+        securityId = orderView.securityId();
+        orderId = orderView.orderId();
+        clientOrderId = new String(clientOrderIdBytes, 0, orderView.getClientOrderId(clientOrderIdBytes, 0), OrderViewDecoder.clientOrderIdCharacterEncoding());
+        submittedTime = orderView.submittedTime();
+        side = orderView.side();
+        price = orderView.price().mantissa();
+        orderQuantity = orderView.orderQuantity();
+    }
+
+    public int getCompID() {
+        return compID;
+    }
+
+    public int getSecurityId() {
+        return securityId;
+    }
+
+    public int getOrderId() {
+        return orderId;
+    }
+
+    public String getClientOrderId() {
+        return clientOrderId;
+    }
+
+    public long getSubmittedTime() {
+        return submittedTime;
+    }
+
+    public SideEnum getSide() {
+        return side;
+    }
+
+    public long getPrice() {
+        return price;
+    }
+
+    public int getOrderQuantity() {
+        return orderQuantity;
+    }
+}

@@ -1,0 +1,38 @@
+package sbe.reader;
+
+import org.agrona.DirectBuffer;
+import sbe.msg.MessageHeaderDecoder;
+import sbe.msg.marketData.TradingSessionDecoder;
+
+import java.io.UnsupportedEncodingException;
+
+public class TradingSessionReader {
+    private StringBuilder sb;
+    private int bufferIndex;
+    private TradingSessionDecoder tradingSession;
+    private MessageHeaderDecoder messageHeader;
+
+    public TradingSessionReader(){
+        sb = new StringBuilder();
+        bufferIndex = 0;
+        messageHeader = new MessageHeaderDecoder();
+        tradingSession = new TradingSessionDecoder();
+    }
+
+    public StringBuilder read(DirectBuffer buffer) throws UnsupportedEncodingException {
+        sb.delete(0, sb.capacity());
+        bufferIndex = 0;
+        messageHeader = messageHeader.wrap(buffer, bufferIndex);
+
+        int actingBlockLength = messageHeader.blockLength();
+        int actingVersion = messageHeader.version();
+        bufferIndex += messageHeader.encodedLength();
+
+        tradingSession.wrap(buffer, bufferIndex, actingBlockLength, actingVersion);
+
+        sb.append("TradingSession=" + tradingSession.tradingSession());
+        sb.append("securityId=" + tradingSession.securityId());
+
+        return sb;
+    }
+}

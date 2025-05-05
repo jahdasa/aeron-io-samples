@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-pluginManagement {
-    // Include 'plugins build' to define convention plugins.
-    includeBuild("build-logic")
-}
-
 plugins {
-    // Apply plugin to allow automatic download of JDKs
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.7.0"
+    id("java-application-conventions")
+    id("me.champeau.jmh") version "0.7.3"
 }
 
-rootProject.name = "aeron-io-samples"
-include(
-    "cluster",
-    "cluster-protocol",
-    "admin",
-    "backup",
-    "limit-order-book",
-    "messages",
-    "socket"
-)
+dependencies {
+    implementation(libs.agrona)
+    implementation(libs.aeron)
+    implementation(libs.slf4j)
+    implementation(libs.logback)
+    testImplementation(libs.bundles.testing)
 
-val standby: String? by settings
-if (true == standby?.toBoolean()) {
-    include("standby")
+    // https://mvnrepository.com/artifact/com.carrotsearch/hppc
+    implementation("com.carrotsearch:hppc:0.10.0")
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+tasks.test {
+    jvmArgs("--add-opens=java.base/sun.nio.ch=ALL-UNNAMED")
 }

@@ -1,11 +1,14 @@
 package io.aeron.samples.admin.service;
 
 import io.aeron.samples.admin.cli.*;
+import io.aeron.samples.admin.client.Client;
 import io.aeron.samples.admin.cluster.ClusterInteractionAgent;
 import io.aeron.samples.admin.model.ResponseWrapper;
+import io.aeron.samples.cluster.admin.protocol.MessageHeaderEncoder;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.BufferUtil;
+import org.agrona.DirectBuffer;
 import org.agrona.concurrent.AgentRunner;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingMillisIdleStrategy;
@@ -40,10 +43,14 @@ public class AdminService
     @PostConstruct
     public void postConstruct()
     {
-        clusterInteractionAgent = new ClusterInteractionAgent(
-            adminClusterChannel,
-            idleStrategy,
-            running);
+        try {
+            clusterInteractionAgent = new ClusterInteractionAgent(
+                adminClusterChannel,
+                idleStrategy,
+                running);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
         final AgentRunner clusterInteractionAgentRunner = new AgentRunner(
             idleStrategy,
@@ -257,4 +264,23 @@ public class AdminService
         return new ResponseWrapper();
 
     }
+
+    public void submitOrder(String clientOrderId, long volume, long price, String side, String orderType, String timeInForce, long displayQuantity, long minQuantity, long stopPrice) throws Exception {
+
+        Client client = Client.newInstance(1, 1);
+        DirectBuffer buffer = client.submitOrder(
+                clientOrderId,
+                volume,
+                price,
+                side,
+                orderType,
+                timeInForce,
+                displayQuantity,
+                minQuantity,
+                stopPrice
+        );
+
+        adminClusterChannel.write(10, buffer, 0, client.getMessageEncodedLength());
+    }
+
 }

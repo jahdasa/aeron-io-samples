@@ -68,7 +68,7 @@ public class Admin
      *
      * @param args command line arguments
      */
-    public static void main(final String[] args) throws IOException
+    public static void main(final String[] args) throws Exception
     {
         //start the agent used for cluster interaction
         final String prompt = "admin > ";

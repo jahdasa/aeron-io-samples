@@ -157,7 +157,7 @@ public enum MarketData {
         mktData.add(lobBuilder.build());
 
         for(ObjectCursor<DirectBuffer> cursor : mktData){
-            marketDataPublisher.send(cursor.value);
+//            marketDataPublisher.send(cursor.value);
         }
         resetLOBBuilder(orderBook.getSecurityId());
 
@@ -169,7 +169,7 @@ public enum MarketData {
     }
 
     public void lobSnapShot(AeronPublisher marketDataPublisher) {
-        marketDataPublisher.send(getAdminMessage(AdminTypeEnum.StartLOB, orderBook.getSecurityId(), compID));
+//        marketDataPublisher.send(getAdminMessage(AdminTypeEnum.StartLOB, orderBook.getSecurityId(), compID));
         //System.out.println("Publihed start snapshot");
 
         int count = 0;
@@ -224,7 +224,7 @@ public enum MarketData {
             publishLOBSnapShot(marketDataPublisher);
         }
 
-        marketDataPublisher.send(getAdminMessage(AdminTypeEnum.EndLOB, orderBook.getSecurityId(), compID));
+//        marketDataPublisher.send(getAdminMessage(AdminTypeEnum.EndLOB, orderBook.getSecurityId(), compID));
         setSnapShotRequest(false);
         setOrderBook(null);
         reset();

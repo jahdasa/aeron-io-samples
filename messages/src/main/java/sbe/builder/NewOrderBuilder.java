@@ -11,6 +11,7 @@ public class NewOrderBuilder {
     private NewOrderEncoder newOrder;
     private MessageHeaderEncoder messageHeader;
     private UnsafeBuffer encodeBuffer;
+    private int messageEncodedLength;
 
     private int compID;
     private int securityId;
@@ -41,6 +42,10 @@ public class NewOrderBuilder {
         traderMnemonic = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.traderMnemonicLength()));
         account = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.accountLength()));
         expireTime = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.expireTimeLength()));
+    }
+
+    public int messageEncodedLength(){
+        return messageEncodedLength;
     }
 
     public NewOrderBuilder compID(int value){
@@ -169,6 +174,7 @@ public class NewOrderBuilder {
                 .cancelOnDisconnect(cancelOnDisconnect)
                 .orderBook(orderBook);
 
+        messageEncodedLength = messageHeader.encodedLength() + newOrder.encodedLength();
 
         return encodeBuffer;
     }

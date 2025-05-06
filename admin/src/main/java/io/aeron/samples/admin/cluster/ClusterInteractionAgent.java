@@ -20,22 +20,13 @@ import io.aeron.Publication;
 import io.aeron.cluster.client.AeronCluster;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
+import io.aeron.samples.admin.client.Client;
 import io.aeron.samples.admin.model.ResponseWrapper;
 import io.aeron.samples.cluster.ClusterConfig;
-import io.aeron.samples.cluster.admin.protocol.AddAuctionBidDecoder;
-import io.aeron.samples.cluster.admin.protocol.AddAuctionDecoder;
-import io.aeron.samples.cluster.admin.protocol.AddParticipantDecoder;
-import io.aeron.samples.cluster.admin.protocol.ConnectClusterDecoder;
-import io.aeron.samples.cluster.admin.protocol.DisconnectClusterDecoder;
-import io.aeron.samples.cluster.admin.protocol.ListAuctionsDecoder;
-import io.aeron.samples.cluster.admin.protocol.ListParticipantsDecoder;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderDecoder;
-import io.aeron.samples.cluster.protocol.AddAuctionBidCommandEncoder;
-import io.aeron.samples.cluster.protocol.AddParticipantCommandEncoder;
-import io.aeron.samples.cluster.protocol.CreateAuctionCommandEncoder;
-import io.aeron.samples.cluster.protocol.ListAuctionsCommandEncoder;
-import io.aeron.samples.cluster.protocol.ListParticipantsCommandEncoder;
+import io.aeron.samples.cluster.admin.protocol.*;
 import io.aeron.samples.cluster.protocol.MessageHeaderEncoder;
+import io.aeron.samples.cluster.protocol.*;
 import org.agrona.DirectBuffer;
 import org.agrona.ExpandableDirectByteBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -46,10 +37,10 @@ import org.agrona.concurrent.SystemEpochClock;
 import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
 import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
+import sbe.msg.NewOrderDecoder;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -88,6 +79,11 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private final ListParticipantsCommandEncoder listParticipantsCommandEncoder = new ListParticipantsCommandEncoder();
     private final ListAuctionsCommandEncoder listAuctionsCommandEncoder = new ListAuctionsCommandEncoder();
 
+    private final sbe.msg.MessageHeaderDecoder sbeMessageHeaderDecoder = new sbe.msg.MessageHeaderDecoder();
+
+    private final NewOrderDecoder newOrderDecoder = new NewOrderDecoder();
+
+
     /**
      * Creates a new agent to interact with the cluster
      * @param adminClusterChannel the channel to send messages to the cluster from the REPL
@@ -104,6 +100,8 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         this.runningFlag = runningFlag;
         this.pendingMessageManager = new PendingMessageManager(SystemEpochClock.INSTANCE);
     }
+
+
 
     @Override
     public int doWork()
@@ -154,8 +152,17 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             case AddAuctionBidDecoder.TEMPLATE_ID -> processAddAuctionBid(messageHeaderDecoder, buffer, offset);
             case ListAuctionsDecoder.TEMPLATE_ID -> processListAuctions(messageHeaderDecoder, buffer, offset);
             case ListParticipantsDecoder.TEMPLATE_ID -> processListParticipants(messageHeaderDecoder, buffer, offset);
+            case NewOrderDecoder.TEMPLATE_ID -> processNowOrder(messageHeaderDecoder, buffer, offset);
             default -> log("Unknown message type: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
         }
+    }
+
+    private void processNowOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
+        log("Process new order" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+
+        newOrderDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + newOrderDecoder.encodedLength());
     }
 
 

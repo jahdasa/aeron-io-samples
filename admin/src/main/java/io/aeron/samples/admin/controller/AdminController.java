@@ -89,4 +89,21 @@ public class AdminController
     {
         return adminService.addAuctionBid(auctionId, participantId, price);
     }
+
+    /**
+     * Endpoint to submit a buy limit order
+     */
+    @PostMapping(path = "/v1/submit-order")
+    public void submitOrder(
+            @RequestParam final String clientOrderId,
+            @RequestParam final long volume,
+            @RequestParam final long price,
+            @RequestParam final String side,
+            @RequestParam final String orderType,
+            @RequestParam final String timeInForce,
+            @RequestParam final long displayQuantity,
+            @RequestParam final long minQuantity,
+            @RequestParam final long stopPrice) throws Exception {
+        adminService.submitOrder(clientOrderId, volume, price, side, orderType, timeInForce, displayQuantity, minQuantity, stopPrice);
+    }
 }

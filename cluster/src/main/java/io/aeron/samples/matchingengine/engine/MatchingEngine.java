@@ -179,36 +179,38 @@ public class  MatchingEngine implements FragmentHandler {
             }
 
             HDRData.INSTANCE.updateHDR(startTime);
+//            HDRData.INSTANCE.storeHDRStats();
             if (running.get() == false) {
                 stop();
             }
+            System.out.println("Time taken to process order: " + (System.nanoTime() - startTime) / 1000 + " micros");
         }catch(Exception e){
             e.printStackTrace();
         }
     }
 
     private void publishReportToTradingGateway(DirectBuffer buffer){
-        tradingGatewayPublisher.send(buffer);
+//        tradingGatewayPublisher.send(buffer);
     }
 
     private void publishToMarketDataGateway(){
         DirectBuffer header = MarketData.INSTANCE.buildUnitHeader();
-        marketDataPublisher.send(header);
+//        marketDataPublisher.send(header);
 
         ObjectArrayList<DirectBuffer> messages = MarketData.INSTANCE.getMktDataMessages();
         for(ObjectCursor<DirectBuffer> cursor : messages){
-            marketDataPublisher.send(cursor.value);
+//            marketDataPublisher.send(cursor.value);
         }
 
         DirectBuffer orderViewBuffer = ExecutionReportData.INSTANCE.getOrderView();
         if(orderViewBuffer != null) {
-            marketDataPublisher.send(orderViewBuffer);
+//            marketDataPublisher.send(orderViewBuffer);
         }
     }
 
     private void publishClientMktData(){
         DirectBuffer header = MarketData.INSTANCE.buildUnitHeader();
-        marketDataPublisher.send(header);
+//        marketDataPublisher.send(header);
 
         if(MarketData.INSTANCE.isSnapShotRequest()){
             MarketData.INSTANCE.lobSnapShot(marketDataPublisher);
@@ -216,7 +218,7 @@ public class  MatchingEngine implements FragmentHandler {
 
         ObjectArrayList<DirectBuffer> messages = MarketData.INSTANCE.getMktDataMessages();
         for(ObjectCursor<DirectBuffer> cursor : messages){
-            marketDataPublisher.send(cursor.value);
+//            marketDataPublisher.send(cursor.value);
         }
     }
 

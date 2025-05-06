@@ -34,6 +34,7 @@ dependencies {
     implementation(libs.jline)
     implementation(libs.picoJline)
     implementation(project(":cluster-protocol"))
+    implementation(project(":messages"))
 
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -41,6 +42,12 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // https://mvnrepository.com/artifact/com.carrotsearch/hppc
+    implementation("com.carrotsearch:hppc:0.10.0")
+
+    // https://mvnrepository.com/artifact/org.apache.commons/commons-csv
+    implementation("org.apache.commons:commons-csv:1.14.0")
 }
 
 application {
@@ -93,4 +100,14 @@ tasks {
 
 repositories {
     mavenCentral()
+}
+
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (requested.group == "org.objectlayout" && requested.name == "objectlayout") {
+                useTarget("org.objectlayout:ObjectLayout:${requested.version}")
+            }
+        }
+    }
 }

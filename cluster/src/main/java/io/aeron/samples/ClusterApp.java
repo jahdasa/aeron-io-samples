@@ -24,6 +24,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.aeron.samples.matchingengine.infra.MatchingEngineClusteredService;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.agrona.concurrent.SystemEpochClock;
 import org.slf4j.Logger;
@@ -54,7 +55,7 @@ public class ClusterApp
 
         final List<String> hostAddresses = List.of(hosts.split(","));
         final ClusterConfig clusterConfig = ClusterConfig.create(nodeId, hostAddresses, hostAddresses, portBase,
-            new AppClusteredService());
+            new AppClusteredService(), new MatchingEngineClusteredService());
         clusterConfig.consensusModuleContext().ingressChannel("aeron:udp");
         clusterConfig.baseDir(getBaseDir(nodeId));
 

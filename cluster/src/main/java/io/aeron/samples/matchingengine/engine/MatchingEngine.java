@@ -68,9 +68,9 @@ public class  MatchingEngine implements FragmentHandler {
             initTraders();
             orderBooks = initOrderBooks();
             initCrossingProcessor(orderBooks);
-            initGatewaySubscriber();
-            initTradingGatewayPublisher();
-            initMarketDataPublisher();
+//            initGatewaySubscriber();
+//            initTradingGatewayPublisher();
+//            initMarketDataPublisher();
             initHDR();
             TradingSessionFactory.initTradingSessionProcessors(orderBooks);
             initOrderBookTradingSessions();
@@ -88,7 +88,7 @@ public class  MatchingEngine implements FragmentHandler {
     public boolean start() {
         System.out.println("Matching Engine Started");
         running.set(true);
-        subscriber.start();
+//        subscriber.start();
         return true;
     }
 

@@ -55,7 +55,7 @@ public class ClusterApp
 
         final List<String> hostAddresses = List.of(hosts.split(","));
         final ClusterConfig clusterConfig = ClusterConfig.create(nodeId, hostAddresses, hostAddresses, portBase,
-            new AppClusteredService(), new MatchingEngineClusteredService());
+            new MatchingEngineClusteredService());
         clusterConfig.consensusModuleContext().ingressChannel("aeron:udp");
         clusterConfig.baseDir(getBaseDir(nodeId));
 

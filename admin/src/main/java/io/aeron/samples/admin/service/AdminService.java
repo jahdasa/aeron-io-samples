@@ -31,7 +31,7 @@ import static org.agrona.concurrent.ringbuffer.RingBufferDescriptor.TRAILER_LENG
 public class AdminService
 {
     final UnsafeBuffer adminClusterBuffer =
-            new UnsafeBuffer(BufferUtil.allocateDirectAligned(8192 + TRAILER_LENGTH, 8));
+            new UnsafeBuffer(BufferUtil.allocateDirectAligned(128*1024*1024 + TRAILER_LENGTH, 8));
 
     final OneToOneRingBuffer adminClusterChannel = new OneToOneRingBuffer(adminClusterBuffer);
 

@@ -20,6 +20,8 @@ public class AdminBuilder {
 
     public static int BUFFER_SIZE = 20;
 
+    int messageLength = 0;
+
     public AdminBuilder(){
         admin = new AdminEncoder();
         messageHeader = new MessageHeaderEncoder();
@@ -56,7 +58,12 @@ public class AdminBuilder {
         admin.adminMessage(adminMessage)
               .securityId(securityId);
 
+        messageLength = messageHeader.encodedLength() + admin.encodedLength();
+
         return encodeBuffer;
     }
 
+    public int getMessageLength() {
+        return messageLength;
+    }
 }

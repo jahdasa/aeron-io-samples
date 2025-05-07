@@ -23,6 +23,8 @@ public class AddOrderBuilder {
 
     public static int BUFFER_SIZE = 39;
 
+    int messageLength = 0;
+
     public AddOrderBuilder(){
         addOrder = new AddOrderEncoder();
         messageHeader = new MessageHeaderEncoder();
@@ -70,6 +72,7 @@ public class AddOrderBuilder {
 
 
     public DirectBuffer build(){
+        messageLength = 0;
         bufferIndex = 0;
         messageHeader.wrap(encodeBuffer, bufferIndex)
                 .blockLength(addOrder.sbeBlockLength())
@@ -91,7 +94,12 @@ public class AddOrderBuilder {
         addOrder.price().mantissa(price);
         addOrder.flags(isMarketOrder);
 
+        messageLength = addOrder.encodedLength() + messageHeader.encodedLength();
         return encodeBuffer;
+    }
+
+    public int getMessageLength() {
+        return messageLength;
     }
 
 }

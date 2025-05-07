@@ -2,12 +2,14 @@ package io.aeron.samples.matchingengine.engine;
 
 import aeron.AeronPublisher;
 import aeron.AeronSubscriber;
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.ObjectArrayList;
 import com.carrotsearch.hppc.cursors.LongObjectCursor;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
+import io.aeron.samples.infra.SessionMessageContext;
 import io.aeron.samples.matchingengine.crossing.CrossingProcessor;
 import io.aeron.samples.matchingengine.crossing.LOBManager;
 import io.aeron.samples.matchingengine.crossing.MatchingContext;
@@ -20,7 +22,10 @@ import io.aeron.samples.matchingengine.data.MarketData;
 import orderBook.OrderBook;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
+import sbe.msg.marketData.MessageHeaderDecoder;
 import sbe.msg.marketData.TradingSessionEnum;
+import sbe.msg.marketData.UnitHeaderDecoder;
+import sbe.msg.marketData.UnitHeaderEncoder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,7 +34,7 @@ import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class  MatchingEngine implements FragmentHandler {
+public class  MatchingEngine {
 
     protected Properties properties;
     private static final String PROPERTIES_FILE =  "MatchingEngine.properties";
@@ -96,7 +101,7 @@ public class  MatchingEngine implements FragmentHandler {
         running.set(value);
     }
 
-    private void initGatewaySubscriber(){
+/*    private void initGatewaySubscriber(){
         String mediaDriverConextDir = properties.getProperty("MEDIA_DRIVER_DIR");
         subscriber = new AeronSubscriber(mediaDriverConextDir,this);
 
@@ -104,9 +109,9 @@ public class  MatchingEngine implements FragmentHandler {
         int streamId = Integer.parseInt(properties.getProperty("SUB_GATEWAY_STREAM_ID"));
 
         subscriber.addSubscriber(url, streamId);
-    }
+    }*/
 
-    private void initTradingGatewayPublisher(){
+/*    private void initTradingGatewayPublisher(){
         String mediaDriverConextDir = properties.getProperty("MEDIA_DRIVER_DIR");
         tradingGatewayPublisher = new AeronPublisher(mediaDriverConextDir);
 
@@ -114,9 +119,9 @@ public class  MatchingEngine implements FragmentHandler {
         int streamId = Integer.parseInt(properties.getProperty("PUB_TRADING_GATEWAY_STREAM_ID"));
 
         tradingGatewayPublisher.addPublication(url, streamId);
-    }
+    }*/
 
-    private void initMarketDataPublisher(){
+/*    private void initMarketDataPublisher(){
         String mediaDriverConextDir = properties.getProperty("MEDIA_DRIVER_DIR");
         marketDataPublisher = new AeronPublisher(mediaDriverConextDir);
 
@@ -124,7 +129,7 @@ public class  MatchingEngine implements FragmentHandler {
         int streamId = Integer.parseInt(properties.getProperty("PUB_MARKET_DATA_STREAM_ID"));
 
         marketDataPublisher.addPublication(url, streamId);
-    }
+    }*/
 
     private LongObjectHashMap<OrderBook> initOrderBooks() throws IOException {
         String dataPath = properties.getProperty("DATA_PATH");
@@ -164,60 +169,77 @@ public class  MatchingEngine implements FragmentHandler {
     }
 
 
-    @Override
-    public void onFragment(DirectBuffer buffer, int offset, int length, Header header) {
+    public void onFragment(DirectBuffer buffer, int offset, int length, Header header, SessionMessageContext context) {
         long startTime = System.nanoTime();
 
         try {
             temp.wrap(buffer, offset, length);
             DirectBuffer report = lobManager.processOrder(temp);
             if (lobManager.isClientMarketDataRequest()) {
-                publishClientMktData();
+                publishClientMktData(context);
             } else {
-                publishReportToTradingGateway(report);
-                publishToMarketDataGateway();
+                publishReportToTradingGateway(report, context);
+                publishToMarketDataGateway(context);
             }
 
             HDRData.INSTANCE.updateHDR(startTime);
-//            HDRData.INSTANCE.storeHDRStats();
+            HDRData.INSTANCE.storeHDRStats();
             if (running.get() == false) {
                 stop();
             }
-            System.out.println("Time taken to process order: " + (System.nanoTime() - startTime) / 1000 + " micros");
+            System.out.println("Time taken to process order: " + (System.nanoTime() - startTime) + " ns");
         }catch(Exception e){
             e.printStackTrace();
         }
     }
 
-    private void publishReportToTradingGateway(DirectBuffer buffer){
+    private void publishReportToTradingGateway(DirectBuffer buffer, SessionMessageContext context){
 //        tradingGatewayPublisher.send(buffer);
+        context.reply(buffer, 0 , ExecutionReportData.INSTANCE.getExecutionReportMessageLength());
     }
 
-    private void publishToMarketDataGateway(){
+    private void publishToMarketDataGateway(SessionMessageContext context){
         DirectBuffer header = MarketData.INSTANCE.buildUnitHeader();
-//        marketDataPublisher.send(header);
+
+        unitHeaderDecoder.wrapAndApplyHeader(header, 0 , messageHeaderDecoder);
+//      marketDataPublisher.send(header);
+        context.reply(header, 0 , messageHeaderDecoder.encodedLength() + unitHeaderDecoder.encodedLength());
 
         ObjectArrayList<DirectBuffer> messages = MarketData.INSTANCE.getMktDataMessages();
-        for(ObjectCursor<DirectBuffer> cursor : messages){
+        IntArrayList mktDataLength = MarketData.INSTANCE.getMktDataLength();
+        System.out.println("Number of messages: " + messages.size() + " mktDataLength: " + mktDataLength.size());
+        for(ObjectCursor<DirectBuffer> cursor : messages)
+        {
+            context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
 //            marketDataPublisher.send(cursor.value);
         }
 
         DirectBuffer orderViewBuffer = ExecutionReportData.INSTANCE.getOrderView();
         if(orderViewBuffer != null) {
+            int messageLength = ExecutionReportData.INSTANCE.getOrderViewMessageLength();
+            context.reply(orderViewBuffer, 0 , messageLength);
 //            marketDataPublisher.send(orderViewBuffer);
         }
     }
 
-    private void publishClientMktData(){
+    UnitHeaderDecoder unitHeaderDecoder = new UnitHeaderDecoder();
+    MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
+
+    private void publishClientMktData(SessionMessageContext context){
         DirectBuffer header = MarketData.INSTANCE.buildUnitHeader();
-//        marketDataPublisher.send(header);
+
+        unitHeaderDecoder.wrapAndApplyHeader(header, 0 , messageHeaderDecoder);
+//      marketDataPublisher.send(header);
+        context.reply(header, 0 , messageHeaderDecoder.encodedLength() + unitHeaderDecoder.encodedLength());
 
         if(MarketData.INSTANCE.isSnapShotRequest()){
-            MarketData.INSTANCE.lobSnapShot(marketDataPublisher);
+            MarketData.INSTANCE.lobSnapShot(context);
         }
 
         ObjectArrayList<DirectBuffer> messages = MarketData.INSTANCE.getMktDataMessages();
+        IntArrayList mktDataLength = MarketData.INSTANCE.getMktDataLength();
         for(ObjectCursor<DirectBuffer> cursor : messages){
+            context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
 //            marketDataPublisher.send(cursor.value);
         }
     }

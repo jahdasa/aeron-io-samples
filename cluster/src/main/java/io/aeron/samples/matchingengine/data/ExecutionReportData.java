@@ -38,7 +38,7 @@ public enum ExecutionReportData {
 
     public void reset(){
         compID = 0;
-        executedPrice = 0;
+        executedPrice = 0L;
         fillGroups.clear();
         rejectCode = RejectCode.NULL_VAL;
         reportBuilder.reset();
@@ -143,6 +143,10 @@ public enum ExecutionReportData {
                 .build();
     }
 
+    public int getExecutionReportMessageLength(){
+        return reportBuilder.getMessageLength();
+    }
+
     public void buildOrderView(OrderEntry aggOrder, long securityId){
         UnsafeBuffer clientOrderId = new UnsafeBuffer(ByteBuffer.allocateDirect(OrderViewEncoder.clientOrderIdLength()));
         clientOrderId.wrap(BuilderUtil.fill(Long.toString(aggOrder.getClientOrderId()), OrderViewEncoder.clientOrderIdLength()).getBytes());
@@ -158,5 +162,9 @@ public enum ExecutionReportData {
 
     public DirectBuffer getOrderView(){
         return orderViewBuilder.build();
+    }
+
+    public int getOrderViewMessageLength(){
+        return orderViewBuilder.getMessageLength();
     }
 }

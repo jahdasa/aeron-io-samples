@@ -2,8 +2,10 @@ package io.aeron.samples.matchingengine.data;
 
 import aeron.AeronPublisher;
 import bplusTree.BPlusTree;
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.ObjectArrayList;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
+import io.aeron.samples.infra.SessionMessageContext;
 import leafNode.OrderEntry;
 import leafNode.OrderList;
 import leafNode.OrderListCursor;
@@ -24,6 +26,7 @@ public enum MarketData {
     INSTANCE;
 
     private ObjectArrayList<DirectBuffer> mktData = new ObjectArrayList<>();
+    private IntArrayList mktDataLength = new IntArrayList();
     private AddOrderBuilder addOrderBuilder = new AddOrderBuilder();
     private BestBidOfferBuilder bestBidAskBuilder = new BestBidOfferBuilder();
     private UnitHeaderBuilder unitHeaderBuilder = new UnitHeaderBuilder();
@@ -39,13 +42,14 @@ public enum MarketData {
 
     public void reset(){
         mktData.release();
+        mktDataLength.release();
         lobBuilder.reset();
         vwapBuilder.reset();
     }
 
-    public void add(DirectBuffer buffer){
+/*    public void add(DirectBuffer buffer){
         mktData.add(buffer);
-    }
+    }*/
 
     public void setSecurityId(long securityId){
         this.securityId = securityId;
@@ -63,16 +67,18 @@ public enum MarketData {
                        .price(orderEntry.getPrice());
 
         Flags flags = isMarketOrder ? Flags.MarketOrder : Flags.B;
-        addOrderBuilder.isMarketOrder(flags)
-                       .build();
+        addOrderBuilder.isMarketOrder(flags);
+//                       .build();
 
         mktData.add(addOrderBuilder.build());
+        mktDataLength.add(addOrderBuilder.getMessageLength());
     }
 
 
-    public void addTrade(long tradeId,long clientOrderId,long price,long quantity,long executedTime){
+    public void addTrade(long orderId, long tradeId,long clientOrderId,long price,long quantity,long executedTime){
         OrderExecutedWithPriceSizeBuilder orderExecutedBuilder = new OrderExecutedWithPriceSizeBuilder();
         mktData.add(orderExecutedBuilder.messageType(MessageTypeEnum.OrderExecutedPriceSize)
+                .orderId(orderId)
                 .tradeId((int) tradeId)
                 .clientOrderId(clientOrderId)
                 .price((int) price)
@@ -81,6 +87,8 @@ public enum MarketData {
                 .instrumentId((int)securityId)
                 .executedTime(executedTime)
                 .build());
+
+        mktDataLength.add(orderExecutedBuilder.getMessageLength());
     }
 
     public void addBestBidOffer(long bid, long bidQuantity, long offer, long offerQuantity){
@@ -93,7 +101,7 @@ public enum MarketData {
                          .build();
 
         mktData.add(bestBidAskBuilder.build());
-
+        mktDataLength.add(bestBidAskBuilder.getMessageLength());
     }
 
     public void addSymbolStatus(int securityId, SessionChangedReasonEnum sessionChangedReason, TradingSessionEnum tradingSession, long staticPriceReference, long dynamicPriceReference) {
@@ -106,6 +114,7 @@ public enum MarketData {
                 .dynamicPriceReference(dynamicPriceReference);
 
         mktData.add(symbolStatusBuilder.build());
+        mktDataLength.add(symbolStatusBuilder.getMessageLength());
     }
 
     public void addShutDownRequest() {
@@ -114,6 +123,7 @@ public enum MarketData {
                     .securityId(0);
 
         mktData.add(adminBuilder.build());
+        mktDataLength.add(adminBuilder.getMessageLength());
     }
 
 
@@ -138,6 +148,8 @@ public enum MarketData {
                 .compID(compID)
                 .securityId(securityId)
                 .build());
+
+        mktDataLength.add(adminBuilder.getMessageLength());
     }
 
     public void addStartMessage(int securityId){
@@ -145,6 +157,8 @@ public enum MarketData {
                 .compID(compID)
                 .securityId(securityId)
                 .build());
+
+        mktDataLength.add(adminBuilder.getMessageLength());
     }
 
     private void resetLOBBuilder(long securityId){
@@ -153,11 +167,13 @@ public enum MarketData {
         lobBuilder.compID(compID);
     }
 
-    private void publishLOBSnapShot(AeronPublisher marketDataPublisher){
+    private void publishLOBSnapShot(SessionMessageContext context){
         mktData.add(lobBuilder.build());
+        mktDataLength.add(lobBuilder.getMessageLength());
 
         for(ObjectCursor<DirectBuffer> cursor : mktData){
 //            marketDataPublisher.send(cursor.value);
+            context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
         }
         resetLOBBuilder(orderBook.getSecurityId());
 
@@ -168,7 +184,10 @@ public enum MarketData {
 //        }
     }
 
-    public void lobSnapShot(AeronPublisher marketDataPublisher) {
+    public void lobSnapShot(SessionMessageContext context) {
+        DirectBuffer adminMessage = getAdminMessage(AdminTypeEnum.StartLOB, orderBook.getSecurityId(), compID);
+        context.reply(adminMessage, 0, adminBuilder.getMessageLength());
+
 //        marketDataPublisher.send(getAdminMessage(AdminTypeEnum.StartLOB, orderBook.getSecurityId(), compID));
         //System.out.println("Publihed start snapshot");
 
@@ -190,7 +209,7 @@ public enum MarketData {
 
                     count++;
                     if(count == 100){
-                        publishLOBSnapShot(marketDataPublisher);
+                        publishLOBSnapShot(context);
                         count = 0;
                         System.out.println("Published large LOB");
                     }
@@ -213,7 +232,7 @@ public enum MarketData {
 
                     count++;
                     if(count == 100){
-                        publishLOBSnapShot(marketDataPublisher);
+                        publishLOBSnapShot(context);
                         count = 0;
                     }
                 }
@@ -221,10 +240,13 @@ public enum MarketData {
         }
 
         if(count != 0) {
-            publishLOBSnapShot(marketDataPublisher);
+            publishLOBSnapShot(context);
         }
 
 //        marketDataPublisher.send(getAdminMessage(AdminTypeEnum.EndLOB, orderBook.getSecurityId(), compID));
+        DirectBuffer adminMessage1 = getAdminMessage(AdminTypeEnum.EndLOB, orderBook.getSecurityId(), compID);
+        context.reply(adminMessage1, 0, adminBuilder.getMessageLength());
+
         setSnapShotRequest(false);
         setOrderBook(null);
         reset();
@@ -281,7 +303,7 @@ public enum MarketData {
         }
 
         mktData.add(vwapBuilder.build());
-
+        mktDataLength.add(vwapBuilder.getMessageLength());
     }
 
     public ObjectArrayList<DirectBuffer> getMktDataMessages(){
@@ -314,5 +336,9 @@ public enum MarketData {
 
     public void setOrderBook(OrderBook orderBook) {
         this.orderBook = orderBook;
+    }
+
+    public IntArrayList getMktDataLength() {
+        return mktDataLength;
     }
 }

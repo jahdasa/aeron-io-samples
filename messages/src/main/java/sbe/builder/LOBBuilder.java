@@ -19,6 +19,7 @@ public class LOBBuilder {
     private UnsafeBuffer clientOrderId;
     private ObjectArrayList<Order> orders;
 
+    int messageLength = 0;
     public static int BUFFER_SIZE = 17000;
 
     public LOBBuilder(){
@@ -82,7 +83,12 @@ public class LOBBuilder {
             }
         }
 
+        messageLength = messageHeader.encodedLength() + lob.encodedLength();
         return encodeBuffer;
+    }
+
+    public int getMessageLength() {
+        return messageLength;
     }
 
     public static class Order implements Serializable{

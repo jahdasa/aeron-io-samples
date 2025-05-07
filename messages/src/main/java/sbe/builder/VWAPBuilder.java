@@ -18,6 +18,7 @@ public class VWAPBuilder {
     private long bidVWAP;
     private long offerVWAP;
 
+    int messageLength = 0;
     public static int BUFFER_SIZE = 32;
 
     public VWAPBuilder(){
@@ -71,6 +72,11 @@ public class VWAPBuilder {
         vwap.bidVWAP().mantissa(bidVWAP);
         vwap.offerVWAP().mantissa(offerVWAP);
 
+        messageLength = messageHeader.encodedLength() + vwap.encodedLength();
         return encodeBuffer;
+    }
+
+    public int getMessageLength() {
+        return messageLength;
     }
 }

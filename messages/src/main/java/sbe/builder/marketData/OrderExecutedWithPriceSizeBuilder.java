@@ -27,6 +27,8 @@ public class OrderExecutedWithPriceSizeBuilder {
     private int instrumentId;
     private long executedTime;
 
+    int messageLength = 0;
+
     public static int BUFFER_SIZE = 62;
 
     public OrderExecutedWithPriceSizeBuilder(){
@@ -114,8 +116,12 @@ public class OrderExecutedWithPriceSizeBuilder {
 
         orderExecutedWithPriceSize.price().mantissa(price);
 
-
+        messageLength = messageHeader.encodedLength() + orderExecutedWithPriceSize.encodedLength();
         return encodeBuffer;
+    }
+
+    public int getMessageLength() {
+        return messageLength;
     }
 
 }

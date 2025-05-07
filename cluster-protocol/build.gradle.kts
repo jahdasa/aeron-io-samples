@@ -54,3 +54,7 @@ tasks {
         dependsOn("generateCodecs")
     }
 }
+
+dependencies {
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher:1.10.0")
+}

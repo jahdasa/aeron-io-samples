@@ -38,6 +38,10 @@ import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sbe.msg.*;
+import sbe.msg.marketData.*;
+import sbe.msg.marketData.PriceDecoder;
+import sbe.msg.marketData.SideEnum;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +55,9 @@ public class AdminClientEgressListener implements EgressListener
     private static final Logger LOGGER = LoggerFactory.getLogger(AdminClientEgressListener.class);
 
     private final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
+    private final sbe.msg.MessageHeaderDecoder sbeMessageHeaderDecoder = new sbe.msg.MessageHeaderDecoder();
+    private final sbe.msg.marketData.MessageHeaderDecoder sbeMarketDataMessageHeaderDecoder = new sbe.msg.marketData.MessageHeaderDecoder();
+    private final sbe.msg.MessageHeaderDecoder sbeMsgMessageHeaderDecoder = new sbe.msg.MessageHeaderDecoder();
     private final AuctionUpdateEventDecoder auctionUpdateEventDecoder = new AuctionUpdateEventDecoder();
     private final AddParticipantCommandResultDecoder addParticipantDecoder = new AddParticipantCommandResultDecoder();
     private final CreateAuctionCommandResultDecoder createAuctionResultDecoder =
@@ -71,6 +78,11 @@ public class AdminClientEgressListener implements EgressListener
         this.pendingMessageManager = pendingMessageManager;
     }
 
+    final BestBidOfferDecoder bestBidOfferDecoder = new BestBidOfferDecoder();
+    final UnitHeaderDecoder unitHeaderDecoder = new UnitHeaderDecoder();
+    final OrderExecutedWithPriceSizeDecoder orderExecutedWithPriceSizeDecoder = new OrderExecutedWithPriceSizeDecoder();
+    final AddOrderDecoder addOrderDecoder = new AddOrderDecoder();
+
     @Override
     public void onMessage(
         final long clusterSessionId,
@@ -89,6 +101,155 @@ public class AdminClientEgressListener implements EgressListener
 
         switch (messageHeaderDecoder.templateId())
         {
+            case ExecutionReportDecoder.TEMPLATE_ID -> {
+                ExecutionReportDecoder executionReportDecoder = new ExecutionReportDecoder();
+                executionReportDecoder.wrapAndApplyHeader(buffer, offset, sbeMsgMessageHeaderDecoder);
+
+                short partitionId = executionReportDecoder.partitionId();
+                int sequenceNumber = executionReportDecoder.sequenceNumber();
+                String executionID = executionReportDecoder.executionID();
+                final String clientOrderId = executionReportDecoder.clientOrderId();
+                final long orderId = executionReportDecoder.orderId();
+                ExecutionTypeEnum executionTypeEnum = executionReportDecoder.executionType();
+                OrderStatusEnum orderStatusEnum = executionReportDecoder.orderStatus();
+                RejectCode rejectCode = executionReportDecoder.rejectCode();
+                int leavesQuantity = executionReportDecoder.leavesQuantity();
+                ContainerEnum container = executionReportDecoder.container();
+                final long securityId = executionReportDecoder.securityId();
+                sbe.msg.SideEnum side = executionReportDecoder.side();
+                String traderMnemonic = executionReportDecoder.traderMnemonic();
+                String account = executionReportDecoder.account();
+                IsMarketOpsRequestEnum marketOpsRequest = executionReportDecoder.isMarketOpsRequest();
+                long transactTime = executionReportDecoder.transactTime();
+                OrderBookEnum orderBookEnum = executionReportDecoder.orderBook();
+
+
+                executionReportDecoder.fillsGroup().iterator().forEachRemaining(fillsGroupDecoder ->
+                {
+                    sbe.msg.PriceDecoder priceDecoder = fillsGroupDecoder.fillPrice();
+                    double priceValue = priceDecoder.mantissa() * Math.pow(10, priceDecoder.exponent());
+                    int fillQty = fillsGroupDecoder.fillQty();
+
+                    log(" fillQty/fillPrice: " + fillQty + "@" + priceValue, AttributedStyle.YELLOW);
+                });
+
+                log("Execution report: " + ExecutionReportDecoder.TEMPLATE_ID +
+                    " partitionId: " + partitionId +
+                    " sequenceNumber: " + sequenceNumber +
+                    " executionID: '" + executionID + "'" +
+                    " clientOrderId: '" + clientOrderId + "'" +
+                    " orderId: " + orderId +
+                    " executionTypeEnum: " + executionTypeEnum.name() +
+                    " orderStatusEnum: " + orderStatusEnum.name() +
+                    " rejectCode: " + rejectCode.name() +
+                    " leavesQuantity: " + leavesQuantity +
+                    " container: " + container.name() +
+                    " securityId: " + securityId +
+                    " side: " + side.name() +
+                    " traderMnemonic: '" + traderMnemonic + "'" +
+                    " account: '" + account + "'" +
+                    " marketOpsRequest: '" + marketOpsRequest.name() + "'" +
+                    " transactTime: '" + transactTime + "'" +
+                    " orderBookEnum: '" + orderBookEnum.name() + "'",
+                    AttributedStyle.YELLOW);
+
+            }
+            case OrderViewDecoder.TEMPLATE_ID -> {
+                OrderViewDecoder orderViewDecoder = new OrderViewDecoder();
+                orderViewDecoder.wrapAndApplyHeader(buffer, offset, sbeMsgMessageHeaderDecoder);
+
+                final long securityId = orderViewDecoder.securityId();
+                final String clientOrderId = orderViewDecoder.clientOrderId();
+                final long orderId = orderViewDecoder.orderId();
+                final long submittedTime = orderViewDecoder.submittedTime();
+
+                final sbe.msg.PriceDecoder price = orderViewDecoder.price();
+                final double priceValue = price.mantissa() * Math.pow(10, price.exponent());
+
+                int orderQuantity = orderViewDecoder.orderQuantity();
+                sbe.msg.SideEnum side = orderViewDecoder.side();
+
+                log("Order view: " + OrderViewDecoder.TEMPLATE_ID + " securityId: " +
+                    securityId + " clientOrderId: '" + clientOrderId + "' orderId: " + orderId +
+                    " submittedTime: " + submittedTime + " side: " + side.name() +
+                    " orderQuantity: " + orderQuantity + " price: " + priceValue,
+                    AttributedStyle.YELLOW);
+            }
+            case AddOrderDecoder.TEMPLATE_ID -> {
+                addOrderDecoder.wrapAndApplyHeader(buffer, offset, sbeMarketDataMessageHeaderDecoder);
+                MessageTypeEnum messageTypeEnum = addOrderDecoder.messageType();
+                long nanosecond = addOrderDecoder.nanosecond();
+                long orderId = addOrderDecoder.orderId();
+                SideEnum side = addOrderDecoder.side();
+                long quantity = addOrderDecoder.quantity();
+                long instrumentId = addOrderDecoder.instrumentId();
+
+                PriceDecoder price = addOrderDecoder.price();
+                final double priceValue = price.mantissa() * Math.pow(10, price.exponent());
+
+                Flags flags = addOrderDecoder.flags();
+
+                log("Add order: " + messageTypeEnum.name() + " " +
+                    orderId + " " + side.name() + " " + quantity + "@" + priceValue +
+                    " instrumentId: " + instrumentId +
+                    " flags: " + flags.name(),
+                    AttributedStyle.YELLOW);
+            }
+            case OrderExecutedWithPriceSizeDecoder.TEMPLATE_ID ->
+            {
+                orderExecutedWithPriceSizeDecoder.wrapAndApplyHeader(buffer, offset, sbeMarketDataMessageHeaderDecoder);
+                MessageTypeEnum messageTypeEnum = orderExecutedWithPriceSizeDecoder.messageType();
+                long nanosecond = orderExecutedWithPriceSizeDecoder.nanosecond();
+                final long orderId = orderExecutedWithPriceSizeDecoder.orderId();
+                long executedQuantity = orderExecutedWithPriceSizeDecoder.executedQuantity();
+                long displayQuantity = orderExecutedWithPriceSizeDecoder.displayQuantity();
+                long tradeId = orderExecutedWithPriceSizeDecoder.tradeId();
+                PrintableEnum printable = orderExecutedWithPriceSizeDecoder.printable();
+                final PriceDecoder price = orderExecutedWithPriceSizeDecoder.price();
+                final double priceValue = price.mantissa() * Math.pow(10, price.exponent());
+
+                long instrumentId = orderExecutedWithPriceSizeDecoder.instrumentId();
+                long clientOrderId = orderExecutedWithPriceSizeDecoder.clientOrderId();
+                long executedTime = orderExecutedWithPriceSizeDecoder.executedTime();
+
+                log("Order executed: " + OrderExecutedWithPriceSizeDecoder.TEMPLATE_ID +
+                    " messageTypeEnum: " + messageTypeEnum.name() +
+                    " orderId: " + orderId +
+                    " executedQuantity/price: " + executedQuantity + "@" + priceValue +
+                    " displayQuantity/price: " + displayQuantity + "@" + priceValue +
+                    " tradeId: " + tradeId +
+                    " printable: " + printable.name() +
+                    " instrumentId: " + instrumentId +
+                    " clientOrderId: " + clientOrderId +
+                    " executedTime: " + executedTime,
+                    AttributedStyle.YELLOW);
+
+            }
+            case UnitHeaderDecoder.TEMPLATE_ID -> {
+                sbeMessageHeaderDecoder.wrap(buffer, offset);
+
+                unitHeaderDecoder.wrapAndApplyHeader(buffer, offset, sbeMarketDataMessageHeaderDecoder);
+                final int messageCount = unitHeaderDecoder.messageCount();
+                byte marketDataGroup = unitHeaderDecoder.marketDataGroup();
+
+                log("Unit header: " + messageHeaderDecoder.templateId() + " " +
+                    messageCount + " messages in group: " + marketDataGroup,
+                    AttributedStyle.YELLOW);
+            }
+            case BestBidOfferDecoder.TEMPLATE_ID ->
+            {
+                bestBidOfferDecoder.wrapAndApplyHeader(buffer, offset, sbeMarketDataMessageHeaderDecoder);
+                final long bidQuantity = bestBidOfferDecoder.bidQuantity();
+                final long offerQuantity = bestBidOfferDecoder.offerQuantity();
+                PriceDecoder bid = bestBidOfferDecoder.bid();
+                final double bidValue = bid.mantissa() * Math.pow(10, bid.exponent());
+
+                PriceDecoder offer = bestBidOfferDecoder.offer();
+                final double offerValue = offer.mantissa() * Math.pow(10, offer.exponent());
+
+                log("Best bid/offer for security bidQuantity/bid: " + bidQuantity + "@" + bidValue + " / " + offerQuantity + "@" + offerValue,
+                    AttributedStyle.YELLOW);
+            }
             case AddParticipantCommandResultDecoder.TEMPLATE_ID ->
             {
                 addParticipantDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);

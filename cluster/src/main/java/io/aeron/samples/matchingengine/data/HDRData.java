@@ -31,15 +31,19 @@ public enum HDRData {
         histogram.recordValue(System.nanoTime() - startTime);
     }
 
-    public void storeHDRStats(){
-        File hdrLatency = new File(dataPath + File.separator + "hdrLatency.txt");
-        if(hdrLatency.exists()){
+    public void storeHDRStats() {
+
+        if (requests != 100_000 && requests != 2_000_000 && requests != 5_000_000) {
+            return;
+        }
+        File hdrLatency = new File(dataPath + File.separator + "hdrLatency-"+ requests + ".txt");
+        if (hdrLatency.exists()) {
             hdrLatency.delete();
         }
 
-        try(PrintStream out = new PrintStream(hdrLatency)){
+        try (PrintStream out = new PrintStream(hdrLatency)) {
             histogram.outputPercentileDistribution(out, 1000.0);
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
 

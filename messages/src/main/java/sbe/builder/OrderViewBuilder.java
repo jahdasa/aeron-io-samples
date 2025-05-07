@@ -26,6 +26,8 @@ public class OrderViewBuilder {
 
     public static int BUFFER_SIZE = 106;
 
+    int messageLength = 0;
+
     public OrderViewBuilder(){
         orderView = new OrderViewEncoder();
         messageHeader = new MessageHeaderEncoder();
@@ -105,7 +107,13 @@ public class OrderViewBuilder {
 
         orderView.orderQuantity(orderQuantity);
 
+        messageLength = messageHeader.encodedLength() + orderView.encodedLength();
+
         return encodeBuffer;
+    }
+
+    public int getMessageLength() {
+        return messageLength;
     }
 
 }

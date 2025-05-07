@@ -23,6 +23,8 @@ public class BestBidOfferBuilder {
 
     public static int BUFFER_SIZE = 39;
 
+    int messageLength = 0;
+
     public BestBidOfferBuilder(){
         bestBidOffer = new BestBidOfferEncoder();
         messageHeader = new MessageHeaderEncoder();
@@ -79,6 +81,12 @@ public class BestBidOfferBuilder {
         bestBidOffer.bidQuantity(bidQuantity);
         bestBidOffer.offerQuantity(offerQuantity);
 
+        messageLength = messageHeader.encodedLength() + bestBidOffer.encodedLength();
+
         return encodeBuffer;
+    }
+
+    public int getMessageLength() {
+        return messageLength;
     }
 }

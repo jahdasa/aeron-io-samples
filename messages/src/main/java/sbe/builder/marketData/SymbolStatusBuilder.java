@@ -24,6 +24,7 @@ public class SymbolStatusBuilder {
     private long staticPriceReference;
     private long dynamicPriceReference;
 
+    int messageLength = 0;
     public static int BUFFER_SIZE = 43;
 
     public SymbolStatusBuilder(){
@@ -96,6 +97,12 @@ public class SymbolStatusBuilder {
                 .sessionChangedReason(sessionChangedReason)
                 .staticPriceReference().mantissa(staticPriceReference);
         symbolStatus.dynamicPriceReference().mantissa(dynamicPriceReference);
+
+        messageLength = messageHeader.encodedLength() + symbolStatus.encodedLength();
         return encodeBuffer;
+    }
+
+    public int getMessageLength() {
+        return messageLength;
     }
 }

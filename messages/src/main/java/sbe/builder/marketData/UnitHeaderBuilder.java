@@ -18,6 +18,8 @@ public class UnitHeaderBuilder {
 
     public static int BUFFER_SIZE = 15;
 
+    int messageLength = 0;
+
     public UnitHeaderBuilder(){
         unitHeader = new UnitHeaderEncoder();
         messageHeader = new MessageHeaderEncoder();
@@ -55,7 +57,12 @@ public class UnitHeaderBuilder {
                   .marketDataGroup(marketDataGroup)
                   .sequenceNumber(sequenceNumber);
 
+        messageLength = unitHeader.encodedLength();
         return encodeBuffer;
+    }
+
+    public int getMessageLength() {
+        return messageLength;
     }
 
 }

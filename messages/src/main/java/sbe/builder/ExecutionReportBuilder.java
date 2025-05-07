@@ -33,6 +33,7 @@ public class ExecutionReportBuilder {
     private OrderBookEnum orderBook;
     private LongIntHashMap fillGroups;
 
+    private int messageLength;
     public static int BUFFER_SIZE = 4096;
 
     public ExecutionReportBuilder(){
@@ -201,6 +202,11 @@ public class ExecutionReportBuilder {
                        .transactTime(transactTime)
                        .orderBook(orderBook);
 
+        messageLength = messageHeader.encodedLength() + executionReport.encodedLength();
         return encodeBuffer;
+    }
+
+    public int getMessageLength() {
+        return messageLength;
     }
 }

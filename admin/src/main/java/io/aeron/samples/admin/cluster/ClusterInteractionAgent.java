@@ -37,6 +37,7 @@ import org.agrona.concurrent.SystemEpochClock;
 import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
 import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
+import sbe.msg.AdminDecoder;
 import sbe.msg.NewOrderDecoder;
 
 import java.util.Arrays;
@@ -82,6 +83,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private final sbe.msg.MessageHeaderDecoder sbeMessageHeaderDecoder = new sbe.msg.MessageHeaderDecoder();
 
     private final NewOrderDecoder newOrderDecoder = new NewOrderDecoder();
+    private final AdminDecoder adminDecoder = new AdminDecoder();
 
 
     /**
@@ -153,6 +155,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             case ListAuctionsDecoder.TEMPLATE_ID -> processListAuctions(messageHeaderDecoder, buffer, offset);
             case ListParticipantsDecoder.TEMPLATE_ID -> processListParticipants(messageHeaderDecoder, buffer, offset);
             case NewOrderDecoder.TEMPLATE_ID -> processNowOrder(messageHeaderDecoder, buffer, offset);
+            case AdminDecoder.TEMPLATE_ID -> processAdminMessage(messageHeaderDecoder, buffer, offset);
             default -> log("Unknown message type: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
         }
     }
@@ -163,6 +166,14 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         newOrderDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
         retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + newOrderDecoder.encodedLength());
+    }
+
+    private void processAdminMessage(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
+        log("Process admin message" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+
+        adminDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + adminDecoder.encodedLength());
     }
 
 

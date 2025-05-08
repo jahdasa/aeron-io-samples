@@ -4,7 +4,6 @@ import io.aeron.samples.admin.cli.*;
 import io.aeron.samples.admin.client.Client;
 import io.aeron.samples.admin.cluster.ClusterInteractionAgent;
 import io.aeron.samples.admin.model.ResponseWrapper;
-import io.aeron.samples.cluster.admin.protocol.MessageHeaderEncoder;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.BufferUtil;
@@ -280,7 +279,27 @@ public class AdminService
                 stopPrice
         );
 
-        adminClusterChannel.write(10, buffer, 0, client.getMessageEncodedLength());
+        adminClusterChannel.write(10, buffer, 0, client.getNewOrderEncodedLength());
     }
 
+    public void submitAdminMessage(int securityId, String adminMessageType) throws Exception {
+
+        Client client = Client.newInstance(1, securityId);
+
+        DirectBuffer buffer = null;
+        if(adminMessageType.equals("lob"))
+        {
+            buffer = client.lobSnapshot();
+        }
+        else if(adminMessageType.equals("vwap"))
+        {
+            buffer = client.calcVWAP();
+        }
+        else
+        {
+            return;
+        }
+
+        adminClusterChannel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
+    }
 }

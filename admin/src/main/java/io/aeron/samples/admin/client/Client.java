@@ -3,20 +3,13 @@ package io.aeron.samples.admin.client;
 //import gateway.client.GatewayClient;
 //import gateway.client.GatewayClientImpl;
 import com.carrotsearch.hppc.IntObjectMap;
-import io.aeron.samples.admin.cluster.PendingMessageManager;
 import org.agrona.DirectBuffer;
-import org.agrona.concurrent.IdleStrategy;
-import org.agrona.concurrent.SystemEpochClock;
-import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
 import sbe.builder.*;
 import sbe.msg.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Client {
 
@@ -211,7 +204,7 @@ public class Client {
         System.out.println("Message=OrderAdd|OrderId=" + clientOrderId.trim() + "|Type=" + orderType + "|Side=" + side + "|Volume=" + volume + "(" + displayQuantity + ")" + "|Price=" + price + "|StopPrice=" + stopPrice + "|TIF=" + timeInForce + "|MES=" + minQuantity);
         return directBuffer;
     }
-    public int getMessageEncodedLength() {
+    public int getNewOrderEncodedLength() {
         return newOrderBuilder.messageEncodedLength();
     }
 
@@ -257,28 +250,26 @@ public class Client {
         System.out.println("Message=OrderModify|Time=" + clientOrderId + "|OrderId=" + origClientOrderId + "|Type=" + orderType + "|Side=" + side + "|Volume=" + volume + "(" + displayQuantity + ")" + "|Price=" + price + "|StopPrice=" + stopPrice + "|TIF=" + timeInForce + "|MES=" + minQuantity);
     }
 
-/*    public long calcVWAP(String side) {
-        snapShotSemaphore.acquire();
+    public DirectBuffer calcVWAP() {
         DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
                     .securityId(securityId)
                     .adminMessage(AdminTypeEnum.VWAP)
                     .build();
-        clientMDGSubscriber.setSideEnum(SideEnum.valueOf(side));
-        marketDataGatewayPub.send(buffer);
-        while(!snapShotSemaphore.acquire()){}
-        return clientMDGSubscriber.getVwap();
-    }*/
 
-/*    public ArrayList<String> lobSnapshot() {
-        snapShotSemaphore.acquire();
+        return buffer;
+    }
+
+    public DirectBuffer lobSnapshot() {
         DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
                 .securityId(securityId)
                 .adminMessage(AdminTypeEnum.LOB)
                 .build();
-        marketDataGatewayPub.send(buffer);
-        while(!snapShotSemaphore.acquire()){}
-        return clientMDGSubscriber.getLob();
-    }*/
+        return buffer;
+    }
+
+    public int getLobSnapshotMessageLength() {
+        return adminBuilder.getMessageLength();
+    }
 
     public void setBid(long bid) {
         this.bid = bid;

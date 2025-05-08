@@ -106,4 +106,14 @@ public class AdminController
             @RequestParam final long stopPrice) throws Exception {
         adminService.submitOrder(clientOrderId, volume, price, side, orderType, timeInForce, displayQuantity, minQuantity, stopPrice);
     }
+
+    /**
+     * Endpoint to submit a buy limit order
+     */
+    @GetMapping(path = "/v1/submit-admin-message")
+    public void submitOrder(
+            @RequestParam(defaultValue = "1") final int securityId,
+            @RequestParam final String adminMessageType) throws Exception {
+        adminService.submitAdminMessage(securityId, adminMessageType);
+    }
 }

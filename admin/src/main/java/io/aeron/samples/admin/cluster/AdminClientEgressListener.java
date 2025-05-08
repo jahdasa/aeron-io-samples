@@ -101,6 +101,56 @@ public class AdminClientEgressListener implements EgressListener
 
         switch (messageHeaderDecoder.templateId())
         {
+            case VWAPDecoder.TEMPLATE_ID -> {
+                VWAPDecoder vwapDecoder = new VWAPDecoder();
+                vwapDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+                sbe.msg.PriceDecoder priceDecoderBid = vwapDecoder.bidVWAP();
+                sbe.msg.PriceDecoder priceDecoderOffer = vwapDecoder.offerVWAP();
+
+                double priceBidValue = priceDecoderBid.mantissa() * Math.pow(10, priceDecoderBid.exponent());
+                double priceOfferValue = priceDecoderOffer.mantissa() * Math.pow(10, priceDecoderOffer.exponent());
+
+                log("VWAP: " + VWAPDecoder.TEMPLATE_ID +
+                        " bidVWAP/offerVWAP: " + priceBidValue + "@" + priceOfferValue
+                , AttributedStyle.YELLOW);
+
+            }
+            case LOBDecoder.TEMPLATE_ID -> {
+                LOBDecoder lobDecoder = new LOBDecoder();
+                lobDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+                int securityId = lobDecoder.securityId();
+
+                lobDecoder.orders().iterator().forEachRemaining(ordersDecoder ->
+                {
+                    String clientOrderId = ordersDecoder.clientOrderId();
+                    int count = ordersDecoder.count();
+                    int orderId = ordersDecoder.orderId();
+                    int orderQuantity = ordersDecoder.orderQuantity();
+                    sbe.msg.PriceDecoder priceDecoder = ordersDecoder.price();
+                    sbe.msg.SideEnum side = ordersDecoder.side();
+
+                    double priceValue = priceDecoder.mantissa() * Math.pow(10, priceDecoder.exponent());
+
+                    log(
+                        "securityId: " + securityId +
+                                " clientOrderId: "+ clientOrderId +
+                                " orderId: " + orderId +
+                                " side: " + side +
+                            " orderQuantity/priceValue: " + count + "@" + orderQuantity + "@" + priceValue, AttributedStyle.YELLOW);
+                });
+            }
+            case AdminDecoder.TEMPLATE_ID -> {
+                AdminDecoder adminDecoder = new AdminDecoder();
+                adminDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+                int securityId = adminDecoder.securityId();
+                AdminTypeEnum adminTypeEnum = adminDecoder.adminMessage();
+
+                log("Admin Message:" + AdminDecoder.TEMPLATE_ID + " adminTypeEnum: " + adminTypeEnum +
+                    " securityId: " + securityId, AttributedStyle.YELLOW);
+            }
             case ExecutionReportDecoder.TEMPLATE_ID -> {
                 ExecutionReportDecoder executionReportDecoder = new ExecutionReportDecoder();
                 executionReportDecoder.wrapAndApplyHeader(buffer, offset, sbeMsgMessageHeaderDecoder);

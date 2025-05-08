@@ -14,6 +14,7 @@ public class AdminBuilder {
     private MessageHeaderEncoder messageHeader;
     private UnsafeBuffer encodeBuffer;
 
+
     private int compID;
     private int securityId;
     private AdminTypeEnum adminMessage;

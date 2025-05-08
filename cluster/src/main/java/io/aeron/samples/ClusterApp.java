@@ -24,6 +24,8 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.aeron.archive.ArchiveThreadingMode;
+import io.aeron.driver.ThreadingMode;
 import io.aeron.samples.matchingengine.infra.MatchingEngineClusteredService;
 import org.agrona.concurrent.ShutdownSignalBarrier;
 import org.agrona.concurrent.SystemEpochClock;
@@ -33,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import io.aeron.cluster.ClusteredMediaDriver;
 import io.aeron.cluster.service.ClusteredServiceContainer;
 import io.aeron.samples.cluster.ClusterConfig;
-import io.aeron.samples.infra.AppClusteredService;
 
 /**
  * Sample cluster application
@@ -58,6 +59,8 @@ public class ClusterApp
             new MatchingEngineClusteredService());
         clusterConfig.consensusModuleContext().ingressChannel("aeron:udp");
         clusterConfig.baseDir(getBaseDir(nodeId));
+        clusterConfig.mediaDriverContext().threadingMode(ThreadingMode.DEDICATED);
+        clusterConfig.archiveContext().threadingMode(ArchiveThreadingMode.DEDICATED);
 
         //this may need tuning for your environment.
         clusterConfig.consensusModuleContext().leaderHeartbeatTimeoutNs(TimeUnit.SECONDS.toNanos(3));

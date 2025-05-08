@@ -85,13 +85,13 @@ public class OrderBook {
 
     public OrderBook(long securityId) {
         Comparator<Long> priceComp = Comparator.comparingLong(e -> e.longValue());
-        bidTree = new BPlusTree(100, priceComp.reversed());
-        offerTree = new BPlusTree(100, priceComp);
+        bidTree = new BPlusTree(128, priceComp.reversed());
+        offerTree = new BPlusTree(128, priceComp);
         this.bidTreeIterator = (BPlusTree.BPlusTreeIterator) bidTree.iterator();
         this.offerTreeIterator = (BPlusTree.BPlusTreeIterator) offerTree.iterator();
 
-        parkedBidTree = new BPlusTree(100, priceComp.reversed());
-        parkedOfferTree = new BPlusTree(100, priceComp);
+        parkedBidTree = new BPlusTree(128, priceComp.reversed());
+        parkedOfferTree = new BPlusTree(128, priceComp);
         parkedBidTreeIterator = (BPlusTree.BPlusTreeIterator) getParkedBidTree().iterator();
         parkedOfferTreeIterator = (BPlusTree.BPlusTreeIterator) getParkedOfferTree().iterator();
 

@@ -29,11 +29,16 @@ public class ExpireOrderPostProcessor implements MatchingPostProcessor{
     }
 
     private void execute(OrderBook orderBook,OrderBook.SIDE side,ExpireRule expireRule){
+        //todo: no GTT
+        if(true) return;
         BPlusTree.BPlusTreeIterator iterator  = orderBook.getPriceIterator(side);
 
         while (iterator.hasNext()) {
             Map.Entry<Long, OrderList> entry = iterator.next();
             OrderList orderList = entry.getValue();
+
+//            System.out.println(side + "@" + entry.getKey() + "@" + orderList.size());
+
             Iterator<OrderListCursor> orderListIterator = orderList.iterator();
             while (orderListIterator.hasNext()) {
                 if(expireRule.isOrderExpired(orderListIterator.next().value)) {

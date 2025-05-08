@@ -33,7 +33,7 @@ public enum HDRData {
 
     public void storeHDRStats() {
 
-        if (requests != 100_000 && requests != 2_000_000 && requests != 5_000_000) {
+        if (requests != 1_000 && requests != 5_000 && requests != 40_000 && requests != 100_000 && requests != 130_000) {
             return;
         }
         File hdrLatency = new File(dataPath + File.separator + "hdrLatency-"+ requests + ".txt");

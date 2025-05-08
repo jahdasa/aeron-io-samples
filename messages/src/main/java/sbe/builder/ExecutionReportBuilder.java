@@ -180,16 +180,17 @@ public class ExecutionReportBuilder {
 
 
         int size = fillGroups.size();
-        if(size > 0) {
-            long[] prices = fillGroups.keys;
-            int[] quantities = fillGroups.values;
-            ExecutionReportEncoder.FillsGroupEncoder fillsGroup = executionReport.fillsGroupCount(size);
-            for (int i = 0; i < size; i++) {
-                ExecutionReportEncoder.FillsGroupEncoder group = fillsGroup.next();
-                group.fillPrice().mantissa(prices[i]);
-                group.fillQty(quantities[i]);
 
-            }
+        //todo: Fix Upper limit 254
+        if(size > 0 && size < 254) {
+            ExecutionReportEncoder.FillsGroupEncoder fillsGroup = executionReport.fillsGroupCount(size);
+
+            fillGroups.iterator().forEachRemaining(cursor -> {
+                ExecutionReportEncoder.FillsGroupEncoder group = fillsGroup.next();
+                group.fillPrice().mantissa(cursor.key);
+                group.fillQty(cursor.value);
+            });
+
         }
 
         executionReport.leavesQuantity(leavesQuantity)

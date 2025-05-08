@@ -96,10 +96,10 @@ public class SessionMessageContextImpl implements SessionMessageContext
     @Override
     public void reply(final DirectBuffer buffer, final int offset, final int length)
     {
-        LOGGER.info(
+/*        LOGGER.info(
             "reply, session: {}, timestamp: {}",
             session,
-            timestamp);
+            timestamp);*/
 
         offerToSession(session, buffer, offset, length);
     }
@@ -142,10 +142,10 @@ public class SessionMessageContextImpl implements SessionMessageContext
             final long result = targetSession.offer(buffer, offset, length);
             if (result > 0L)
             {
-                LOGGER.info(
+/*                LOGGER.info(
                     "offer message to session: {}, timestamp: {}",
                     targetSession,
-                    timestamp);
+                    timestamp);*/
 
                 return;
             }

@@ -202,7 +202,7 @@ public class AdminClientEgressListener implements EgressListener
                 long nanosecond = orderExecutedWithPriceSizeDecoder.nanosecond();
                 final long orderId = orderExecutedWithPriceSizeDecoder.orderId();
                 long executedQuantity = orderExecutedWithPriceSizeDecoder.executedQuantity();
-                long displayQuantity = orderExecutedWithPriceSizeDecoder.displayQuantity();
+//                long displayQuantity = orderExecutedWithPriceSizeDecoder.displayQuantity();
                 long tradeId = orderExecutedWithPriceSizeDecoder.tradeId();
                 PrintableEnum printable = orderExecutedWithPriceSizeDecoder.printable();
                 final PriceDecoder price = orderExecutedWithPriceSizeDecoder.price();
@@ -216,7 +216,7 @@ public class AdminClientEgressListener implements EgressListener
                     " messageTypeEnum: " + messageTypeEnum.name() +
                     " orderId: " + orderId +
                     " executedQuantity/price: " + executedQuantity + "@" + priceValue +
-                    " displayQuantity/price: " + displayQuantity + "@" + priceValue +
+//                    " displayQuantity/price: " + displayQuantity + "@" + priceValue +
                     " tradeId: " + tradeId +
                     " printable: " + printable.name() +
                     " instrumentId: " + instrumentId +
@@ -239,15 +239,20 @@ public class AdminClientEgressListener implements EgressListener
             case BestBidOfferDecoder.TEMPLATE_ID ->
             {
                 bestBidOfferDecoder.wrapAndApplyHeader(buffer, offset, sbeMarketDataMessageHeaderDecoder);
+
+                long instrumentId = bestBidOfferDecoder.instrumentId();
                 final long bidQuantity = bestBidOfferDecoder.bidQuantity();
                 final long offerQuantity = bestBidOfferDecoder.offerQuantity();
+
                 PriceDecoder bid = bestBidOfferDecoder.bid();
                 final double bidValue = bid.mantissa() * Math.pow(10, bid.exponent());
 
                 PriceDecoder offer = bestBidOfferDecoder.offer();
                 final double offerValue = offer.mantissa() * Math.pow(10, offer.exponent());
 
-                log("Best bid/offer for security bidQuantity/bid: " + bidQuantity + "@" + bidValue + " / " + offerQuantity + "@" + offerValue,
+                log("Best bid/offer for security "+ instrumentId +
+                            " bidQuantity/bid: " + bidQuantity + "@" + bidValue +
+                            " offerQuantity/offerValue: " + offerQuantity + "@" + offerValue,
                     AttributedStyle.YELLOW);
             }
             case AddParticipantCommandResultDecoder.TEMPLATE_ID ->

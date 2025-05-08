@@ -207,7 +207,7 @@ public class  MatchingEngine {
 
         ObjectArrayList<DirectBuffer> messages = MarketData.INSTANCE.getMktDataMessages();
         IntArrayList mktDataLength = MarketData.INSTANCE.getMktDataLength();
-        System.out.println("Number of messages: " + messages.size() + " mktDataLength: " + mktDataLength.size());
+//        System.out.println("Number of messages: " + messages.size() + " mktDataLength: " + mktDataLength.size());
         for(ObjectCursor<DirectBuffer> cursor : messages)
         {
             context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));

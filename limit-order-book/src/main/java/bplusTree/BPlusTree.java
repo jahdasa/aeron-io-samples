@@ -61,7 +61,8 @@ public class BPlusTree<K, V> implements Iterable<Map.Entry<K, V>> {
     }
 
     public K getFirstKey() {
-        return (K)root.firstKey();
+        //todo: check it
+        return (K) firstNode.firstKey();
     }
 
     @SuppressWarnings("unchecked")

@@ -130,10 +130,10 @@ public class MatchingEngineClusteredService implements ClusteredService
         final int length,
         final Header header)
     {
-        LOGGER.info(
+/*        LOGGER.info(
             "Client message received, session: {}, timestamp: {}",
             session,
-            timestamp);
+            timestamp);*/
 
         context.setSessionContext(session, timestamp);
 

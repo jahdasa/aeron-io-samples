@@ -101,6 +101,28 @@ public class AdminClientEgressListener implements EgressListener
 
         switch (messageHeaderDecoder.templateId())
         {
+            case MarketDepthDecoder.TEMPLATE_ID ->
+            {
+                MarketDepthDecoder marketDepthDecoder = new MarketDepthDecoder();
+                marketDepthDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+                int securityId = marketDepthDecoder.securityId();
+
+                marketDepthDecoder.depth().iterator().forEachRemaining(depthDecoder ->
+                {
+                    int count = depthDecoder.orderCount();
+                    long quantity = depthDecoder.quantity();
+                    sbe.msg.PriceDecoder priceDecoder = depthDecoder.price();
+                    sbe.msg.SideEnum side = depthDecoder.side();
+
+                    double priceValue = priceDecoder.mantissa() * Math.pow(10, priceDecoder.exponent());
+
+                    log(
+                            "securityId: " + securityId +
+                                    " side: " + side +
+                                    " count/quantity/priceValue: " + count + "@" + quantity + "@" + priceValue, AttributedStyle.YELLOW);
+                });
+            }
             case VWAPDecoder.TEMPLATE_ID -> {
                 VWAPDecoder vwapDecoder = new VWAPDecoder();
                 vwapDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
@@ -300,7 +322,7 @@ public class AdminClientEgressListener implements EgressListener
                 PriceDecoder offer = bestBidOfferDecoder.offer();
                 final double offerValue = offer.mantissa() * Math.pow(10, offer.exponent());
 
-                log("Best bid/offer for security "+ instrumentId +
+                log("BBO: " + BestBidOfferDecoder.TEMPLATE_ID + " security "+ instrumentId +
                             " bidQuantity/bid: " + bidQuantity + "@" + bidValue +
                             " offerQuantity/offerValue: " + offerQuantity + "@" + offerValue,
                     AttributedStyle.YELLOW);

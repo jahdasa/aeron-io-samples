@@ -116,4 +116,12 @@ public class AdminController
             @RequestParam final String adminMessageType) throws Exception {
         adminService.submitAdminMessage(securityId, adminMessageType);
     }
+
+    /**
+     * Endpoint to submit a buy limit order
+     */
+    @GetMapping(path = "/v1/bbo")
+    public void bestBidOffer() throws Exception {
+        adminService.bbo();
+    }
 }

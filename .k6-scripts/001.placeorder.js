@@ -13,7 +13,7 @@ function randomClientOrderId()
 function randomPrice()
 {
     const prefix = 10000;
-    const randomDigits = Math.floor(Math.random() * 1e6);
+    const randomDigits = Math.floor(Math.random() * 1e2);
 
     return prefix + randomDigits;
 }

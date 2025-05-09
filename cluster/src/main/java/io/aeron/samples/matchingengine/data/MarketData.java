@@ -6,6 +6,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.ObjectArrayList;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 import io.aeron.samples.infra.SessionMessageContext;
+import io.aeron.samples.matchingengine.crossing.strategy.AuctionData;
 import leafNode.OrderEntry;
 import leafNode.OrderList;
 import leafNode.OrderListCursor;
@@ -14,11 +15,13 @@ import org.agrona.DirectBuffer;
 import org.joda.time.Instant;
 import sbe.builder.AdminBuilder;
 import sbe.builder.LOBBuilder;
+import sbe.builder.MarketDepthBuilder;
 import sbe.builder.VWAPBuilder;
 import sbe.builder.marketData.*;
 import sbe.msg.AdminTypeEnum;
 import sbe.msg.marketData.*;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -34,17 +37,22 @@ public enum MarketData {
     private LOBBuilder lobBuilder = new LOBBuilder();
     private AdminBuilder adminBuilder = new AdminBuilder();
     private VWAPBuilder vwapBuilder = new VWAPBuilder();
+    private MarketDepthBuilder marketDepthBuilder = new MarketDepthBuilder();
     private int sequenceNumber;
     private long securityId;
     private int compID;
     private boolean snapShotRequest;
     private OrderBook orderBook;
 
+    private boolean marketDepthRequest;
+
+
     public void reset(){
         mktData.release();
         mktDataLength.release();
         lobBuilder.reset();
         vwapBuilder.reset();
+        marketDepthBuilder.reset();
     }
 
 /*    public void add(DirectBuffer buffer){
@@ -167,6 +175,12 @@ public enum MarketData {
         lobBuilder.compID(compID);
     }
 
+    private void resetMarketDepthBuilder(long securityId){
+        marketDepthBuilder.reset();
+        marketDepthBuilder.securityId((int) securityId);
+        marketDepthBuilder.compID(compID);
+    }
+
     private void publishLOBSnapShot(SessionMessageContext context){
         mktData.add(lobBuilder.build());
         mktDataLength.add(lobBuilder.getMessageLength());
@@ -182,6 +196,16 @@ public enum MarketData {
 //        } catch (InterruptedException e) {
 //            e.printStackTrace();
 //        }
+    }
+
+    private void publishMarketDepth(SessionMessageContext context){
+        mktData.add(marketDepthBuilder.build());
+        mktDataLength.add(marketDepthBuilder.getMessageLength());
+
+        for(ObjectCursor<DirectBuffer> cursor : mktData){
+            context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
+        }
+        resetMarketDepthBuilder(orderBook.getSecurityId());
     }
 
     public void lobSnapShot(SessionMessageContext context) {
@@ -248,6 +272,7 @@ public enum MarketData {
         context.reply(adminMessage1, 0, adminBuilder.getMessageLength());
 
         setSnapShotRequest(false);
+        setMarketDepthRequest(false);
         setOrderBook(null);
         reset();
         //System.out.println("Publish end orders");
@@ -306,6 +331,97 @@ public enum MarketData {
         mktDataLength.add(vwapBuilder.getMessageLength());
     }
 
+    public void calcMarketDepth(SessionMessageContext context){
+        marketDepthBuilder.securityId((int) orderBook.getSecurityId());
+        marketDepthBuilder.compID(compID);
+
+        DirectBuffer adminMessage = getAdminMessage(AdminTypeEnum.StartMarketDepth, orderBook.getSecurityId(), compID);
+        context.reply(adminMessage, 0, adminBuilder.getMessageLength());
+
+        int count = 0;
+        resetMarketDepthBuilder(orderBook.getSecurityId());
+
+        long[] prices = orderBook.getPriceList().toArray();
+        Arrays.sort(prices);
+
+        BPlusTree<Long, OrderList> bidTree = orderBook.getBidTree();
+
+        for(int i=prices.length - 1; i>=0; i--){
+            if(prices[i] == 0){
+                continue;
+            }
+
+            OrderList bidList = bidTree.get(prices[i]);
+            int bidCount = 0;
+            long bidTotalVolume = 0L;
+
+            if(bidList != null){
+
+                bidCount = bidList.size();
+                if(bidCount == 0L)
+                {
+                    continue;
+                }
+                bidTotalVolume = bidList.total();
+                marketDepthBuilder.addDepth(sbe.msg.SideEnum.Buy, prices[i], bidCount, bidTotalVolume);
+                count++;
+            }
+
+            if(count == 100){
+                publishMarketDepth(context);
+                count = 0;
+                System.out.println("Published large MarketDepth");
+            }
+        }
+
+        if(count != 0) {
+            publishMarketDepth(context);
+        }
+
+        BPlusTree<Long, OrderList> offerTree = orderBook.getOfferTree();
+
+        for(int i=prices.length - 1; i>=0; i--){
+            if(prices[i] == 0){
+                continue;
+            }
+
+            OrderList offerList = offerTree.get(prices[i]);
+            int offerCount = 0;
+            long offerTotalVolume = 0L;
+
+            if(offerList != null){
+                offerCount = offerList.size();
+                if(offerCount == 0L)
+                {
+                    continue;
+                }
+
+                offerTotalVolume = offerList.total();
+                marketDepthBuilder.addDepth(sbe.msg.SideEnum.Sell, prices[i], offerCount, offerTotalVolume);
+                count++;
+            }
+
+            if(count == 100){
+                publishMarketDepth(context);
+                count = 0;
+                System.out.println("Published large MarketDepth");
+            }
+        }
+
+
+        if(count != 0) {
+            publishMarketDepth(context);
+        }
+
+        DirectBuffer adminMessage1 = getAdminMessage(AdminTypeEnum.EndMarketDepth, orderBook.getSecurityId(), compID);
+        context.reply(adminMessage1, 0, adminBuilder.getMessageLength());
+
+        setSnapShotRequest(false);
+        setMarketDepthRequest(false);
+        setOrderBook(null);
+        reset();
+    }
+
     public ObjectArrayList<DirectBuffer> getMktDataMessages(){
         return mktData;
     }
@@ -340,5 +456,13 @@ public enum MarketData {
 
     public IntArrayList getMktDataLength() {
         return mktDataLength;
+    }
+
+    public boolean isMarketDepthRequest() {
+        return marketDepthRequest;
+    }
+
+    public void setMarketDepthRequest(boolean marketDepthRequest) {
+        this.marketDepthRequest = marketDepthRequest;
     }
 }

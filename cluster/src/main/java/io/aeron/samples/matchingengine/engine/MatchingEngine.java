@@ -177,7 +177,11 @@ public class  MatchingEngine {
             DirectBuffer report = lobManager.processOrder(temp);
             if (lobManager.isClientMarketDataRequest()) {
                 publishClientMktData(context);
-            } else {
+            }
+            if (lobManager.isClientMarketDepthRequest()) {
+                publishClientMktData(context);
+            }
+            else {
                 publishReportToTradingGateway(report, context);
                 publishToMarketDataGateway(context);
             }
@@ -236,11 +240,14 @@ public class  MatchingEngine {
             MarketData.INSTANCE.lobSnapShot(context);
         }
 
+        if(MarketData.INSTANCE.isMarketDepthRequest()){
+            MarketData.INSTANCE.calcMarketDepth(context);
+        }
+
         ObjectArrayList<DirectBuffer> messages = MarketData.INSTANCE.getMktDataMessages();
         IntArrayList mktDataLength = MarketData.INSTANCE.getMktDataLength();
         for(ObjectCursor<DirectBuffer> cursor : messages){
             context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
-//            marketDataPublisher.send(cursor.value);
         }
     }
 

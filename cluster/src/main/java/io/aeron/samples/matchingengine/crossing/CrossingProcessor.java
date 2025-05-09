@@ -28,6 +28,7 @@ public class   CrossingProcessor implements LOBManager {
     private TradeGatewayParser tradeGatewayParser;
     private LongObjectHashMap<OrderBook> orderBooks;
     private boolean clientMarketDataRequest;
+    private boolean clientMarketDepthRequest;
 
     public CrossingProcessor(LongObjectHashMap<OrderBook> orderBooks){
         this.orderBooks = orderBooks;
@@ -46,6 +47,7 @@ public class   CrossingProcessor implements LOBManager {
         BusinessRejectReportData.INSTANCE.reset();
         BusinessRejectEnum rejectEnum = BusinessRejectEnum.NULL_VAL;
         clientMarketDataRequest = false;
+        clientMarketDepthRequest = false;
 
         try {
             tradeGatewayParser.parse(message);
@@ -76,6 +78,11 @@ public class   CrossingProcessor implements LOBManager {
     @Override
     public boolean isClientMarketDataRequest() {
         return clientMarketDataRequest;
+    }
+
+    @Override
+    public boolean isClientMarketDepthRequest() {
+        return clientMarketDepthRequest;
     }
 
     private void changeTradingSession(int securityId, TradingSessionEnum newTradingSession, SessionChangedReasonEnum sessionChangedReason){
@@ -118,6 +125,7 @@ public class   CrossingProcessor implements LOBManager {
             case SimulationComplete:simulationComplete();break;
             case LOB: lobSnapShot(securityId);break;
             case VWAP: calculateVWAP(securityId);break;
+            case MarketDepth: calculateMarketDepth(securityId);break;
             case ShutDown:{
                 MarketData.INSTANCE.addShutDownRequest();
                 MatchingEngine.setRunning(false);
@@ -151,6 +159,12 @@ public class   CrossingProcessor implements LOBManager {
     private void calculateVWAP(int securityId){
         clientMarketDataRequest = true;
         MarketData.INSTANCE.calcVWAP(orderBooks.get(securityId));
+    }
+
+    private void calculateMarketDepth(int securityId){
+        clientMarketDepthRequest = true;
+        MarketData.INSTANCE.setMarketDepthRequest(true);
+        MarketData.INSTANCE.setOrderBook(orderBooks.get(securityId));
     }
 
     private void resendBBO(int securityId){

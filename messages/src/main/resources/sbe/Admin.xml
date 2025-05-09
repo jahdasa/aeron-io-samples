@@ -25,6 +25,9 @@
             <validValue name="BestBidOfferRequest" description="Best Bid Offer Request">7</validValue>
             <validValue name="StartMessage" description="First message from client">8</validValue>
             <validValue name="EndMessage" description="Last message from client">9</validValue>
+            <validValue name="MarketDepth" description="Calculate Market Depth">10</validValue>
+            <validValue name="StartMarketDepth" description="Start of Market Depth">11</validValue>
+            <validValue name="EndMarketDepth" description="End ofMarket Depth">12</validValue>
         </enum>
         <composite name="Price" description="Decimal with constant exponent">
             <type name="mantissa" presence="optional" primitiveType="int64"/>

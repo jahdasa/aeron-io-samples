@@ -139,6 +139,12 @@
             <type name="blockLength" primitiveType="uint16"/>
             <type name="numInGroup" primitiveType="uint8"/>
         </composite>
+
+        <composite name="depthGroup" description="depth group dimensions">
+            <type name="blockLength" primitiveType="uint16"/>
+            <type name="numInGroup" primitiveType="uint16" semanticType="NumInGroup"/>
+        </composite>
+
         <type name="idString6" length="6" primitiveType="char" semanticType="String"/>
         <type name="idString8" length="8" primitiveType="char" semanticType="String"/>
         <type name="idString10" length="10" primitiveType="char" semanticType="String"/>
@@ -321,6 +327,18 @@
         <field name="securityId" id="1" type="int32"/>
         <field name="bidVWAP" id="3" type="Price"/>
         <field name="offerVWAP" id="4" type="Price"/>
+    </me:message>
+
+
+    <me:message name="MarketDepth" id="96" description="All depth entries for a lob">
+        <field name="securityId" id="1" type="int32"/>
+        <group name="depth" id="2" dimensionType="depthGroup">
+            <field name="side" id="1" type="SideEnum"/>
+            <field name="price" id="2" type="Price"/>
+            <field name="orderCount" id="3" type="uint16"/>
+            <field name="quantity" id="4" type="uint64"/>
+        </group>
+
     </me:message>
 
 </me:messageSchema>

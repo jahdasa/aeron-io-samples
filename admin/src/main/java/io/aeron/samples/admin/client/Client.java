@@ -267,6 +267,14 @@ public class Client {
         return buffer;
     }
 
+    public DirectBuffer marketDepth() {
+        DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
+                .securityId(securityId)
+                .adminMessage(AdminTypeEnum.MarketDepth)
+                .build();
+        return buffer;
+    }
+
     public int getLobSnapshotMessageLength() {
         return adminBuilder.getMessageLength();
     }

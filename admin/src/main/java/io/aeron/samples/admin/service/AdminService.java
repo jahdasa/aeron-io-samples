@@ -295,11 +295,22 @@ public class AdminService
         {
             buffer = client.calcVWAP();
         }
+        else if(adminMessageType.equals("marketDepth"))
+        {
+            buffer = client.marketDepth();
+        }
         else
         {
             return;
         }
 
         adminClusterChannel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
+    }
+
+    public void bbo() throws Exception {
+/*        Client client = Client.newInstance(1, 1);
+        DirectBuffer buffer = client.get
+
+        adminClusterChannel.write(10, buffer, 0, client.getNewOrderEncodedLength());*/
     }
 }

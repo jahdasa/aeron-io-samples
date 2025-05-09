@@ -27,3 +27,9 @@ Running the samples in Docker is the easiest way to get started. See the [docker
 - Docker Compose 2.x - see [docker readme](docker/readme.md) for more details
 - Kubernetes 1.26.x  - see [kubernetes readme](kubernetes/readme.md) for more details
 - Minikube 1.31.x - if running Kubernetes with minikube. See [kubernetes readme](kubernetes/readme.md) for more details
+
+# Linux
+du@LAPTOP-1CS3JJSU:/mnt/c/code/github/aeron-io-samples$ ./cluster/build/distributions/cluster/bin/cluster --add-opens java.base/sun.nio.ch=ALL-UNNAMED io.aeron.samples.ClusterApp
+netstat -lntu
+sudo ncat -l 9999
+wsl hostname -I

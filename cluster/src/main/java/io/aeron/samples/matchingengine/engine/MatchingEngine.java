@@ -175,10 +175,7 @@ public class  MatchingEngine {
         try {
             temp.wrap(buffer, offset, length);
             DirectBuffer report = lobManager.processOrder(temp);
-            if (lobManager.isClientMarketDataRequest()) {
-                publishClientMktData(context);
-            }
-            if (lobManager.isClientMarketDepthRequest()) {
+            if (lobManager.isClientMarketDataRequest() || lobManager.isClientMarketDepthRequest()) {
                 publishClientMktData(context);
             }
             else {

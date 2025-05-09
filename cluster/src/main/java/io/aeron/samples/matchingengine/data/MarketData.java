@@ -367,7 +367,7 @@ public enum MarketData {
                 count++;
             }
 
-            if(count == 100){
+            if(count == 1000){
                 publishMarketDepth(context);
                 count = 0;
                 System.out.println("Published large MarketDepth");
@@ -401,7 +401,7 @@ public enum MarketData {
                 count++;
             }
 
-            if(count == 100){
+            if(count == 1000){
                 publishMarketDepth(context);
                 count = 0;
                 System.out.println("Published large MarketDepth");

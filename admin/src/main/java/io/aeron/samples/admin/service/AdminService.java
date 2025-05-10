@@ -14,6 +14,10 @@ import org.agrona.concurrent.SleepingMillisIdleStrategy;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
 import org.springframework.stereotype.Service;
+import sbe.builder.BuilderUtil;
+import sbe.msg.NewOrderDecoder;
+import sbe.msg.NewOrderEncoder;
+import sbe.msg.SideEnum;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -264,10 +268,22 @@ public class AdminService
 
     }
 
-    public void submitOrder(String clientOrderId, long volume, long price, String side, String orderType, String timeInForce, long displayQuantity, long minQuantity, long stopPrice) throws Exception {
-
-        Client client = Client.newInstance(1, 1);
-        DirectBuffer buffer = client.submitOrder(
+    public ResponseWrapper placeOrder(
+        final int securityId,
+        String clientOrderId,
+        long volume,
+        long price,
+        String side,
+        String orderType,
+        String timeInForce,
+        long displayQuantity,
+        long minQuantity,
+        long stopPrice,
+        int traderId,
+        int clientId) throws Exception
+    {
+        final Client client = Client.newInstance(clientId, securityId);
+        final DirectBuffer buffer = client.placeOrder(
                 clientOrderId,
                 volume,
                 price,
@@ -276,10 +292,36 @@ public class AdminService
                 timeInForce,
                 displayQuantity,
                 minQuantity,
-                stopPrice
+                stopPrice,
+                traderId
         );
 
+        clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
+
+        final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
+                SideEnum.valueOf(side).value() + "@" +
+                securityId + "@" +
+                clientOrderId + "@" +
+                traderId + "@" +
+                clientId;
+
+        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
+        clusterInteractionAgent.onComplete(correlationId, response);
+
         adminClusterChannel.write(10, buffer, 0, client.getNewOrderEncodedLength());
+
+        try {
+            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
+            log.info("Response: {}", responseWrapper.getData());
+
+            return responseWrapper;
+        }
+        catch (final Exception e)
+        {
+            log.error(e.getMessage(), e);
+        }
+
+        return new ResponseWrapper();
     }
 
     public void submitAdminMessage(int securityId, String adminMessageType) throws Exception {
@@ -322,7 +364,18 @@ public class AdminService
     }
 
 
-    public void replaceOrder(int securityId,  String clientOrderId, long volume, long price, String side, String orderType, String timeInForce, long displayQuantity, long minQuantity, long stopPrice) throws Exception {
+    public void replaceOrder(
+        int securityId,
+        String clientOrderId,
+        long volume,
+        long price,
+        String side,
+        String orderType,
+        String timeInForce,
+        long displayQuantity,
+        long minQuantity,
+        long stopPrice,
+        int traderId) throws Exception {
 
         final Client client = Client.newInstance(1, securityId);
         final DirectBuffer buffer = client.replaceOrder(
@@ -334,7 +387,8 @@ public class AdminService
                 timeInForce,
                 displayQuantity,
                 minQuantity,
-                stopPrice
+                stopPrice,
+                traderId
         );
 
         adminClusterChannel.write(10, buffer, 0, client.getReplaceOrderEncodedLength());

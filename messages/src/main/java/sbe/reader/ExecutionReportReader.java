@@ -14,7 +14,6 @@ public class ExecutionReportReader {
     private MessageHeaderDecoder messageHeader;
     private byte[] executionId;
     private byte[] clientOrderId;
-    private byte[] trader;
     private byte[] account;
 
     public ExecutionReportReader(){
@@ -24,7 +23,6 @@ public class ExecutionReportReader {
         executionReport = new ExecutionReportDecoder();
         executionId = new byte[ExecutionReportDecoder.executionIDLength()];
         clientOrderId = new byte[ExecutionReportDecoder.clientOrderIdLength()];
-        trader = new byte[ExecutionReportDecoder.traderMnemonicLength()];
         account = new byte[ExecutionReportDecoder.accountLength()];
     }
 
@@ -60,7 +58,7 @@ public class ExecutionReportReader {
         sb.append("Container=" + executionReport.container());
         sb.append("SecurityId=" + executionReport.securityId());
         sb.append("Side=" + executionReport.side());
-        sb.append("TraderMnemonic=" + new String(trader, 0, executionReport.getTraderMnemonic(trader, 0), ExecutionReportDecoder.traderMnemonicCharacterEncoding()));
+        sb.append("TraderId=" + executionReport.traderId());
 
         sb.append("Account=" + new String(account, 0, executionReport.getAccount(account, 0), ExecutionReportDecoder.accountCharacterEncoding()));
         sb.append("IsMarketOpsRequest=" + executionReport.isMarketOpsRequest());

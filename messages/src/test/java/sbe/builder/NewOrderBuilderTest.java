@@ -28,7 +28,7 @@ public class NewOrderBuilderTest {
                 .cancelOnDisconnect(CancelOnDisconnectEnum.DoNotCancel)
                 .orderBook(OrderBookEnum.Regular)
                 .securityId(1)
-                .traderMnemonic("John")
+                .traderId(1)
                 .orderType(orderType)
                 .timeInForce(TimeInForceEnum.Day)
                 .expireTime("20150813-23:00:00".getBytes())

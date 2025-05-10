@@ -15,7 +15,6 @@ public class OrderCancelReplaceRequestParser {
     private OrderCancelReplaceRequestDecoder orderCancelReplaceRequest = new OrderCancelReplaceRequestDecoder();
     private DateTimeFormatter dateTimeFormatter =  DateTimeFormat.forPattern("yyyyMMdd-HH:mm:ss");
     private int securityId;
-    private byte[] traderMnemonic = new byte[NewOrderDecoder.traderMnemonicLength()];
     private byte[] expireTime = new byte[NewOrderDecoder.expireTimeLength()];
 
     public void decode(DirectBuffer buffer, OrderEntry orderEntry, int bufferOffset, int actingBlockLength, int actingVersion) throws UnsupportedEncodingException {
@@ -26,8 +25,7 @@ public class OrderCancelReplaceRequestParser {
         orderEntry.setOrigClientOrderId(Long.parseLong(orderCancelReplaceRequest.origClientOrderId().trim()));
 
         securityId = orderCancelReplaceRequest.securityId();
-        String traderName = new  String(traderMnemonic, 0, orderCancelReplaceRequest.getTraderMnemonic(traderMnemonic, 0), OrderCancelReplaceRequestDecoder.traderMnemonicCharacterEncoding()).trim();
-        orderEntry.setTrader(TraderDAO.getTrader(traderName));
+        orderEntry.setTrader(orderCancelReplaceRequest.traderId());
 
         orderEntry.setType((byte) orderCancelReplaceRequest.orderType().value());
         orderEntry.setTimeInForce((byte) orderCancelReplaceRequest.timeInForce().value());

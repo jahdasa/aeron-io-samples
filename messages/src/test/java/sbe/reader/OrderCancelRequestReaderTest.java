@@ -23,7 +23,7 @@ public class OrderCancelRequestReaderTest {
         StringBuilder sb = orderCancelRequestReader.read(buffer);
         assertEquals("ClientOrderId=2                   " +
                      "OrigClientOrderId=1                   " +
-                     "OrderId=0SecurityId=1TraderMnemonic=test             " +
+                     "OrderId=0SecurityId=1TraderId=1" +
                      "Side=BuyOrderBook=Regular" +
                      "LimitPrice=1000",sb.toString());
     }
@@ -39,9 +39,7 @@ public class OrderCancelRequestReaderTest {
         orderCancelRequestBuilder.origClientOrderId(origClientOrderId.getBytes());
         orderCancelRequestBuilder.securityId(1);
 
-        String trader = BuilderUtil.fill("test", OrderCancelRequestEncoder.traderMnemonicLength());
-
-        orderCancelRequestBuilder.traderMnemonic(trader.getBytes())
+        orderCancelRequestBuilder.tradeId(1)
                                  .side(SideEnum.Buy)
                                  .orderBook(OrderBookEnum.Regular)
                                  .limitPrice(1000);

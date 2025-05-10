@@ -21,7 +21,7 @@ public class OrderCancelRequestBuilder {
     private UnsafeBuffer clientOrderId;
     private UnsafeBuffer origClientOrderId;
     private int orderId;
-    private UnsafeBuffer traderMnemonic;
+    private int traderId;
     private SideEnum side;
     private long limitPrice;
     private OrderBookEnum orderBook;
@@ -35,7 +35,6 @@ public class OrderCancelRequestBuilder {
 
         clientOrderId = new UnsafeBuffer(ByteBuffer.allocateDirect(OrderCancelRequestEncoder.clientOrderIdLength()));
         origClientOrderId = new UnsafeBuffer(ByteBuffer.allocateDirect(OrderCancelRequestEncoder.origClientOrderIdLength()));
-        traderMnemonic = new UnsafeBuffer(ByteBuffer.allocateDirect(OrderCancelRequestEncoder.traderMnemonicLength()));
     }
 
     public OrderCancelRequestBuilder compID(int value){
@@ -63,8 +62,8 @@ public class OrderCancelRequestBuilder {
         return this;
     }
 
-    public OrderCancelRequestBuilder traderMnemonic(byte[] value){
-        this.traderMnemonic.wrap(value);
+    public OrderCancelRequestBuilder tradeId(int value){
+        this.traderId = value;
         return this;
     }
 
@@ -98,7 +97,7 @@ public class OrderCancelRequestBuilder {
                 .putOrigClientOrderId(origClientOrderId.byteArray(),0)
                 .orderId(orderId)
                 .securityId(securityId)
-                .putTraderMnemonic(traderMnemonic.byteArray(),0)
+                .traderId(traderId)
                 .side(side)
                 .orderBook(orderBook);
         orderCancelRequest.limitPrice().mantissa(limitPrice);

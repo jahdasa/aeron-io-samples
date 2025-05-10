@@ -23,6 +23,8 @@ public class OrderViewBuilder {
     private SideEnum side;
     private long price;
     private int orderQuantity;
+    private int traderId;
+
 
     public static int BUFFER_SIZE = 106;
 
@@ -52,6 +54,11 @@ public class OrderViewBuilder {
 
     public OrderViewBuilder orderId(int value){
         this.orderId = value;
+        return this;
+    }
+
+    public OrderViewBuilder traderId(int value){
+        this.traderId = value;
         return this;
     }
 
@@ -99,6 +106,7 @@ public class OrderViewBuilder {
 
         orderView.securityId(securityId);
         orderView.orderId(orderId);
+        orderView.traderId(traderId);
         orderView.putClientOrderId(clientOrderId.byteArray(), 0);
 
         orderView.submittedTime(submittedTime);

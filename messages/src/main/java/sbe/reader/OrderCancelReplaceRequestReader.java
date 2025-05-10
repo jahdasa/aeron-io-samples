@@ -13,7 +13,6 @@ public class OrderCancelReplaceRequestReader {
     private MessageHeaderDecoder messageHeader;
     private byte[] clientOrderId;
     private byte[] origClientOrderId;
-    private byte[] traderMnemonic;
     private byte[] account;
     private byte[] expireTime;
 
@@ -24,7 +23,6 @@ public class OrderCancelReplaceRequestReader {
         orderCancelReplaceRequest = new OrderCancelReplaceRequestDecoder();
         clientOrderId = new byte[OrderCancelReplaceRequestDecoder.clientOrderIdLength()];
         origClientOrderId = new byte[OrderCancelReplaceRequestDecoder.origClientOrderIdLength()];
-        traderMnemonic = new byte[OrderCancelReplaceRequestDecoder.traderMnemonicLength()];
         account = new byte[OrderCancelReplaceRequestDecoder.accountLength()];
         expireTime = new byte[OrderCancelReplaceRequestDecoder.expireTimeLength()];
     }
@@ -44,7 +42,7 @@ public class OrderCancelReplaceRequestReader {
         sb.append("OrigClientOrderId=" + new String(origClientOrderId, 0, orderCancelReplaceRequest.getOrigClientOrderId(origClientOrderId, 0), OrderCancelReplaceRequestDecoder.origClientOrderIdCharacterEncoding()));
         sb.append("OrderId=" + orderCancelReplaceRequest.orderId());
         sb.append("SecurityId=" + orderCancelReplaceRequest.securityId());
-        sb.append("TraderMnemonic=" + new String(traderMnemonic, 0, orderCancelReplaceRequest.getTraderMnemonic(traderMnemonic, 0), OrderCancelReplaceRequestDecoder.traderMnemonicCharacterEncoding()));
+        sb.append("TraderId=" + orderCancelReplaceRequest.traderId());
         sb.append("Account=" + new String(account, 0, orderCancelReplaceRequest.getAccount(account, 0), OrderCancelReplaceRequestDecoder.accountCharacterEncoding()));
         sb.append("ExpireTime=" + new String(expireTime, 0, orderCancelReplaceRequest.getExpireTime(expireTime, 0), OrderCancelReplaceRequestDecoder.expireTimeCharacterEncoding()));
         sb.append("Side=" + orderCancelReplaceRequest.side());

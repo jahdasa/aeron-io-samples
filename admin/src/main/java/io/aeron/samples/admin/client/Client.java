@@ -19,16 +19,17 @@ public class Client {
 //    private ClientMDGSubscriber clientMDGSubscriber;
 //    private GatewayClient marketDataGatewayPub;
 
-    private String traderMnemonic = BuilderUtil.fill("John", NewOrderEncoder.traderMnemonicLength());
     private NewOrderBuilder newOrderBuilder = new NewOrderBuilder().account("account123".getBytes())
             .capacity(CapacityEnum.Agency)
             .cancelOnDisconnect(CancelOnDisconnectEnum.DoNotCancel)
             .orderBook(OrderBookEnum.Regular)
-            .traderMnemonic(traderMnemonic.getBytes())
             .expireTime("20211230-23:00:00".getBytes());
-    private OrderCancelRequestBuilder orderCancelRequestBuilder = new OrderCancelRequestBuilder().orderBook(OrderBookEnum.Regular)
-            .traderMnemonic(traderMnemonic.getBytes());
-    private OrderCancelReplaceRequestBuilder orderCancelReplaceRequestBuilder = new OrderCancelReplaceRequestBuilder().account("account123".getBytes())
+
+    private OrderCancelRequestBuilder orderCancelRequestBuilder = new OrderCancelRequestBuilder()
+            .orderBook(OrderBookEnum.Regular);
+
+    private OrderCancelReplaceRequestBuilder orderCancelReplaceRequestBuilder = new OrderCancelReplaceRequestBuilder()
+            .account("account123".getBytes())
             .orderBook(OrderBookEnum.Regular);
     private AdminBuilder adminBuilder = new AdminBuilder();
 
@@ -182,8 +183,18 @@ public class Client {
     public void waitForMarketDataUpdate() { while(!mktDataUpdateSemaphore.acquire()){} }
 */
 
-    public DirectBuffer submitOrder(String clientOrderId, long volume, long price, String side, String orderType, String timeInForce, long displayQuantity, long minQuantity, long stopPrice) {
-//        mktDataUpdateSemaphore.acquire();
+    public DirectBuffer placeOrder(
+        String clientOrderId,
+        final long volume,
+        final long price,
+        final String side,
+        final String orderType,
+        final String timeInForce,
+        final long displayQuantity,
+        final long minQuantity,
+        final long stopPrice,
+        final int traderId)
+    {
         clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
 
         DirectBuffer directBuffer = newOrderBuilder.compID(clientData.getCompID())
@@ -197,9 +208,8 @@ public class Client {
                 .minQuantity((int) minQuantity)
                 .limitPrice(price)
                 .stopPrice(stopPrice)
+                .traderId(traderId)
                 .build();
-//        tradingGatewayPub.send(directBuffer);
-//        waitForMarketDataUpdate();
 
         System.out.println("Message=OrderAdd|OrderId=" + clientOrderId.trim() + "|Type=" + orderType + "|Side=" + side + "|Volume=" + volume + "(" + displayQuantity + ")" + "|Price=" + price + "|StopPrice=" + stopPrice + "|TIF=" + timeInForce + "|MES=" + minQuantity);
         return directBuffer;
@@ -241,18 +251,18 @@ public class Client {
             String timeInForce,
             long displayQuantity,
             long minQuantity,
-            long stopPrice)
+            long stopPrice,
+            int traderId)
     {
         //String clientOrderId = BuilderUtil.fill(LocalDateTime.now().toString(), OrderCancelReplaceRequestEncoder.clientOrderIdLength());
         String clientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelReplaceRequestEncoder.clientOrderIdLength());
         String origClientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelReplaceRequestEncoder.origClientOrderIdLength());
-        String traderMnemonic = BuilderUtil.fill("John", OrderCancelReplaceRequestEncoder.traderMnemonicLength());
 
         DirectBuffer directBuffer = orderCancelReplaceRequestBuilder.compID(clientData.getCompID())
                 .clientOrderId(clientOrderId.getBytes())
                 .origClientOrderId(origClientOrderId.getBytes())
                 .securityId(securityId)
-                .traderMnemonic(traderMnemonic.getBytes())
+                .tradeId(traderId)
                 .orderType(OrdTypeEnum.valueOf(orderType))
                 .timeInForce(TimeInForceEnum.valueOf(timeInForce))
                 .expireTime("20211230-23:00:00".getBytes())

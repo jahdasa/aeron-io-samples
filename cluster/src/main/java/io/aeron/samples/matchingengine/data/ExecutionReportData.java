@@ -135,7 +135,7 @@ public enum ExecutionReportData {
                 .container(getContainer())
                 .securityId(securityId)
                 .side(SideEnum.get(aggOrder.getSide()))
-                .traderMnemonic(TraderDAO.getTraderById(aggOrder.getTrader()))
+                .traderId(aggOrder.getTrader())
                 .account(acc.getBytes())
                 .isMarketOpsRequest(IsMarketOpsRequestEnum.No)
                 .transactTime(Instant.now().getMillis())
@@ -152,6 +152,7 @@ public enum ExecutionReportData {
         clientOrderId.wrap(BuilderUtil.fill(Long.toString(aggOrder.getClientOrderId()), OrderViewEncoder.clientOrderIdLength()).getBytes());
         orderViewBuilder.compID(getCompID())
                 .orderId((int) aggOrder.getOrderId())
+                .traderId(aggOrder.getTrader())
                 .clientOrderId(clientOrderId.byteArray())
                 .orderQuantity(aggOrder.getQuantity())
                 .price(aggOrder.getPrice())

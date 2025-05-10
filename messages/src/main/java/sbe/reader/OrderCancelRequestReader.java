@@ -13,7 +13,6 @@ public class OrderCancelRequestReader {
     private MessageHeaderDecoder messageHeader;
     private byte[] clientOrderId;
     private byte[] origClientOrderId;
-    private byte[] traderMnemonic;
 
     public OrderCancelRequestReader(){
         sb = new StringBuilder();
@@ -22,7 +21,6 @@ public class OrderCancelRequestReader {
         orderCancelRequest = new OrderCancelRequestDecoder();
         clientOrderId = new byte[OrderCancelRequestDecoder.clientOrderIdLength()];
         origClientOrderId = new byte[OrderCancelRequestDecoder.origClientOrderIdLength()];
-        traderMnemonic = new byte[OrderCancelRequestDecoder.traderMnemonicLength()];
     }
 
     public StringBuilder read(DirectBuffer buffer) throws UnsupportedEncodingException {
@@ -40,7 +38,7 @@ public class OrderCancelRequestReader {
         sb.append("OrigClientOrderId=" + new String(origClientOrderId, 0, orderCancelRequest.getOrigClientOrderId(origClientOrderId, 0), OrderCancelRequestDecoder.origClientOrderIdCharacterEncoding()));
         sb.append("OrderId=" + orderCancelRequest.orderId());
         sb.append("SecurityId=" + orderCancelRequest.securityId());
-        sb.append("TraderMnemonic=" + new String(traderMnemonic, 0, orderCancelRequest.getTraderMnemonic(traderMnemonic, 0), OrderCancelRequestDecoder.traderMnemonicCharacterEncoding()));
+        sb.append("TraderId=" + orderCancelRequest.traderId());
         sb.append("Side=" + orderCancelRequest.side());
         sb.append("OrderBook=" + orderCancelRequest.orderBook());
         sb.append("LimitPrice=" + orderCancelRequest.limitPrice().mantissa());

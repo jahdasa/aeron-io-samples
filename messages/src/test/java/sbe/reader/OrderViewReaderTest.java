@@ -34,6 +34,7 @@ public class OrderViewReaderTest {
         return orderViewBuilder.compID(1)
                 .securityId(2)
                 .orderId(3)
+                .traderId(1)
                 .submittedTime(Instant.now().toEpochMilli())
                 .orderQuantity(1000)
                 .price(100)

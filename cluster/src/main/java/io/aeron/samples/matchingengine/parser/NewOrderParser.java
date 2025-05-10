@@ -14,7 +14,6 @@ public class NewOrderParser {
     private NewOrderDecoder newOrder = new NewOrderDecoder();
     private DateTimeFormatter dateTimeFormatter =  DateTimeFormat.forPattern("yyyyMMdd-HH:mm:ss");
     private int securityId;
-    private byte[] traderMnemonic = new byte[NewOrderDecoder.traderMnemonicLength()];
     private byte[] expireTime = new byte[NewOrderDecoder.expireTimeLength()];
     private byte[] clientOrderId = new byte[NewOrderDecoder.clientOrderIdLength()];
 
@@ -22,8 +21,7 @@ public class NewOrderParser {
         newOrder.wrap(buffer, bufferOffset, actingBlockLength, actingVersion);
 
         securityId = newOrder.securityId();
-        String traderName = new  String(traderMnemonic, 0, newOrder.getTraderMnemonic(traderMnemonic, 0), NewOrderDecoder.traderMnemonicCharacterEncoding()).trim();
-        orderEntry.setTrader(TraderDAO.getTrader(traderName));
+        orderEntry.setTrader(newOrder.traderId());
 
         orderEntry.setType((byte) newOrder.orderType().value());
         orderEntry.setTimeInForce((byte) newOrder.timeInForce().value());

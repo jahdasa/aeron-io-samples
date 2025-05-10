@@ -19,7 +19,6 @@ public class NewOrderBuilder {
     private int displayQuantity;
     private int minQuantity;
     private UnsafeBuffer clientOrderId;
-    private UnsafeBuffer traderMnemonic;
     private UnsafeBuffer account;
     private OrdTypeEnum orderType;
     private TimeInForceEnum timeInForce;
@@ -30,6 +29,7 @@ public class NewOrderBuilder {
     private CapacityEnum capacity;
     private CancelOnDisconnectEnum cancelOnDisconnect;
     private OrderBookEnum orderBook;
+    private int traderId;
 
     public static int BUFFER_SIZE = 114;
 
@@ -39,7 +39,6 @@ public class NewOrderBuilder {
         encodeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(BUFFER_SIZE));
 
         clientOrderId = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.clientOrderIdLength()));
-        traderMnemonic = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.traderMnemonicLength()));
         account = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.accountLength()));
         expireTime = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.expireTimeLength()));
     }
@@ -66,17 +65,6 @@ public class NewOrderBuilder {
 
     public NewOrderBuilder securityId(int value){
         this.securityId = value;
-        return this;
-    }
-
-    public NewOrderBuilder traderMnemonic(byte[] value){
-        this.traderMnemonic.wrap(value);
-        return this;
-    }
-
-    public NewOrderBuilder traderMnemonic(String value){
-        value = BuilderUtil.fill(value, NewOrderEncoder.traderMnemonicLength());
-        this.traderMnemonic.wrap(value.getBytes());
         return this;
     }
 
@@ -119,6 +107,11 @@ public class NewOrderBuilder {
         return this;
     }
 
+    public NewOrderBuilder traderId(int value){
+        this.traderId = value;
+        return this;
+    }
+
     public NewOrderBuilder limitPrice(long value){
         this.limitPrice = value;
         return this;
@@ -157,7 +150,7 @@ public class NewOrderBuilder {
         newOrder.wrap(encodeBuffer, bufferIndex)
                 .putClientOrderId(clientOrderId.byteArray(),0)
                 .securityId(securityId)
-                .putTraderMnemonic(traderMnemonic.byteArray(),0)
+                .traderId(traderId)
                 .putAccount(account.byteArray(),0)
                 .orderType(orderType)
                 .timeInForce(timeInForce)

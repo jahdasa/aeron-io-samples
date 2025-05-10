@@ -207,12 +207,11 @@ public class AdminClientEgressListener implements EgressListener
                 ContainerEnum container = executionReportDecoder.container();
                 final long securityId = executionReportDecoder.securityId();
                 sbe.msg.SideEnum side = executionReportDecoder.side();
-                String traderMnemonic = executionReportDecoder.traderMnemonic();
+                int traderId = executionReportDecoder.traderId();
                 String account = executionReportDecoder.account();
                 IsMarketOpsRequestEnum marketOpsRequest = executionReportDecoder.isMarketOpsRequest();
                 long transactTime = executionReportDecoder.transactTime();
                 OrderBookEnum orderBookEnum = executionReportDecoder.orderBook();
-
 
                 executionReportDecoder.fillsGroup().iterator().forEachRemaining(fillsGroupDecoder ->
                 {
@@ -236,7 +235,7 @@ public class AdminClientEgressListener implements EgressListener
                     " container: " + container.name() +
                     " securityId: " + securityId +
                     " side: " + side.name() +
-                    " traderMnemonic: '" + traderMnemonic + "'" +
+                    " traderId: '" + traderId + "'" +
                     " account: '" + account + "'" +
                     " marketOpsRequest: '" + marketOpsRequest.name() + "'" +
                     " transactTime: '" + transactTime + "'" +
@@ -249,6 +248,7 @@ public class AdminClientEgressListener implements EgressListener
                 orderViewDecoder.wrapAndApplyHeader(buffer, offset, sbeMsgMessageHeaderDecoder);
 
                 final long securityId = orderViewDecoder.securityId();
+                final int traderId = orderViewDecoder.traderId();
                 final String clientOrderId = orderViewDecoder.clientOrderId();
                 final long orderId = orderViewDecoder.orderId();
                 final long submittedTime = orderViewDecoder.submittedTime();
@@ -262,8 +262,32 @@ public class AdminClientEgressListener implements EgressListener
                 log("Order view: " + OrderViewDecoder.TEMPLATE_ID + " securityId: " +
                     securityId + " clientOrderId: '" + clientOrderId + "' orderId: " + orderId +
                     " submittedTime: " + submittedTime + " side: " + side.name() +
-                    " orderQuantity: " + orderQuantity + " price: " + priceValue,
+                    " orderQuantity: " + orderQuantity + " price: " + priceValue + " traderId: " + traderId,
                     AttributedStyle.YELLOW);
+
+
+                // placeorder-tid@side@security@clientOrderId@trader@client
+                final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
+                        side.value() + "@" +
+                        securityId + "@" +
+                        clientOrderId + "@" +
+                        traderId + "@" +
+                        sbeMsgMessageHeaderDecoder.compID();
+
+                pendingMessageManager.markOrderViewMessageAsReceived(
+                    correlationId,
+                    securityId,
+                    traderId,
+                    clientOrderId,
+                    orderId,
+                    submittedTime,
+                    priceValue,
+                    orderQuantity,
+                    side
+                );
+
+                log("correlationId: " + correlationId, AttributedStyle.YELLOW);
+
             }
             case AddOrderDecoder.TEMPLATE_ID -> {
                 addOrderDecoder.wrapAndApplyHeader(buffer, offset, sbeMarketDataMessageHeaderDecoder);

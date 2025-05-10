@@ -11,7 +11,6 @@ import java.io.UnsupportedEncodingException;
 public class OrderCancelRequestParser {
     private OrderCancelRequestDecoder orderCancelRequest = new OrderCancelRequestDecoder();
     private int securityId;
-    private byte[] traderMnemonic = new byte[OrderCancelRequestDecoder.traderMnemonicLength()];
     private byte[] origClientOrderId = new byte[OrderCancelRequestDecoder.origClientOrderIdLength()];
     private byte[] clientOrderId = new byte[OrderCancelRequestDecoder.clientOrderIdLength()];
 
@@ -20,8 +19,7 @@ public class OrderCancelRequestParser {
 
         orderEntry.setOrderId(orderCancelRequest.orderId());
         securityId = orderCancelRequest.securityId();
-        String traderName = new  String(traderMnemonic, 0, orderCancelRequest.getTraderMnemonic(traderMnemonic, 0), OrderCancelRequestDecoder.traderMnemonicCharacterEncoding()).trim();
-        orderEntry.setTrader(TraderDAO.getTrader(traderName));
+        orderEntry.setTrader(orderCancelRequest.traderId());
         String origClientOrderIdText = new String(origClientOrderId, 0, orderCancelRequest.getOrigClientOrderId(origClientOrderId, 0), orderCancelRequest.origClientOrderIdCharacterEncoding()).trim();
         orderEntry.setOrigClientOrderId(Long.parseLong(origClientOrderIdText));
         String clientOrderIdText = new String(clientOrderId, 0, orderCancelRequest.getClientOrderId(clientOrderId, 0), orderCancelRequest.clientOrderIdCharacterEncoding()).trim();

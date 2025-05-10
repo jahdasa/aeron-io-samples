@@ -184,6 +184,16 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
         newOrderDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
+        // placeorder-tid@side@security@clientOrderId@trader@client
+        final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
+            newOrderDecoder.side().value() + "@" +
+            newOrderDecoder.securityId() + "@" +
+            newOrderDecoder.clientOrderId() + "@" +
+            newOrderDecoder.traderId() + "@" +
+            sbeMessageHeaderDecoder.compID();
+
+        pendingMessageManager.addMessage(correlationId, "place-order");
+
         retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + newOrderDecoder.encodedLength());
     }
 

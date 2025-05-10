@@ -33,9 +33,8 @@ public class MessageGenerator {
         orderCancelRequestBuilder.origClientOrderId(origClientOrderId.getBytes());
         orderCancelRequestBuilder.securityId(1);
 
-        String trader = BuilderUtil.fill("John", OrderCancelRequestEncoder.traderMnemonicLength());
 
-        orderCancelRequestBuilder.traderMnemonic(trader.getBytes())
+        orderCancelRequestBuilder.tradeId(1)
                 .side(SideEnum.Buy)
                 .orderBook(OrderBookEnum.Regular);
 
@@ -53,9 +52,7 @@ public class MessageGenerator {
         orderCancelRequestBuilder.origClientOrderId(origClientOrderId.getBytes());
         orderCancelRequestBuilder.securityId(99);
 
-        String trader = BuilderUtil.fill("John", OrderCancelRequestEncoder.traderMnemonicLength());
-
-        orderCancelRequestBuilder.traderMnemonic(trader.getBytes())
+        orderCancelRequestBuilder.tradeId(1)
                 .side(SideEnum.Buy)
                 .orderBook(OrderBookEnum.Regular);
 
@@ -73,8 +70,7 @@ public class MessageGenerator {
         orderCancelReplaceRequestBuilder.origClientOrderId(origClientOrderId.getBytes());
         orderCancelReplaceRequestBuilder.securityId(1);
 
-        String trader = BuilderUtil.fill("John", OrderCancelReplaceRequestEncoder.traderMnemonicLength());
-        orderCancelReplaceRequestBuilder.traderMnemonic(trader.getBytes());
+        orderCancelReplaceRequestBuilder.tradeId(1);
 
         String account = BuilderUtil.fill("test", OrderCancelReplaceRequestEncoder.accountLength());
         orderCancelReplaceRequestBuilder.account(account.getBytes());

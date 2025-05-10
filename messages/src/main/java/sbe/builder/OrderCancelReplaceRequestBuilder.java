@@ -17,8 +17,8 @@ public class OrderCancelReplaceRequestBuilder {
     private UnsafeBuffer clientOrderId;
     private UnsafeBuffer origClientOrderId;
     private int orderId;
+    private int traderId;
     private int securityId;
-    private UnsafeBuffer traderMnemonic;
     private UnsafeBuffer account;
     private OrdTypeEnum orderType;
     private TimeInForceEnum timeInForce;
@@ -40,7 +40,6 @@ public class OrderCancelReplaceRequestBuilder {
 
         clientOrderId = new UnsafeBuffer(ByteBuffer.allocateDirect(OrderCancelReplaceRequestEncoder.clientOrderIdLength()));
         origClientOrderId = new UnsafeBuffer(ByteBuffer.allocateDirect(OrderCancelReplaceRequestEncoder.origClientOrderIdLength()));
-        traderMnemonic = new UnsafeBuffer(ByteBuffer.allocateDirect(OrderCancelReplaceRequestEncoder.traderMnemonicLength()));
         account = new UnsafeBuffer(ByteBuffer.allocateDirect(OrderCancelReplaceRequestEncoder.accountLength()));
         expireTime = new UnsafeBuffer(ByteBuffer.allocateDirect(OrderCancelReplaceRequestEncoder.expireTimeLength()));
     }
@@ -70,10 +69,11 @@ public class OrderCancelReplaceRequestBuilder {
         return this;
     }
 
-    public OrderCancelReplaceRequestBuilder traderMnemonic(byte[] value){
-        this.traderMnemonic.wrap(value);
+    public OrderCancelReplaceRequestBuilder tradeId(int value){
+        this.traderId = value;
         return this;
     }
+
 
     public OrderCancelReplaceRequestBuilder account(byte[] value){
         this.account.wrap(value);
@@ -146,7 +146,7 @@ public class OrderCancelReplaceRequestBuilder {
                 .putOrigClientOrderId(origClientOrderId.byteArray(),0)
                 .orderId(orderId)
                 .securityId(securityId)
-                .putTraderMnemonic(traderMnemonic.byteArray(),0)
+                .traderId(traderId)
                 .putAccount(account.byteArray(),0)
                 .orderType(orderType)
                 .timeInForce(timeInForce)

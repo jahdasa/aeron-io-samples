@@ -19,7 +19,7 @@ public class OrderCancelReplaceRequestReaderTest {
 
         StringBuilder sb = orderCancelReplaceRequestReader.read(buffer);
         assertEquals("ClientOrderId=2                   OrigClientOrderId=1                   " +
-                     "OrderId=0SecurityId=1TraderMnemonic=John             Account=test      " +
+                     "OrderId=0SecurityId=1TraderId=1Account=test      " +
                      "ExpireTime=20150823-10:00:00Side=BuyOrderQuantity=1000DisplayQuantity=1000MinQuantity=0" +
                      "LimitPrice=10000StopPrice=0OrderBook=Regular",
                       sb.toString());
@@ -35,9 +35,6 @@ public class OrderCancelReplaceRequestReaderTest {
         String origClientOrderId = BuilderUtil.fill("1",OrderCancelReplaceRequestEncoder.origClientOrderIdLength());
         orderCancelReplaceRequestBuilder.origClientOrderId(origClientOrderId.getBytes());
         orderCancelReplaceRequestBuilder.securityId(1);
-
-        String trader = BuilderUtil.fill("John", OrderCancelReplaceRequestEncoder.traderMnemonicLength());
-        orderCancelReplaceRequestBuilder.traderMnemonic(trader.getBytes());
 
         String account = BuilderUtil.fill("test", OrderCancelReplaceRequestEncoder.accountLength());
         orderCancelReplaceRequestBuilder.account(account.getBytes());

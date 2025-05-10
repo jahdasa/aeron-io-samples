@@ -43,7 +43,7 @@ public class CrossingProcessorPerfTest {
                 .cancelOnDisconnect(CancelOnDisconnectEnum.DoNotCancel)
                 .orderBook(OrderBookEnum.Regular)
                 .securityId(1)
-                .traderMnemonic("John             ".getBytes())
+                .traderId(1)
                 .orderType(OrdTypeEnum.Limit)
                 .timeInForce(TimeInForceEnum.Day)
                 .expireTime("20150813-23:00:00".getBytes())

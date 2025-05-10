@@ -90,11 +90,15 @@ public class AdminController
         return adminService.addAuctionBid(auctionId, participantId, price);
     }
 
+    // placeorder-tid@side@security@clientOrderId@trader@client
+    // clientOrderId@security@side@placeOrder@trader@client
+    // clientOrderId@security@fc@trader@client
     /**
      * Endpoint to submit a buy limit order
      */
-    @PostMapping(path = "/v1/submit-order")
-    public void submitOrder(
+    @PostMapping(path = "/v1/place-order")
+    public ResponseWrapper submitOrder(
+            @RequestParam(defaultValue = "1") final int securityId,
             @RequestParam final String clientOrderId,
             @RequestParam final long volume,
             @RequestParam final long price,
@@ -103,17 +107,38 @@ public class AdminController
             @RequestParam final String timeInForce,
             @RequestParam final long displayQuantity,
             @RequestParam final long minQuantity,
-            @RequestParam final long stopPrice) throws Exception {
-        adminService.submitOrder(clientOrderId, volume, price, side, orderType, timeInForce, displayQuantity, minQuantity, stopPrice);
+            @RequestParam final long stopPrice,
+            @RequestParam final int traderId,
+            @RequestParam final int client
+            ) throws Exception
+    {
+        return adminService.placeOrder(
+            securityId,
+            clientOrderId,
+            volume,
+            price,
+            side,
+            orderType,
+            timeInForce,
+            displayQuantity,
+            minQuantity,
+            stopPrice,
+            traderId,
+            client);
     }
 
+    // admin-tid@type@security@reqid@trader@client
     /**
      * Endpoint to submit a buy limit order
      */
     @GetMapping(path = "/v1/submit-admin-message")
-    public void submitOrder(
+    public void submitAdminMessage(
+            @RequestParam final long requestId,
             @RequestParam(defaultValue = "1") final int securityId,
-            @RequestParam final String adminMessageType) throws Exception {
+            @RequestParam final String adminMessageType,
+            @RequestParam final long trader,
+            @RequestParam final int client
+            ) throws Exception {
         adminService.submitAdminMessage(securityId, adminMessageType);
     }
 
@@ -125,6 +150,7 @@ public class AdminController
         adminService.bbo();
     }
 
+    // cancelorder-tid@side@security@clientOrderId@trader@client
     /**
      * Endpoint to cancel an order
      */
@@ -138,6 +164,8 @@ public class AdminController
         adminService.cancelOrder(securityId, clientOrderId, side, price);
     }
 
+
+    // cancelorder-tid@side@security@clientOrderId@trader@client
     @PostMapping(path = "/v1/replace-order")
     public void replaceOrder(
             @RequestParam(defaultValue = "1") final int securityId,
@@ -149,8 +177,19 @@ public class AdminController
             @RequestParam final String timeInForce,
             @RequestParam final long displayQuantity,
             @RequestParam final long minQuantity,
-            @RequestParam final long stopPrice) throws Exception
+            @RequestParam final long stopPrice,
+            @RequestParam final int traderId) throws Exception
     {
-        adminService.replaceOrder(securityId, clientOrderId, volume, price, side, orderType, timeInForce, displayQuantity, minQuantity, stopPrice);
+        adminService.replaceOrder(securityId,
+                clientOrderId,
+                volume,
+                price,
+                side,
+                orderType,
+                timeInForce,
+                displayQuantity,
+                minQuantity,
+                stopPrice,
+                traderId);
     }
 }

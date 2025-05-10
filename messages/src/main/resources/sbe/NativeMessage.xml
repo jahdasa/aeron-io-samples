@@ -202,7 +202,7 @@
     <me:message name="NewOrder" id="9" description="New Order Message">
         <field name="clientOrderId" id="1" type="idString20"/>
         <field name="securityId" id="2" type="int32"/>
-        <field name="traderMnemonic" id="3" type="idString17"/>
+        <field name="traderId" id="3" type="int32"/>
         <field name="account" id="4" type="idString10"/>
         <field name="orderType" id="5" type="OrdTypeEnum"/>
         <field name="timeInForce" id="6" type="TimeInForceEnum"/>
@@ -223,7 +223,7 @@
         <field name="origClientOrderId" id="2" type="idString20"/>
         <field name="orderId" id="3" type="int32"/>
         <field name="securityId" id="4" type="int32"/>
-        <field name="traderMnemonic" id="5" type="idString17"/>
+        <field name="traderId" id="5" type="int32"/>
         <field name="side" id="6" type="SideEnum"/>
         <field name="orderBook" id="7" type="OrderBookEnum"/>
         <field name="limitPrice" id="8" type="Price"/>
@@ -243,7 +243,7 @@
         <field name="origClientOrderId" id="2" type="idString20"/>
         <field name="orderId" id="3" type="int32"/>
         <field name="securityId" id="4" type="int32"/>
-        <field name="traderMnemonic" id="5" type="idString17"/>
+        <field name="traderId" id="5" type="int32"/>
         <field name="account" id="6" type="idString10"/>
         <field name="orderType" id="7" type="OrdTypeEnum"/>
         <field name="timeInForce" id="8" type="TimeInForceEnum"/>
@@ -273,7 +273,7 @@
         <field name="container" id="12" type="ContainerEnum"/>
         <field name="securityId" id="13" type="int32"/>
         <field name="side" id="14" type="SideEnum"/>
-        <field name="traderMnemonic" id="15" type="idString17"/>
+        <field name="traderId" id="15" type="int32"/>
         <field name="account" id="16" type="idString10"/>
         <field name="isMarketOpsRequest" id="17" type="IsMarketOpsRequestEnum"/>
         <field name="transactTime" id="18" type="uint64"/>

@@ -19,6 +19,7 @@ public class ExecutionReportBuilder {
     private UnsafeBuffer executionId;
     private UnsafeBuffer clientOrderId;
     private int orderId;
+    private int traderId;
     private ExecutionTypeEnum executionType;
     private OrderStatusEnum orderStatus;
     private RejectCode rejectCode;
@@ -26,7 +27,6 @@ public class ExecutionReportBuilder {
     private ContainerEnum container;
     private int securityId;
     private SideEnum side;
-    private UnsafeBuffer traderMnemonic;
     private UnsafeBuffer account;
     private IsMarketOpsRequestEnum isMarketOpsRequest;
     private long transactTime;
@@ -43,7 +43,6 @@ public class ExecutionReportBuilder {
 
         executionId = new UnsafeBuffer(ByteBuffer.allocateDirect(ExecutionReportEncoder.executionIDLength()));
         clientOrderId = new UnsafeBuffer(ByteBuffer.allocateDirect(ExecutionReportEncoder.clientOrderIdLength()));
-        traderMnemonic = new UnsafeBuffer(ByteBuffer.allocateDirect(ExecutionReportEncoder.traderMnemonicLength()));
         account = new UnsafeBuffer(ByteBuffer.allocateDirect(ExecutionReportEncoder.accountLength()));
         fillGroups = new LongIntHashMap();
     }
@@ -117,19 +116,14 @@ public class ExecutionReportBuilder {
         return this;
     }
 
+
+    public ExecutionReportBuilder traderId(int value){
+        this.traderId = value;
+        return this;
+    }
+
     public ExecutionReportBuilder side(SideEnum value){
         this.side = value;
-        return this;
-    }
-
-    public ExecutionReportBuilder traderMnemonic(byte[] value){
-        this.traderMnemonic.wrap(value);
-        return this;
-    }
-
-    public ExecutionReportBuilder traderMnemonic(String value){
-        String newValue = BuilderUtil.fill(value,ExecutionReportEncoder.traderMnemonicLength());
-        this.traderMnemonic.wrap(newValue.getBytes());
         return this;
     }
 
@@ -197,7 +191,7 @@ public class ExecutionReportBuilder {
                        .container(container)
                        .securityId(securityId)
                        .side(side)
-                       .putTraderMnemonic(traderMnemonic.byteArray(),0)
+                       .traderId(traderId)
                        .putAccount(account.byteArray(),0)
                        .isMarketOpsRequest(isMarketOpsRequest)
                        .transactTime(transactTime)

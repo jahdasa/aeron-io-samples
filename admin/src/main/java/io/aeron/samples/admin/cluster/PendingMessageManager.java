@@ -105,6 +105,46 @@ public class PendingMessageManager
         });
     }
 
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markOrderViewMessageAsReceived(
+        final String correlationId,
+        final long securityId,
+        final int traderId,
+        final String clientOrderId ,
+        final long orderId,
+        final long submittedTime,
+        final double priceValue,
+        int orderQuantity,
+        sbe.msg.SideEnum side
+        )
+    {
+        trackedMessages.removeIf(pendingMessage ->
+        {
+            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+
+            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+            if (exist)
+            {
+                OrderViewResponse responseData = new OrderViewResponse(
+                        correlationId,
+                        securityId,
+                        traderId,
+                        clientOrderId,
+                        orderId,
+                        submittedTime,
+                        priceValue,
+                        orderQuantity,
+                        side
+                );
+                replySuccess(correlationId, responseData);
+            }
+            return exist;
+        });
+    }
+
 
     /**
      * Mark a message as received

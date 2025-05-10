@@ -313,4 +313,11 @@ public class AdminService
 
         adminClusterChannel.write(10, buffer, 0, client.getNewOrderEncodedLength());*/
     }
+
+    public void cancelOrder(int securityId, String clientOrderId, final String side, final long price) throws Exception {
+        Client client = Client.newInstance(1, securityId);
+        DirectBuffer buffer = client.cancelOrder(clientOrderId, side, price);
+
+        adminClusterChannel.write(10, buffer, 0, client.getCancelOrderEncodedLength());
+    }
 }

@@ -208,8 +208,11 @@ public class Client {
         return newOrderBuilder.messageEncodedLength();
     }
 
-    public void cancelOrder(String originalClientOrderId, String side, long price) {
-//        mktDataUpdateSemaphore.acquire();
+    public int getCancelOrderEncodedLength() {
+        return orderCancelRequestBuilder.getMessageEncodedLength();
+    }
+
+    public DirectBuffer cancelOrder(String originalClientOrderId, String side, long price) {
         String origClientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelRequestEncoder.origClientOrderIdLength());
         String clientOrderId = BuilderUtil.fill("-" + originalClientOrderId, OrderCancelRequestEncoder.clientOrderIdLength());
 
@@ -220,9 +223,9 @@ public class Client {
                 .side(SideEnum.valueOf(side))
                 .limitPrice(price)
                 .build();
-//        tradingGatewayPub.send(directBuffer);
-//        waitForMarketDataUpdate();
         System.out.println("Message=OrderCancel|OrderId=" + origClientOrderId.trim());
+
+        return directBuffer;
     }
 
     public void replaceOrder(String originalClientOrderId, long volume, long price, String side, String orderType, String timeInForce, long displayQuantity, long minQuantity, long stopPrice) {

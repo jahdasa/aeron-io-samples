@@ -124,4 +124,17 @@ public class AdminController
     public void bestBidOffer() throws Exception {
         adminService.bbo();
     }
+
+    /**
+     * Endpoint to cancel an order
+     */
+    @PostMapping(path = "/v1/cancel-order")
+    public void cancelOrder(
+            @RequestParam(defaultValue = "1") final int securityId,
+            @RequestParam final String clientOrderId,
+            @RequestParam final String side,
+            @RequestParam final long price
+            ) throws Exception {
+        adminService.cancelOrder(securityId, clientOrderId, side, price);
+    }
 }

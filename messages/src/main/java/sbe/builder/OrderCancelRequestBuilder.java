@@ -14,6 +14,7 @@ public class OrderCancelRequestBuilder {
     private OrderCancelRequestEncoder orderCancelRequest;
     private MessageHeaderEncoder messageHeader;
     private UnsafeBuffer encodeBuffer;
+    private int messageEncodedLength;
 
     private int compID;
     private int securityId;
@@ -102,7 +103,12 @@ public class OrderCancelRequestBuilder {
                 .orderBook(orderBook);
         orderCancelRequest.limitPrice().mantissa(limitPrice);
 
+        messageEncodedLength = messageHeader.encodedLength() + orderCancelRequest.encodedLength();
+
         return encodeBuffer;
     }
 
+    public int getMessageEncodedLength() {
+        return messageEncodedLength;
+    }
 }

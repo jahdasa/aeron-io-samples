@@ -39,6 +39,7 @@ import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
 import sbe.msg.AdminDecoder;
 import sbe.msg.NewOrderDecoder;
+import sbe.msg.OrderCancelRequestDecoder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -84,6 +85,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
     private final NewOrderDecoder newOrderDecoder = new NewOrderDecoder();
     private final AdminDecoder adminDecoder = new AdminDecoder();
+    private final OrderCancelRequestDecoder orderCancelRequestDecoder = new OrderCancelRequestDecoder();
 
 
     /**
@@ -156,8 +158,17 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             case ListParticipantsDecoder.TEMPLATE_ID -> processListParticipants(messageHeaderDecoder, buffer, offset);
             case NewOrderDecoder.TEMPLATE_ID -> processNowOrder(messageHeaderDecoder, buffer, offset);
             case AdminDecoder.TEMPLATE_ID -> processAdminMessage(messageHeaderDecoder, buffer, offset);
+            case OrderCancelRequestDecoder.TEMPLATE_ID -> processCancelOrder(messageHeaderDecoder, buffer, offset);
             default -> log("Unknown message type: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
         }
+    }
+
+    private void processCancelOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
+        log("Process new order" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+
+        orderCancelRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + orderCancelRequestDecoder.encodedLength());
     }
 
     private void processNowOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {

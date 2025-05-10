@@ -104,6 +104,8 @@ public class   CrossingProcessor implements LOBManager {
 
     public void processOrder(int template,int securityId,OrderEntry orderEntry){
         OrderBook orderBook = orderBooks.get(securityId);
+        MatchingContext.INSTANCE.setTemplateId(template);
+
         TradingSessionProcessor tradingSessionProcessor = getOrderBookTradingSession(securityId);
         if(tradingSessionProcessor.isOrderValid(orderEntry,template)) {
             tradingSessionProcessor.process(orderBook, orderEntry);

@@ -378,6 +378,7 @@ public enum MarketData {
             publishMarketDepth(context);
         }
 
+        count = 0;
         BPlusTree<Long, OrderList> offerTree = orderBook.getOfferTree();
 
         for(int i=prices.length - 1; i>=0; i--){

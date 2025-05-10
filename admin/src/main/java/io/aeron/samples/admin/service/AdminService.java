@@ -320,4 +320,23 @@ public class AdminService
 
         adminClusterChannel.write(10, buffer, 0, client.getCancelOrderEncodedLength());
     }
+
+
+    public void replaceOrder(int securityId,  String clientOrderId, long volume, long price, String side, String orderType, String timeInForce, long displayQuantity, long minQuantity, long stopPrice) throws Exception {
+
+        final Client client = Client.newInstance(1, securityId);
+        final DirectBuffer buffer = client.replaceOrder(
+                clientOrderId,
+                volume,
+                price,
+                side,
+                orderType,
+                timeInForce,
+                displayQuantity,
+                minQuantity,
+                stopPrice
+        );
+
+        adminClusterChannel.write(10, buffer, 0, client.getReplaceOrderEncodedLength());
+    }
 }

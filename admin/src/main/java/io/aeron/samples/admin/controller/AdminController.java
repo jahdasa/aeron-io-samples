@@ -137,4 +137,20 @@ public class AdminController
             ) throws Exception {
         adminService.cancelOrder(securityId, clientOrderId, side, price);
     }
+
+    @PostMapping(path = "/v1/replace-order")
+    public void replaceOrder(
+            @RequestParam(defaultValue = "1") final int securityId,
+            @RequestParam final String clientOrderId,
+            @RequestParam final long volume,
+            @RequestParam final long price,
+            @RequestParam final String side,
+            @RequestParam final String orderType,
+            @RequestParam final String timeInForce,
+            @RequestParam final long displayQuantity,
+            @RequestParam final long minQuantity,
+            @RequestParam final long stopPrice) throws Exception
+    {
+        adminService.replaceOrder(securityId, clientOrderId, volume, price, side, orderType, timeInForce, displayQuantity, minQuantity, stopPrice);
+    }
 }

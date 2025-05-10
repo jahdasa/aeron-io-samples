@@ -54,7 +54,7 @@ public class ContinuousTradingProcessor implements TradingSessionProcessor {
     private void initPreProcessors(){
         preProcessors = new ObjectArrayList<>(3);
         preProcessors.add(new CancelOrderPreProcessor());
-        //preProcessors.add(new ReplaceOrderPreProcessor());
+        preProcessors.add(new ReplaceOrderPreProcessor());
         preProcessors.add(new OrderTypePreProcessor());
         preProcessors.add(new AddOrderPreProcessor());
         //preProcessors.add(new HawkesSimulationPreProcessor());

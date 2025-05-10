@@ -45,7 +45,7 @@ public class ReplaceOrderPreProcessor implements MatchingPreProcessor  {
         Iterator<OrderListCursor> orderListIterator = orderList.iterator();
         while (orderListIterator.hasNext()) {
             OrderEntry currentOrder = orderListIterator.next().value;
-            if (currentOrder.getOrderId() == replacementOrder.getOrderId()) {
+            if (currentOrder.getClientOrderId() == replacementOrder.getOrigClientOrderId()) {
                 boolean isParkedOrder  = MatchingUtil.isParkedOrder(currentOrder);
                 if(shouldRegressOrderBook(currentOrder,replacementOrder,isParkedOrder)){
                     orderListIterator.remove();
@@ -63,7 +63,9 @@ public class ReplaceOrderPreProcessor implements MatchingPreProcessor  {
                         return MATCHING_ACTION.AGGRESS_ORDER;
                     }
                 } else {
+                    int quantityToRemove = currentOrder.getQuantity() - replacementOrder.getQuantity();
                     amendCurrentOrder(currentOrder, replacementOrder, isParkedOrder);
+                    orderList.updateTotal(quantityToRemove);
                     break;
                 }
             }
@@ -111,6 +113,7 @@ public class ReplaceOrderPreProcessor implements MatchingPreProcessor  {
     }
 
     private void amendCurrentOrder(OrderEntry currentOrder,OrderEntry replacementOrder,boolean isParkedOrder){
+        currentOrder.setOrderId(replacementOrder.getOrderId());
         currentOrder.setQuantity(replacementOrder.getQuantity());
         if(currentOrder.getTimeInForce() == TimeInForce.GTD.getValue() ||
                 currentOrder.getTimeInForce() == TimeInForce.GTT.getValue()){

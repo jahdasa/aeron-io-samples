@@ -37,9 +37,7 @@ import org.agrona.concurrent.SystemEpochClock;
 import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
 import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
-import sbe.msg.AdminDecoder;
-import sbe.msg.NewOrderDecoder;
-import sbe.msg.OrderCancelRequestDecoder;
+import sbe.msg.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -86,6 +84,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private final NewOrderDecoder newOrderDecoder = new NewOrderDecoder();
     private final AdminDecoder adminDecoder = new AdminDecoder();
     private final OrderCancelRequestDecoder orderCancelRequestDecoder = new OrderCancelRequestDecoder();
+    private final OrderCancelReplaceRequestDecoder orderCancelReplaceRequestDecoder = new OrderCancelReplaceRequestDecoder();
 
 
     /**
@@ -159,8 +158,17 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             case NewOrderDecoder.TEMPLATE_ID -> processNowOrder(messageHeaderDecoder, buffer, offset);
             case AdminDecoder.TEMPLATE_ID -> processAdminMessage(messageHeaderDecoder, buffer, offset);
             case OrderCancelRequestDecoder.TEMPLATE_ID -> processCancelOrder(messageHeaderDecoder, buffer, offset);
+            case OrderCancelReplaceRequestDecoder.TEMPLATE_ID -> processReplaceOrder(messageHeaderDecoder, buffer, offset);
             default -> log("Unknown message type: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
         }
+    }
+
+    private void processReplaceOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
+        log("Process replace order" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+
+        orderCancelReplaceRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + orderCancelReplaceRequestDecoder.encodedLength());
     }
 
     private void processCancelOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {

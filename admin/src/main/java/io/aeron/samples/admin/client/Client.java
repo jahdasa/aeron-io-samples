@@ -212,6 +212,10 @@ public class Client {
         return orderCancelRequestBuilder.getMessageEncodedLength();
     }
 
+    public int getReplaceOrderEncodedLength() {
+        return orderCancelReplaceRequestBuilder.getMessageEncodedLength();
+    }
+
     public DirectBuffer cancelOrder(String originalClientOrderId, String side, long price) {
         String origClientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelRequestEncoder.origClientOrderIdLength());
         String clientOrderId = BuilderUtil.fill("-" + originalClientOrderId, OrderCancelRequestEncoder.clientOrderIdLength());
@@ -228,7 +232,17 @@ public class Client {
         return directBuffer;
     }
 
-    public void replaceOrder(String originalClientOrderId, long volume, long price, String side, String orderType, String timeInForce, long displayQuantity, long minQuantity, long stopPrice) {
+    public DirectBuffer replaceOrder(
+            String originalClientOrderId,
+            long volume,
+            long price,
+            String side,
+            String orderType,
+            String timeInForce,
+            long displayQuantity,
+            long minQuantity,
+            long stopPrice)
+    {
         //String clientOrderId = BuilderUtil.fill(LocalDateTime.now().toString(), OrderCancelReplaceRequestEncoder.clientOrderIdLength());
         String clientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelReplaceRequestEncoder.clientOrderIdLength());
         String origClientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelReplaceRequestEncoder.origClientOrderIdLength());
@@ -249,8 +263,9 @@ public class Client {
                 .limitPrice(price)
                 .stopPrice(stopPrice)
                 .build();
-//        tradingGatewayPub.send(directBuffer);
         System.out.println("Message=OrderModify|Time=" + clientOrderId + "|OrderId=" + origClientOrderId + "|Type=" + orderType + "|Side=" + side + "|Volume=" + volume + "(" + displayQuantity + ")" + "|Price=" + price + "|StopPrice=" + stopPrice + "|TIF=" + timeInForce + "|MES=" + minQuantity);
+
+        return directBuffer;
     }
 
     public DirectBuffer calcVWAP() {

@@ -22,6 +22,9 @@ public class OrderCancelReplaceRequestParser {
         orderCancelReplaceRequest.wrap(buffer, bufferOffset, actingBlockLength, actingVersion);
 
         orderEntry.setOrderId(orderCancelReplaceRequest.orderId());
+        orderEntry.setClientOrderId(Long.parseLong(orderCancelReplaceRequest.clientOrderId().trim()));
+        orderEntry.setOrigClientOrderId(Long.parseLong(orderCancelReplaceRequest.origClientOrderId().trim()));
+
         securityId = orderCancelReplaceRequest.securityId();
         String traderName = new  String(traderMnemonic, 0, orderCancelReplaceRequest.getTraderMnemonic(traderMnemonic, 0), OrderCancelReplaceRequestDecoder.traderMnemonicCharacterEncoding()).trim();
         orderEntry.setTrader(TraderDAO.getTrader(traderName));

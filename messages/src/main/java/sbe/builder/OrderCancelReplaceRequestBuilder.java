@@ -11,6 +11,7 @@ public class OrderCancelReplaceRequestBuilder {
     private OrderCancelReplaceRequestEncoder orderCancelReplaceRequest;
     private MessageHeaderEncoder messageHeader;
     private UnsafeBuffer encodeBuffer;
+    private int messageEncodedLength;
 
     private int compID;
     private UnsafeBuffer clientOrderId;
@@ -159,6 +160,13 @@ public class OrderCancelReplaceRequestBuilder {
         orderCancelReplaceRequest.stopPrice().mantissa(stopPrice);
         orderCancelReplaceRequest.orderBook(orderBook);
 
+        messageEncodedLength = messageHeader.encodedLength() + orderCancelReplaceRequest.encodedLength();
+
+
         return encodeBuffer;
+    }
+
+    public int getMessageEncodedLength() {
+        return messageEncodedLength;
     }
 }

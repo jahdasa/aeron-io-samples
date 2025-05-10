@@ -139,7 +139,7 @@ public class AdminClientEgressListener implements EgressListener
 
                 log(
                         "securityId: " + securityId +
-                                " b/v: " + bidTotal + "@" + bidTotalVolume + " o/v: " + offerTotal + "@" + offerTotalVolume , AttributedStyle.YELLOW);
+                                " b-t/v: " + bidTotal + "@" + bidTotalVolume + " o-t/v: " + offerTotal + "@" + offerTotalVolume , AttributedStyle.YELLOW);
             }
             case VWAPDecoder.TEMPLATE_ID -> {
                 VWAPDecoder vwapDecoder = new VWAPDecoder();

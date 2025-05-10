@@ -32,13 +32,15 @@ public class ReplaceOrderPreProcessor implements MatchingPreProcessor  {
         OrderBook.SIDE side = OrderBook.getSide(replacementOrder.getSide());
         BPlusTree<Long, OrderList> tree = getTree(side, orderBook, replacementOrder);
 
-        long price = replacementOrder.getPrice();
-        OrderList orderList = tree.get(price);
-        if(orderList == null){
-            return preProcessByOrderId(orderBook,side,replacementOrder);
-        }else{
+//        long price = replacementOrder.getPrice();
+//        OrderList orderList = tree.get(price);
+
+        return preProcessByOrderId(orderBook, side, replacementOrder);
+/*        if(orderList == null){
+            preProcessByOrderId(orderBook, side, replacementOrder);
+        } else {
             return preProcessByPrice(orderList,orderBook,side,replacementOrder,price);
-        }
+        }*/
     }
 
     private MATCHING_ACTION preProcessByPrice(OrderList orderList,OrderBook orderBook,OrderBook.SIDE side,OrderEntry replacementOrder,long price){
@@ -84,7 +86,7 @@ public class ReplaceOrderPreProcessor implements MatchingPreProcessor  {
             while (orderListIterator.hasNext()) {
                 OrderEntry currentOrder = orderListIterator.next().value;
                 long price = currentOrder.getPrice();
-                if (currentOrder.getOrderId() == replacementOrder.getOrderId()) {
+                if (currentOrder.getClientOrderId() == replacementOrder.getClientOrderId()) {
                     boolean isParkedOrder  = MatchingUtil.isParkedOrder(currentOrder);
                     if(shouldRegressOrderBook(currentOrder,replacementOrder,isParkedOrder)){
                         orderListIterator.remove();
@@ -102,7 +104,9 @@ public class ReplaceOrderPreProcessor implements MatchingPreProcessor  {
                             return MATCHING_ACTION.AGGRESS_ORDER;
                         }
                     } else {
+                        int quantityToRemove = currentOrder.getQuantity() - replacementOrder.getQuantity();
                         amendCurrentOrder(currentOrder, replacementOrder, isParkedOrder);
+                        orderList.updateTotal(quantityToRemove);
                         break;
                     }
                 }

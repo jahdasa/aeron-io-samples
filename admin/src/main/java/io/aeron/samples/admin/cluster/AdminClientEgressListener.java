@@ -45,6 +45,7 @@ import sbe.msg.marketData.SideEnum;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 
 /**
@@ -107,7 +108,10 @@ public class AdminClientEgressListener implements EgressListener
                 marketDepthDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
                 int securityId = marketDepthDecoder.securityId();
-
+                AtomicLong bidTotalVolume = new AtomicLong(0L);
+                AtomicLong bidTotal = new AtomicLong(0L);
+                AtomicLong offerTotalVolume = new AtomicLong(0L);
+                AtomicLong offerTotal = new AtomicLong(0L);
                 marketDepthDecoder.depth().iterator().forEachRemaining(depthDecoder ->
                 {
                     int count = depthDecoder.orderCount();
@@ -117,11 +121,25 @@ public class AdminClientEgressListener implements EgressListener
 
                     double priceValue = priceDecoder.mantissa() * Math.pow(10, priceDecoder.exponent());
 
+                    if(side== sbe.msg.SideEnum.Buy){
+                        bidTotalVolume.addAndGet(quantity);
+                        bidTotal.addAndGet((long) (quantity*priceValue));
+                    }
+                    else
+                    {
+                        offerTotalVolume.addAndGet(quantity);
+                        offerTotal.addAndGet((long) (quantity*priceValue));
+                    }
+
                     log(
                             "securityId: " + securityId +
                                     " side: " + side +
-                                    " count/quantity/priceValue: " + count + "@" + quantity + "@" + priceValue, AttributedStyle.YELLOW);
+                                    "@" + count + "@" + quantity + "@" + priceValue, AttributedStyle.YELLOW);
                 });
+
+                log(
+                        "securityId: " + securityId +
+                                " b/v: " + bidTotal + "@" + bidTotalVolume + " o/v: " + offerTotal + "@" + offerTotalVolume , AttributedStyle.YELLOW);
             }
             case VWAPDecoder.TEMPLATE_ID -> {
                 VWAPDecoder vwapDecoder = new VWAPDecoder();

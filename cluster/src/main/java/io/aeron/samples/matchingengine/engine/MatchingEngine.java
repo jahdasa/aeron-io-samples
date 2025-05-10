@@ -19,6 +19,7 @@ import dao.TraderDAO;
 import io.aeron.samples.matchingengine.data.ExecutionReportData;
 import io.aeron.samples.matchingengine.data.HDRData;
 import io.aeron.samples.matchingengine.data.MarketData;
+import leafNode.OrderListImpl;
 import orderBook.OrderBook;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
@@ -188,7 +189,8 @@ public class  MatchingEngine {
             if (running.get() == false) {
                 stop();
             }
-            System.out.println("Time taken to process order: " + (System.nanoTime() - startTime) + " ns");
+            System.out.println("Time taken to process order: " + (System.nanoTime() - startTime) + " ns" + ", l/i " + OrderListImpl.counter + "@" + OrderListImpl.OrderListIterator.counter);
+            ;
         }catch(Exception e){
             e.printStackTrace();
         }

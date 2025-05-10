@@ -17,6 +17,7 @@ public class OrderListImpl implements OrderList{
 
     private OrderEntry orderEntry;
     private static final long OBJECT_SIZE = OrderEntry.getObjectSize();
+    public static long counter = 0;
 
     public OrderListImpl(){
         this(DEFAULT_CAPACITY);
@@ -28,6 +29,7 @@ public class OrderListImpl implements OrderList{
         address = unsafe.allocateMemory(OBJECT_SIZE * this.capacity);
         initArray();
         orderListIterator = new OrderListIterator();
+        counter++;
     }
 
     public int size() {
@@ -233,12 +235,14 @@ public class OrderListImpl implements OrderList{
         return orderListIterator;
     }
 
-    class OrderListIterator implements Iterator<OrderListCursor>{
+    public class OrderListIterator implements Iterator<OrderListCursor>{
 
         private OrderListCursor cursor;
+        public static long counter = 0;
 
         public OrderListIterator(){
             cursor = new OrderListCursor();
+            counter++;
         }
 
         @Override

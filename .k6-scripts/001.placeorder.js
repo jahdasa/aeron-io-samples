@@ -33,7 +33,7 @@ function randomSide()
 }
 
 export default function () {
-    const url = 'http://localhost:8080/api/v1/submit-order';
+    const url = 'http://localhost:8080/api/v1/place-order';
 
     const volume = randomVolume();
     const payload = {
@@ -46,6 +46,8 @@ export default function () {
         displayQuantity: volume,
         minQuantity: '0',
         stopPrice: '0',
+        traderId: 1,
+        client: 1
     };
 
     const headers = {

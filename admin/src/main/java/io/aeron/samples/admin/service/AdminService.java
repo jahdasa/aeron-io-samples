@@ -299,7 +299,7 @@ public class AdminService
         final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
                 SideEnum.valueOf(side).value() + "@" +
                 securityId + "@" +
-                clientOrderId + "@" +
+                clientOrderId.trim() + "@" +
                 traderId + "@" +
                 clientId;
 
@@ -340,7 +340,7 @@ public class AdminService
         {
             buffer = client.calcVWAP();
         }
-        else if(adminMessageType.equals("marketDepth"))
+        else if(adminMessageType.equals("MarketDepth"))
         {
             buffer = client.marketDepth();
         }
@@ -393,7 +393,7 @@ public class AdminService
     }
 
 
-    public void replaceOrder(
+    public ResponseWrapper replaceOrder(
         int securityId,
         String clientOrderId,
         long volume,
@@ -404,22 +404,49 @@ public class AdminService
         long displayQuantity,
         long minQuantity,
         long stopPrice,
-        int traderId) throws Exception {
-
+        int traderId,
+        int clientId) throws Exception
+    {
         final Client client = Client.newInstance(1, securityId);
         final DirectBuffer buffer = client.replaceOrder(
-                clientOrderId,
-                volume,
-                price,
-                side,
-                orderType,
-                timeInForce,
-                displayQuantity,
-                minQuantity,
-                stopPrice,
-                traderId
+            clientOrderId,
+            volume,
+            price,
+            side,
+            orderType,
+            timeInForce,
+            displayQuantity,
+            minQuantity,
+            stopPrice,
+            traderId
         );
 
+        // neworder-tid@side@security@clientOrderId@trader@client
+        final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
+            SideEnum.valueOf(side).value() + "@" +
+            securityId + "@" +
+            clientOrderId.trim() + "@" +
+            traderId + "@" +
+            clientId;
+
+        log.info("CorrelationId: {}", correlationId);
+
+        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
+        clusterInteractionAgent.onComplete(correlationId, response);
+
         adminClusterChannel.write(10, buffer, 0, client.getReplaceOrderEncodedLength());
+
+        try {
+            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
+            log.info("Response: {}", responseWrapper.getData());
+
+            return responseWrapper;
+        }
+        catch (final Exception e)
+        {
+            log.error(e.getMessage(), e);
+        }
+
+        return new ResponseWrapper();
     }
 }

@@ -165,9 +165,9 @@ public class AdminController
     }
 
 
-    // cancelorder-tid@side@security@clientOrderId@trader@client
+    // replaceorder-tid@side@security@clientOrderId@trader@client
     @PostMapping(path = "/v1/replace-order")
-    public void replaceOrder(
+    public ResponseWrapper replaceOrder(
             @RequestParam(defaultValue = "1") final int securityId,
             @RequestParam final String clientOrderId,
             @RequestParam final long volume,
@@ -178,18 +178,20 @@ public class AdminController
             @RequestParam final long displayQuantity,
             @RequestParam final long minQuantity,
             @RequestParam final long stopPrice,
-            @RequestParam final int traderId) throws Exception
+            @RequestParam final int traderId,
+            @RequestParam final int client) throws Exception
     {
-        adminService.replaceOrder(securityId,
-                clientOrderId,
-                volume,
-                price,
-                side,
-                orderType,
-                timeInForce,
-                displayQuantity,
-                minQuantity,
-                stopPrice,
-                traderId);
+        return adminService.replaceOrder(securityId,
+            clientOrderId,
+            volume,
+            price,
+            side,
+            orderType,
+            timeInForce,
+            displayQuantity,
+            minQuantity,
+            stopPrice,
+            traderId,
+            client);
     }
 }

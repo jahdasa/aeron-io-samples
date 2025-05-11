@@ -163,11 +163,11 @@ public class AdminClientEgressListener implements EgressListener
 
                 // placeorder-tid@side@security@clientOrderId@trader@client
                 final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
-                        "marketDepth" + "@" +
+                        "MarketDepth" + "@" +
                         securityId + "@" +
                         "1" + "@" +
                         "1" + "@" +
-                        sbeMsgMessageHeaderDecoder.compID();
+                        "1";
 
                 pendingMessageManager.markMarketDataMessageAsReceived(
                         correlationId,
@@ -230,14 +230,13 @@ public class AdminClientEgressListener implements EgressListener
                 if(adminTypeEnum == AdminTypeEnum.EndMarketDepth)
                 {
                     final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
-                            "marketDepth" + "@" +
+                            "MarketDepth" + "@" +
                             securityId + "@" +
                             "1" + "@" +
                             "1" + "@" +
                             "1";
 
-                    pendingMessageManager.markAdminMessageAsReceived(
-                            correlationId
+                    pendingMessageManager.markAdminMessageAsReceived(correlationId
                     );
                 }
 
@@ -321,7 +320,7 @@ public class AdminClientEgressListener implements EgressListener
                 final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
                         side.value() + "@" +
                         securityId + "@" +
-                        clientOrderId + "@" +
+                        clientOrderId.trim() + "@" +
                         traderId + "@" +
                         sbeMsgMessageHeaderDecoder.compID();
 

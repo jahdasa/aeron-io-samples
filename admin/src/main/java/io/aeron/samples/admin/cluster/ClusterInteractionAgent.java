@@ -168,6 +168,16 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
         orderCancelReplaceRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
+        // neworder-tid@side@security@clientOrderId@trader@client
+        final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
+                orderCancelReplaceRequestDecoder.side().value() + "@" +
+                orderCancelReplaceRequestDecoder.securityId() + "@" +
+                orderCancelReplaceRequestDecoder.clientOrderId().trim() + "@" +
+                orderCancelReplaceRequestDecoder.traderId() + "@" +
+                sbeMessageHeaderDecoder.compID();
+
+        pendingMessageManager.addMessage(correlationId, "admin-message");
+
         retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + orderCancelReplaceRequestDecoder.encodedLength());
     }
 
@@ -188,7 +198,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
             newOrderDecoder.side().value() + "@" +
             newOrderDecoder.securityId() + "@" +
-            newOrderDecoder.clientOrderId() + "@" +
+            newOrderDecoder.clientOrderId().trim() + "@" +
             newOrderDecoder.traderId() + "@" +
             sbeMessageHeaderDecoder.compID();
 
@@ -198,9 +208,18 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     }
 
     private void processAdminMessage(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        log("Process admin message" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+        log("Process admin message: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
 
         adminDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+        // admin-tid@type@security@reqid@traderId@client
+        final String correlationId = AdminEncoder.TEMPLATE_ID + "@" +
+                adminDecoder.adminMessage().name() + "@" +
+                adminDecoder.securityId() + "@" +
+                "1" + "@" +
+                "1" + "@" +
+                sbeMessageHeaderDecoder.compID();
+        pendingMessageManager.addMessage(correlationId, "admin-message");
 
         retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + adminDecoder.encodedLength());
     }

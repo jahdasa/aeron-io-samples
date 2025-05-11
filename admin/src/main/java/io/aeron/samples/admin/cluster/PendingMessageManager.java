@@ -42,8 +42,11 @@ public class PendingMessageManager
     private final Map<String, CompletableFuture<ResponseWrapper>> futures = new ConcurrentHashMap<>();
     private final Map<String, ResponseWrapper> partialData = new ConcurrentHashMap<>();
 
-    private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(5);
+    private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(50);
+
     private final Deque<PendingMessage> trackedMessages = new LinkedList<>();
+    private final ConcurrentHashMap<String, PendingMessage> trackedMessagesMap = new ConcurrentHashMap<>();
+
     private final EpochClock current;
     private LineReader lineReader;
 
@@ -66,7 +69,9 @@ public class PendingMessageManager
         LOGGER.info("addMessage to trackedMessages correlationId: {}, messageType: {}", correlationId, messageType);
 
         final long timeoutAt = current.time() + TIMEOUT_MS;
-        trackedMessages.add(new PendingMessage(timeoutAt, correlationId, messageType));
+        final PendingMessage message = new PendingMessage(timeoutAt, correlationId, messageType);
+        trackedMessagesMap.put(correlationId, message);
+        trackedMessages.add(message);
     }
 
     /**
@@ -75,17 +80,14 @@ public class PendingMessageManager
      */
     public void markMessageAsReceived(final String correlationId)
     {
-        trackedMessages.removeIf(pendingMessage ->
-        {
-            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-            if (exist)
-            {
-                replySuccess(correlationId, new AddParticipantResponse(correlationId, Collections.emptyList()));
-            }
-            return exist;
-        });
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            replySuccess(correlationId, new AddParticipantResponse(correlationId, Collections.emptyList()));
+            trackedMessagesMap.remove(correlationId);
+        }
     }
 
     /**
@@ -94,17 +96,14 @@ public class PendingMessageManager
      */
     public void markCreateAuctionMessageAsReceived(final String correlationId, final long auctionId, final AddAuctionResult result)
     {
-        trackedMessages.removeIf(pendingMessage ->
-        {
-            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-            if (exist)
-            {
-                replySuccess(correlationId, new CreateAuctionResponse(correlationId, auctionId, result));
-            }
-            return exist;
-        });
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            replySuccess(correlationId, new CreateAuctionResponse(correlationId, auctionId, result));
+            trackedMessagesMap.remove(correlationId);
+        }
     }
 
     /**
@@ -123,28 +122,25 @@ public class PendingMessageManager
         sbe.msg.SideEnum side
         )
     {
-        trackedMessages.removeIf(pendingMessage ->
-        {
-            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-            if (exist)
-            {
-                OrderViewResponse responseData = new OrderViewResponse(
-                        correlationId,
-                        securityId,
-                        traderId,
-                        clientOrderId,
-                        orderId,
-                        submittedTime,
-                        priceValue,
-                        orderQuantity,
-                        side
-                );
-                replySuccess(correlationId, responseData);
-            }
-            return exist;
-        });
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            OrderViewResponse responseData = new OrderViewResponse(
+                    correlationId,
+                    securityId,
+                    traderId,
+                    clientOrderId,
+                    orderId,
+                    submittedTime,
+                    priceValue,
+                    orderQuantity,
+                    side
+            );
+            replySuccess(correlationId, responseData);
+            trackedMessagesMap.remove(correlationId);
+        }
     }
 
 
@@ -156,17 +152,14 @@ public class PendingMessageManager
         final String correlationId,
         final List<ParticipantDTO> participantsList)
     {
-        trackedMessages.removeIf(pendingMessage ->
-        {
-            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-            if (exist)
-            {
-                replySuccess(correlationId, new AddParticipantResponse(correlationId, participantsList));
-            }
-            return exist;
-        });
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            replySuccess(correlationId, new AddParticipantResponse(correlationId, participantsList));
+            trackedMessagesMap.remove(correlationId);
+        }
     }
 
     /**
@@ -178,17 +171,14 @@ public class PendingMessageManager
             final long auctionId,
             final AddAuctionBidResult result)
     {
-        trackedMessages.removeIf(pendingMessage ->
-        {
-            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-            if (exist)
-            {
-                replySuccess(correlationId, new AddAuctionBidResponse(correlationId, auctionId, result));
-            }
-            return exist;
-        });
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            replySuccess(correlationId, new AddAuctionBidResponse(correlationId, auctionId, result));
+            trackedMessagesMap.remove(correlationId);
+        }
     }
 
     /**
@@ -199,17 +189,14 @@ public class PendingMessageManager
             final String correlationId,
             final List<ActionDTO> actions)
     {
-        trackedMessages.removeIf(pendingMessage ->
-        {
-            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-            if (exist)
-            {
-                replySuccess(correlationId, new ListActionsResponse(correlationId, actions));
-            }
-            return exist;
-        });
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            replySuccess(correlationId, new ListActionsResponse(correlationId, actions));
+            trackedMessagesMap.remove(correlationId);
+        }
     }
 
     /**
@@ -221,6 +208,13 @@ public class PendingMessageManager
         final long currentTime = current.time();
         if (null == trackedMessages.peek())
         {
+            return;
+        }
+
+        String correlationIdPeak = trackedMessages.peek().correlationId();
+        if (!trackedMessagesMap.containsKey(correlationIdPeak))
+        {
+            trackedMessages.remove();
             return;
         }
 
@@ -300,33 +294,24 @@ public class PendingMessageManager
     }
 
     public void markMarketDataMessageAsReceived(String correlationId, MarketDepthDTO marketDepthDTO) {
-        trackedMessages.removeIf(pendingMessage ->
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        final ResponseWrapper responseWrapper = partialData.get(correlationId);
+        if(responseWrapper == null)
         {
-            final boolean exist = pendingMessage.correlationId().equals(correlationId);
-
-            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-            if (exist)
-            {
-                final ResponseWrapper responseWrapper = partialData.get(correlationId);
-                if(responseWrapper == null)
-                {
-                    var response = new ResponseWrapper();
-                    response.setData(marketDepthDTO);
-                    response.setStatus(HttpStatus.OK.value());
-                    partialData.put(correlationId, response);
-                }
-                else
-                {
-                    final MarketDepthDTO aggData =  (MarketDepthDTO)responseWrapper.getData();
-                    aggData.getLines().addAll(marketDepthDTO.getLines());
-                    aggData.setAskTotalVolume(aggData.getAskTotalVolume() + marketDepthDTO.getAskTotalVolume());
-                    aggData.setBidTotalVolume(aggData.getBidTotalVolume() + marketDepthDTO.getBidTotalVolume());
-                    aggData.setAskTotal(aggData.getAskTotal() + marketDepthDTO.getAskTotal());
-                    aggData.setBidTotal(aggData.getBidTotal() + marketDepthDTO.getBidTotal());
-                }
-            }
-            return exist;
-        });
+            var response = new ResponseWrapper();
+            response.setData(marketDepthDTO);
+            response.setStatus(HttpStatus.OK.value());
+            partialData.put(correlationId, response);
+        }
+        else
+        {
+            final MarketDepthDTO aggData =  (MarketDepthDTO)responseWrapper.getData();
+            aggData.getLines().addAll(marketDepthDTO.getLines());
+            aggData.setAskTotalVolume(aggData.getAskTotalVolume() + marketDepthDTO.getAskTotalVolume());
+            aggData.setBidTotalVolume(aggData.getBidTotalVolume() + marketDepthDTO.getBidTotalVolume());
+            aggData.setAskTotal(aggData.getAskTotal() + marketDepthDTO.getAskTotal());
+            aggData.setBidTotal(aggData.getBidTotal() + marketDepthDTO.getBidTotal());
+        }
     }
 
     /**
@@ -334,21 +319,19 @@ public class PendingMessageManager
      * @param correlationId the correlation id of the message
      */
     public void markAdminMessageAsReceived(
-            final String correlationId
-            )
+        final String correlationId
+    )
     {
-        trackedMessages.removeIf(pendingMessage ->
-        {
-            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-            if (exist)
-            {
-                BaseResponse data = partialData.get(correlationId).getData();
-                replySuccess(correlationId, data);
-                partialData.remove(correlationId);
-            }
-            return exist;
-        });
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            BaseResponse data = partialData.get(correlationId).getData();
+            replySuccess(correlationId, data);
+            partialData.remove(correlationId);
+            trackedMessagesMap.remove(correlationId);
+        }
     }
+
 }

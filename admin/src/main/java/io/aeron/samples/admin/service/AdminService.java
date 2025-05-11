@@ -334,11 +334,11 @@ public class AdminService
         Client client = Client.newInstance(clientId, securityId);
 
         DirectBuffer buffer = null;
-        if(adminMessageType.equals("lob"))
+        if(adminMessageType.equals("LOB"))
         {
             buffer = client.lobSnapshot();
         }
-        else if(adminMessageType.equals("vwap"))
+        else if(adminMessageType.equals("VWAP"))
         {
             buffer = client.calcVWAP();
         }
@@ -367,7 +367,7 @@ public class AdminService
         adminClusterChannel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
 
         try {
-            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
+            final ResponseWrapper responseWrapper = response.get(15, TimeUnit.SECONDS);
             log.info("Response: {}", responseWrapper.getData());
 
             return responseWrapper;
@@ -473,7 +473,7 @@ public class AdminService
 
         try {
             final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
+            log.debug("Response: {}", responseWrapper.getData());
 
             return responseWrapper;
         }

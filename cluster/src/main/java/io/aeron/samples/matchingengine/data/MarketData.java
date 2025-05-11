@@ -232,7 +232,7 @@ public enum MarketData {
                             currentOrder.getPrice());
 
                     count++;
-                    if(count == 100){
+                    if(count == 500){
                         publishLOBSnapShot(context);
                         count = 0;
                         System.out.println("Published large LOB");
@@ -255,7 +255,7 @@ public enum MarketData {
                             currentOrder.getPrice());
 
                     count++;
-                    if(count == 100){
+                    if(count == 500){
                         publishLOBSnapShot(context);
                         count = 0;
                     }

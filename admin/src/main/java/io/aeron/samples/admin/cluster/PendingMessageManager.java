@@ -314,6 +314,23 @@ public class PendingMessageManager
         }
     }
 
+    public void markLOBMessageAsReceived(String correlationId, LimitOrderBookDTO limitOrderBookDTO) {
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        final ResponseWrapper responseWrapper = partialData.get(correlationId);
+        if(responseWrapper == null)
+        {
+            var response = new ResponseWrapper();
+            response.setData(limitOrderBookDTO);
+            response.setStatus(HttpStatus.OK.value());
+            partialData.put(correlationId, response);
+        }
+        else
+        {
+            final LimitOrderBookDTO aggData =  (LimitOrderBookDTO)responseWrapper.getData();
+            aggData.getOrders().addAll(limitOrderBookDTO.getOrders());
+        }
+    }
+
     /**
      * Mark a message as received
      * @param correlationId the correlation id of the message
@@ -327,8 +344,36 @@ public class PendingMessageManager
         LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
         if (exist)
         {
-            BaseResponse data = partialData.get(correlationId).getData();
+            final ResponseWrapper wrapper = partialData.get(correlationId);
+
+            BaseResponse data = new LimitOrderBookDTO();
+            if(wrapper != null)
+            {
+                data = wrapper.getData();
+            }
+
             replySuccess(correlationId, data);
+            partialData.remove(correlationId);
+            trackedMessagesMap.remove(correlationId);
+        }
+    }
+
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markVwapMessageAsReceived(
+            final String correlationId,
+            double bidVWAP,
+            double offerVWAP
+    )
+    {
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
+
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            replySuccess(correlationId, new VWAPDTO(bidVWAP, offerVWAP));
             partialData.remove(correlationId);
             trackedMessagesMap.remove(correlationId);
         }

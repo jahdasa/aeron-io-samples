@@ -20,6 +20,7 @@ import io.aeron.cluster.client.EgressListener;
 import io.aeron.cluster.codecs.EventCode;
 import io.aeron.logbuffer.Header;
 import io.aeron.samples.admin.model.ActionDTO;
+import io.aeron.samples.admin.model.LimitOrderBookDTO;
 import io.aeron.samples.admin.model.MarketDepthDTO;
 import io.aeron.samples.admin.model.ParticipantDTO;
 import io.aeron.samples.admin.util.EnvironmentUtil;
@@ -169,10 +170,7 @@ public class AdminClientEgressListener implements EgressListener
                         "1" + "@" +
                         "1";
 
-                pendingMessageManager.markMarketDataMessageAsReceived(
-                        correlationId,
-                        marketDepthDTO
-                );
+                pendingMessageManager.markMarketDataMessageAsReceived(correlationId, marketDepthDTO);
 
                 log("correlationId: " + correlationId, AttributedStyle.YELLOW);
 
@@ -191,6 +189,14 @@ public class AdminClientEgressListener implements EgressListener
                         " bidVWAP/offerVWAP: " + priceBidValue + "@" + priceOfferValue
                 , AttributedStyle.YELLOW);
 
+                final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
+                        "VWAP" + "@" +
+                        vwapDecoder.securityId() + "@" +
+                        "1" + "@" +
+                        "1" + "@" +
+                        "1";
+
+                pendingMessageManager.markVwapMessageAsReceived(correlationId, priceBidValue, priceOfferValue);
             }
             case LOBDecoder.TEMPLATE_ID -> {
                 LOBDecoder lobDecoder = new LOBDecoder();
@@ -198,10 +204,15 @@ public class AdminClientEgressListener implements EgressListener
 
                 int securityId = lobDecoder.securityId();
 
+                final LimitOrderBookDTO limitOrderBookDTO = new LimitOrderBookDTO();
+                limitOrderBookDTO.setSecurityId(securityId);
+
+                final List<LimitOrderBookDTO.OrderDTO> orders = new ArrayList<>();
+                limitOrderBookDTO.setOrders(orders);
+
                 lobDecoder.orders().iterator().forEachRemaining(ordersDecoder ->
                 {
                     String clientOrderId = ordersDecoder.clientOrderId();
-                    int count = ordersDecoder.count();
                     int orderId = ordersDecoder.orderId();
                     int orderQuantity = ordersDecoder.orderQuantity();
                     sbe.msg.PriceDecoder priceDecoder = ordersDecoder.price();
@@ -209,13 +220,31 @@ public class AdminClientEgressListener implements EgressListener
 
                     double priceValue = priceDecoder.mantissa() * Math.pow(10, priceDecoder.exponent());
 
-                    log(
+/*                    log(
                         "securityId: " + securityId +
                                 " clientOrderId: "+ clientOrderId +
                                 " orderId: " + orderId +
                                 " side: " + side +
-                            " orderQuantity/priceValue: " + count + "@" + orderQuantity + "@" + priceValue, AttributedStyle.YELLOW);
+                            " orderQuantity/priceValue: " + count + "@" + orderQuantity + "@" + priceValue, AttributedStyle.YELLOW);*/
+
+                    final LimitOrderBookDTO.OrderDTO order = new LimitOrderBookDTO.OrderDTO();
+                    order.setOrderId(orderId);
+                    order.setClientOrderId(clientOrderId);
+                    order.setPrice(priceValue);
+                    order.setSide(side);
+                    order.setQuantity(orderQuantity);
+                    orders.add(order);
                 });
+
+                // placeorder-tid@side@security@clientOrderId@trader@client
+                final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
+                    "LOB" + "@" +
+                    securityId + "@" +
+                    "1" + "@" +
+                    "1" + "@" +
+                    "1";
+
+                pendingMessageManager.markLOBMessageAsReceived(correlationId, limitOrderBookDTO);
             }
             case AdminDecoder.TEMPLATE_ID -> {
                 AdminDecoder adminDecoder = new AdminDecoder();
@@ -230,15 +259,26 @@ public class AdminClientEgressListener implements EgressListener
                 if(adminTypeEnum == AdminTypeEnum.EndMarketDepth)
                 {
                     final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
-                            "MarketDepth" + "@" +
-                            securityId + "@" +
-                            "1" + "@" +
-                            "1" + "@" +
-                            "1";
+                        "MarketDepth" + "@" +
+                        securityId + "@" +
+                        "1" + "@" +
+                        "1" + "@" +
+                        "1";
 
-                    pendingMessageManager.markAdminMessageAsReceived(correlationId
-                    );
+                    pendingMessageManager.markAdminMessageAsReceived(correlationId);
                 }
+                else if(adminTypeEnum == AdminTypeEnum.EndLOB)
+                {
+                    final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
+                        "LOB" + "@" +
+                        securityId + "@" +
+                        "1" + "@" +
+                        "1" + "@" +
+                        "1";
+
+                    pendingMessageManager.markAdminMessageAsReceived(correlationId);
+                }
+
 
             }
             case ExecutionReportDecoder.TEMPLATE_ID -> {

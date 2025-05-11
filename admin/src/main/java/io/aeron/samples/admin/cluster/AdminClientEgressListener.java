@@ -315,13 +315,12 @@ public class AdminClientEgressListener implements EgressListener
                     " orderQuantity: " + orderQuantity + " price: " + priceValue + " traderId: " + traderId,
                     AttributedStyle.YELLOW);
 
-
                 // placeorder-tid@side@security@clientOrderId@trader@client
                 final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
                         side.value() + "@" +
                         securityId + "@" +
                         clientOrderId.trim() + "@" +
-                        traderId + "@" +
+                        "1" + "@" +
                         sbeMsgMessageHeaderDecoder.compID();
 
                 pendingMessageManager.markOrderViewMessageAsReceived(

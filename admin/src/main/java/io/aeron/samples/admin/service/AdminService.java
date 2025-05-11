@@ -1,5 +1,6 @@
 package io.aeron.samples.admin.service;
 
+import io.aeron.cluster.codecs.CancelTimerEncoder;
 import io.aeron.samples.admin.cli.*;
 import io.aeron.samples.admin.client.Client;
 import io.aeron.samples.admin.cluster.ClusterInteractionAgent;
@@ -14,6 +15,7 @@ import org.agrona.concurrent.SleepingMillisIdleStrategy;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 import sbe.builder.BuilderUtil;
 import sbe.msg.*;
 
@@ -385,11 +387,44 @@ public class AdminService
         adminClusterChannel.write(10, buffer, 0, client.getNewOrderEncodedLength());*/
     }
 
-    public void cancelOrder(int securityId, String clientOrderId, final String side, final long price) throws Exception {
-        Client client = Client.newInstance(1, securityId);
-        DirectBuffer buffer = client.cancelOrder(clientOrderId, side, price);
+    public ResponseWrapper cancelOrder(
+        int securityId,
+        String clientOrderId,
+        final String side,
+        final long price,
+        final int traderId,
+        final int clientId) throws Exception
+    {
+        final Client client = Client.newInstance(clientId, securityId);
+        DirectBuffer buffer = client.cancelOrder(clientOrderId, side, price, traderId);
+
+        // cancelorder-tid@side@security@clientOrderId@trader@client
+        final String correlationId = NewOrderEncoder.TEMPLATE_ID + "@" +
+                SideEnum.valueOf(side).value() + "@" +
+                securityId + "@" +
+                "-" + clientOrderId.trim() + "@" +
+                traderId + "@" +
+                clientId;
+
+        log.info("CorrelationId: {}", correlationId);
+
+        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
+        clusterInteractionAgent.onComplete(correlationId, response);
 
         adminClusterChannel.write(10, buffer, 0, client.getCancelOrderEncodedLength());
+
+        try {
+            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
+            log.info("Response: {}", responseWrapper.getData());
+
+            return responseWrapper;
+        }
+        catch (final Exception e)
+        {
+            log.error(e.getMessage(), e);
+        }
+
+        return new ResponseWrapper();
     }
 
 

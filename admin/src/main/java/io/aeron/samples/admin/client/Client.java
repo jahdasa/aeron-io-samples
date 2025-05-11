@@ -226,7 +226,12 @@ public class Client {
         return orderCancelReplaceRequestBuilder.getMessageEncodedLength();
     }
 
-    public DirectBuffer cancelOrder(String originalClientOrderId, String side, long price) {
+    public DirectBuffer cancelOrder(
+        String originalClientOrderId,
+        String side,
+        long price,
+        int traderId)
+    {
         String origClientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelRequestEncoder.origClientOrderIdLength());
         String clientOrderId = BuilderUtil.fill("-" + originalClientOrderId, OrderCancelRequestEncoder.clientOrderIdLength());
 
@@ -236,6 +241,9 @@ public class Client {
                 .securityId(securityId)
                 .side(SideEnum.valueOf(side))
                 .limitPrice(price)
+                .securityId(securityId)
+                .traderId(traderId)
+                .compID(clientData.getCompID())
                 .build();
         System.out.println("Message=OrderCancel|OrderId=" + origClientOrderId.trim());
 

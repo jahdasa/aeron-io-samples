@@ -62,7 +62,7 @@ public class OrderCancelRequestBuilder {
         return this;
     }
 
-    public OrderCancelRequestBuilder tradeId(int value){
+    public OrderCancelRequestBuilder traderId(int value){
         this.traderId = value;
         return this;
     }

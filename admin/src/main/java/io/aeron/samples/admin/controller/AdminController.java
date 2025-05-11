@@ -155,13 +155,16 @@ public class AdminController
      * Endpoint to cancel an order
      */
     @PostMapping(path = "/v1/cancel-order")
-    public void cancelOrder(
+    public ResponseWrapper cancelOrder(
             @RequestParam(defaultValue = "1") final int securityId,
             @RequestParam final String clientOrderId,
             @RequestParam final String side,
-            @RequestParam final long price
-            ) throws Exception {
-        adminService.cancelOrder(securityId, clientOrderId, side, price);
+            @RequestParam final long price,
+            @RequestParam final int traderId,
+            @RequestParam final int client
+            ) throws Exception
+    {
+        return adminService.cancelOrder(securityId, clientOrderId, side, price, traderId, client);
     }
 
 

@@ -186,6 +186,16 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
         orderCancelRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
+        // cancelorder-tid@side@security@clientOrderId@trader@client
+        final String correlationId = NewOrderEncoder.TEMPLATE_ID + "@" +
+                orderCancelRequestDecoder.side().value() + "@" +
+                orderCancelRequestDecoder.securityId() + "@" +
+                orderCancelRequestDecoder.clientOrderId().trim() + "@" +
+                orderCancelRequestDecoder.traderId() + "@" +
+                "1";
+
+        pendingMessageManager.addMessage(correlationId, "cancel-order");
+
         retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + orderCancelRequestDecoder.encodedLength());
     }
 

@@ -34,7 +34,7 @@ public class MessageGenerator {
         orderCancelRequestBuilder.securityId(1);
 
 
-        orderCancelRequestBuilder.tradeId(1)
+        orderCancelRequestBuilder.traderId(1)
                 .side(SideEnum.Buy)
                 .orderBook(OrderBookEnum.Regular);
 
@@ -52,7 +52,7 @@ public class MessageGenerator {
         orderCancelRequestBuilder.origClientOrderId(origClientOrderId.getBytes());
         orderCancelRequestBuilder.securityId(99);
 
-        orderCancelRequestBuilder.tradeId(1)
+        orderCancelRequestBuilder.traderId(1)
                 .side(SideEnum.Buy)
                 .orderBook(OrderBookEnum.Regular);
 

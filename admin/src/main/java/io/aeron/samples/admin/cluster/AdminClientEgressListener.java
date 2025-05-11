@@ -20,6 +20,7 @@ import io.aeron.cluster.client.EgressListener;
 import io.aeron.cluster.codecs.EventCode;
 import io.aeron.logbuffer.Header;
 import io.aeron.samples.admin.model.ActionDTO;
+import io.aeron.samples.admin.model.MarketDepthDTO;
 import io.aeron.samples.admin.model.ParticipantDTO;
 import io.aeron.samples.admin.util.EnvironmentUtil;
 import io.aeron.samples.cluster.protocol.AddAuctionBidCommandResultDecoder;
@@ -112,6 +113,13 @@ public class AdminClientEgressListener implements EgressListener
                 AtomicLong bidTotal = new AtomicLong(0L);
                 AtomicLong offerTotalVolume = new AtomicLong(0L);
                 AtomicLong offerTotal = new AtomicLong(0L);
+
+                final MarketDepthDTO marketDepthDTO = new MarketDepthDTO();
+                marketDepthDTO.setSecurityId(securityId);
+
+                final List<MarketDepthDTO.MarketDepthLine> lines = new ArrayList<>();
+                marketDepthDTO.setLines(lines);
+
                 marketDepthDecoder.depth().iterator().forEachRemaining(depthDecoder ->
                 {
                     int count = depthDecoder.orderCount();
@@ -135,11 +143,39 @@ public class AdminClientEgressListener implements EgressListener
                             "securityId: " + securityId +
                                     " side: " + side +
                                     "@" + count + "@" + quantity + "@" + priceValue, AttributedStyle.YELLOW);
+
+                    MarketDepthDTO.MarketDepthLine line = new MarketDepthDTO.MarketDepthLine();
+                    line.setCount(count);
+                    line.setPrice(priceValue);
+                    line.setSide(side);
+                    line.setQuantity(quantity);
+                    lines.add(line);
                 });
 
                 log(
                         "securityId: " + securityId +
                                 " b-t/v: " + bidTotal + "@" + bidTotalVolume + " o-t/v: " + offerTotal + "@" + offerTotalVolume , AttributedStyle.YELLOW);
+
+                marketDepthDTO.setBidTotalVolume(bidTotalVolume.get());
+                marketDepthDTO.setBidTotal(bidTotal.get());
+                marketDepthDTO.setAskTotalVolume(offerTotalVolume.get());
+                marketDepthDTO.setAskTotal(offerTotal.get());
+
+                // placeorder-tid@side@security@clientOrderId@trader@client
+                final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
+                        "marketDepth" + "@" +
+                        securityId + "@" +
+                        "1" + "@" +
+                        "1" + "@" +
+                        sbeMsgMessageHeaderDecoder.compID();
+
+                pendingMessageManager.markMarketDataMessageAsReceived(
+                        correlationId,
+                        marketDepthDTO
+                );
+
+                log("correlationId: " + correlationId, AttributedStyle.YELLOW);
+
             }
             case VWAPDecoder.TEMPLATE_ID -> {
                 VWAPDecoder vwapDecoder = new VWAPDecoder();
@@ -190,9 +226,24 @@ public class AdminClientEgressListener implements EgressListener
 
                 log("Admin Message:" + AdminDecoder.TEMPLATE_ID + " adminTypeEnum: " + adminTypeEnum +
                     " securityId: " + securityId, AttributedStyle.YELLOW);
+
+                if(adminTypeEnum == AdminTypeEnum.EndMarketDepth)
+                {
+                    final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
+                            "marketDepth" + "@" +
+                            securityId + "@" +
+                            "1" + "@" +
+                            "1" + "@" +
+                            "1";
+
+                    pendingMessageManager.markAdminMessageAsReceived(
+                            correlationId
+                    );
+                }
+
             }
             case ExecutionReportDecoder.TEMPLATE_ID -> {
-                ExecutionReportDecoder executionReportDecoder = new ExecutionReportDecoder();
+                final ExecutionReportDecoder executionReportDecoder = new ExecutionReportDecoder();
                 executionReportDecoder.wrapAndApplyHeader(buffer, offset, sbeMsgMessageHeaderDecoder);
 
                 short partitionId = executionReportDecoder.partitionId();

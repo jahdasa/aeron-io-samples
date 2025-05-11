@@ -25,6 +25,7 @@ import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import sbe.msg.AdminTypeEnum;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -39,6 +40,7 @@ public class PendingMessageManager
     private static final Logger LOGGER = LoggerFactory.getLogger(PendingMessageManager.class);
 
     private final Map<String, CompletableFuture<ResponseWrapper>> futures = new ConcurrentHashMap<>();
+    private final Map<String, ResponseWrapper> partialData = new ConcurrentHashMap<>();
 
     private static final long TIMEOUT_MS = TimeUnit.SECONDS.toMillis(5);
     private final Deque<PendingMessage> trackedMessages = new LinkedList<>();
@@ -295,5 +297,58 @@ public class PendingMessageManager
         response.setError(error);
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         future.complete(response);
+    }
+
+    public void markMarketDataMessageAsReceived(String correlationId, MarketDepthDTO marketDepthDTO) {
+        trackedMessages.removeIf(pendingMessage ->
+        {
+            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+
+            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+            if (exist)
+            {
+                final ResponseWrapper responseWrapper = partialData.get(correlationId);
+                if(responseWrapper == null)
+                {
+                    var response = new ResponseWrapper();
+                    response.setData(marketDepthDTO);
+                    response.setStatus(HttpStatus.OK.value());
+                    partialData.put(correlationId, response);
+                }
+                else
+                {
+                    final MarketDepthDTO aggData =  (MarketDepthDTO)responseWrapper.getData();
+                    aggData.getLines().addAll(marketDepthDTO.getLines());
+                    aggData.setAskTotalVolume(aggData.getAskTotalVolume() + marketDepthDTO.getAskTotalVolume());
+                    aggData.setBidTotalVolume(aggData.getBidTotalVolume() + marketDepthDTO.getBidTotalVolume());
+                    aggData.setAskTotal(aggData.getAskTotal() + marketDepthDTO.getAskTotal());
+                    aggData.setBidTotal(aggData.getBidTotal() + marketDepthDTO.getBidTotal());
+                }
+            }
+            return exist;
+        });
+    }
+
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markAdminMessageAsReceived(
+            final String correlationId
+            )
+    {
+        trackedMessages.removeIf(pendingMessage ->
+        {
+            final boolean exist = pendingMessage.correlationId().equals(correlationId);
+
+            LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+            if (exist)
+            {
+                BaseResponse data = partialData.get(correlationId).getData();
+                replySuccess(correlationId, data);
+                partialData.remove(correlationId);
+            }
+            return exist;
+        });
     }
 }

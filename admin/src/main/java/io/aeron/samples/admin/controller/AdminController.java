@@ -132,14 +132,14 @@ public class AdminController
      * Endpoint to submit a buy limit order
      */
     @GetMapping(path = "/v1/submit-admin-message")
-    public void submitAdminMessage(
+    public ResponseWrapper submitAdminMessage(
             @RequestParam final long requestId,
             @RequestParam(defaultValue = "1") final int securityId,
             @RequestParam final String adminMessageType,
             @RequestParam final long trader,
             @RequestParam final int client
             ) throws Exception {
-        adminService.submitAdminMessage(securityId, adminMessageType);
+        return adminService.submitAdminMessage(securityId, adminMessageType, requestId, trader, client);
     }
 
     /**

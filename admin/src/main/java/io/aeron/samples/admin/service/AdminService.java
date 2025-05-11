@@ -15,9 +15,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
 import org.springframework.stereotype.Service;
 import sbe.builder.BuilderUtil;
-import sbe.msg.NewOrderDecoder;
-import sbe.msg.NewOrderEncoder;
-import sbe.msg.SideEnum;
+import sbe.msg.*;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -324,9 +322,14 @@ public class AdminService
         return new ResponseWrapper();
     }
 
-    public void submitAdminMessage(int securityId, String adminMessageType) throws Exception {
+    public ResponseWrapper submitAdminMessage(
+        int securityId,
+        String adminMessageType,
+        final long requestId,
+        final long traderId,
+        final int clientId) throws Exception {
 
-        Client client = Client.newInstance(1, securityId);
+        Client client = Client.newInstance(clientId, securityId);
 
         DirectBuffer buffer = null;
         if(adminMessageType.equals("lob"))
@@ -343,10 +346,36 @@ public class AdminService
         }
         else
         {
-            return;
+            return new ResponseWrapper();
         }
 
+        // admin-tid@type@security@reqid@traderId@client
+        final String correlationId = AdminEncoder.TEMPLATE_ID + "@" +
+                adminMessageType + "@" +
+                securityId + "@" +
+                requestId + "@" +
+                traderId + "@" +
+                clientId;
+
+        log.info("CorrelationId: {}", correlationId);
+
+        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
+        clusterInteractionAgent.onComplete(correlationId, response);
+
         adminClusterChannel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
+
+        try {
+            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
+            log.info("Response: {}", responseWrapper.getData());
+
+            return responseWrapper;
+        }
+        catch (final Exception e)
+        {
+            log.error(e.getMessage(), e);
+        }
+
+        return new ResponseWrapper();
     }
 
     public void bbo() throws Exception {

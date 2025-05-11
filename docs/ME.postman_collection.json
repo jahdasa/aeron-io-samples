@@ -710,7 +710,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "http://localhost:8080/api/v1/submit-admin-message?securityId=1&adminMessageType=lob&trader=1&client=1&requestId=1",
+							"raw": "http://localhost:8080/api/v1/submit-admin-message?securityId=1&adminMessageType=LOB&trader=1&client=1&requestId=1",
 							"protocol": "http",
 							"host": [
 								"localhost"
@@ -728,7 +728,7 @@
 								},
 								{
 									"key": "adminMessageType",
-									"value": "lob"
+									"value": "LOB"
 								},
 								{
 									"key": "trader",

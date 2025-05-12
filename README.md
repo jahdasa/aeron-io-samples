@@ -1,14 +1,9 @@
-# Aeron.io Quick Start
 
-> **Note**: This code in this repo is for demonstration purposes only and is not representative of a production system. Please contact info@aeron.io for help configuring your system.
+# Matching Engine
 
-A Cluster and command line client built using Aeron Cluster.
-
-![demo](images/docker_demo.gif)
-
-# Running
-
-Running the samples in Docker is the easiest way to get started. See the [docker readme](docker/readme.md) for more details.
+Based on open source CoinTossX exchange
+https://arxiv.org/pdf/2102.10925
+https://github.com/dharmeshsing/CoinTossX
 
 ## Local
 
@@ -32,7 +27,7 @@ wsl hostname -I
 -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:MaxGCPauseMillis=1
 
 # Compile
-Build & Install ObjectLayout project 
+Build & Install ObjectLayout project [https://github.com/jahdasa/ObjectLayout]
 mvn build install
 update DATA_PATH in two MatchingEngine.properties files:
 

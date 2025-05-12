@@ -35,6 +35,16 @@ sudo ncat -l 9999
 wsl hostname -I
 -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:MaxGCPauseMillis=1
 
+# Compile
+Build & Install ObjectLayout project 
+mvn build install
+
+# Run
+1. run cluster
+2. run admin
+3. call connect endpoint
+4. place/replace order
+5. get LOB/vwap/bbo/market depth
 
 
 # curl

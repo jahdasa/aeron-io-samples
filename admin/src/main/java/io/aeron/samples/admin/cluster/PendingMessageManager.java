@@ -25,7 +25,6 @@ import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import sbe.msg.AdminTypeEnum;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -374,6 +373,29 @@ public class PendingMessageManager
         if (exist)
         {
             replySuccess(correlationId, new VWAPDTO(bidVWAP, offerVWAP));
+            partialData.remove(correlationId);
+            trackedMessagesMap.remove(correlationId);
+        }
+    }
+
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markBBOMessageAsReceived(
+            final String correlationId,
+            final long bidQuantity,
+            final long offerQuantity,
+            final double bidValue,
+            final double offerValue
+    )
+    {
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
+
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            replySuccess(correlationId, new BBODTO(bidQuantity, offerQuantity,bidValue, offerValue));
             partialData.remove(correlationId);
             trackedMessagesMap.remove(correlationId);
         }

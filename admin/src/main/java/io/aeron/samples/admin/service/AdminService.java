@@ -346,6 +346,10 @@ public class AdminService
         {
             buffer = client.marketDepth();
         }
+        else if(adminMessageType.equals("BestBidOfferRequest"))
+        {
+            buffer = client.bbo();
+        }
         else
         {
             return new ResponseWrapper();
@@ -378,13 +382,6 @@ public class AdminService
         }
 
         return new ResponseWrapper();
-    }
-
-    public void bbo() throws Exception {
-/*        Client client = Client.newInstance(1, 1);
-        DirectBuffer buffer = client.get
-
-        adminClusterChannel.write(10, buffer, 0, client.getNewOrderEncodedLength());*/
     }
 
     public ResponseWrapper cancelOrder(

@@ -142,14 +142,6 @@ public class AdminController
         return adminService.submitAdminMessage(securityId, adminMessageType, requestId, trader, client);
     }
 
-    /**
-     * Endpoint to submit a buy limit order
-     */
-    @GetMapping(path = "/v1/bbo")
-    public void bestBidOffer() throws Exception {
-        adminService.bbo();
-    }
-
     // cancelorder-tid@side@security@clientOrderId@trader@client
     /**
      * Endpoint to cancel an order

@@ -60,7 +60,7 @@ public class   CrossingProcessor implements LOBManager {
         int template = tradeGatewayParser.getTemplateId();
 
         if(template == AdminDecoder.TEMPLATE_ID){
-            processAdminMessage(tradeGatewayParser.getAdminTypeEnum(),tradeGatewayParser.getSecurityId());
+            processAdminMessage(tradeGatewayParser.getAdminTypeEnum(), tradeGatewayParser.getSecurityId());
         } else if(template == TradingSessionDecoder.TEMPLATE_ID){
             changeTradingSession(tradeGatewayParser.getSecurityId(), tradeGatewayParser.getTradingSessionEnum(),SessionChangedReasonEnum.ScheduledTransition);
         } else {
@@ -170,6 +170,7 @@ public class   CrossingProcessor implements LOBManager {
     }
 
     private void resendBBO(int securityId){
+        clientMarketDataRequest = true;
         MatchingUtil.publishBestBidOffer(orderBooks.get(securityId));
     }
 }

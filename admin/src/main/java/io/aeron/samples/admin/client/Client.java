@@ -311,6 +311,15 @@ public class Client {
         return buffer;
     }
 
+    public DirectBuffer bbo()
+    {
+        final DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
+                .securityId(securityId)
+                .adminMessage(AdminTypeEnum.BestBidOfferRequest)
+                .build();
+        return buffer;
+    }
+
     public int getLobSnapshotMessageLength() {
         return adminBuilder.getMessageLength();
     }

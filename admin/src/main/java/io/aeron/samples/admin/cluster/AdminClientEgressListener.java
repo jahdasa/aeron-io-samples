@@ -457,6 +457,15 @@ public class AdminClientEgressListener implements EgressListener
                             " bidQuantity/bid: " + bidQuantity + "@" + bidValue +
                             " offerQuantity/offerValue: " + offerQuantity + "@" + offerValue,
                     AttributedStyle.YELLOW);
+
+                final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
+                        AdminTypeEnum.BestBidOfferRequest.name() + "@" +
+                        "1" + "@" +
+                        "1" + "@" +
+                        "1" + "@" +
+                        "1";
+
+                pendingMessageManager.markBBOMessageAsReceived(correlationId, bidQuantity, offerQuantity, bidValue, offerValue);
             }
             case AddParticipantCommandResultDecoder.TEMPLATE_ID ->
             {

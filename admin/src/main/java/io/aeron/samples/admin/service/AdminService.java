@@ -1,6 +1,5 @@
 package io.aeron.samples.admin.service;
 
-import io.aeron.cluster.codecs.CancelTimerEncoder;
 import io.aeron.samples.admin.cli.*;
 import io.aeron.samples.admin.client.Client;
 import io.aeron.samples.admin.cluster.ClusterInteractionAgent;
@@ -15,7 +14,6 @@ import org.agrona.concurrent.SleepingMillisIdleStrategy;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 import sbe.builder.BuilderUtil;
 import sbe.msg.*;
 
@@ -164,9 +162,8 @@ public class AdminService
         catch (final Exception e)
         {
             log.error(e.getMessage(), e);
+            return new ResponseWrapper(-1 , "timeout");
         }
-
-        return new ResponseWrapper();
     }
 
     public ResponseWrapper addAuction(final String name, final int participantId, final int duration)
@@ -198,9 +195,8 @@ public class AdminService
         catch (final Exception e)
         {
             log.error(e.getMessage(), e);
+            return new ResponseWrapper(-1 , "timeout");
         }
-
-        return new ResponseWrapper();
     }
 
     public ResponseWrapper listActions()
@@ -228,9 +224,8 @@ public class AdminService
         catch (final Exception e)
         {
             log.error(e.getMessage(), e);
+            return new ResponseWrapper(-1 , "timeout");
         }
-
-        return new ResponseWrapper();
     }
 
     public ResponseWrapper addAuctionBid(final long auctionId, final int participantId, final long price)
@@ -262,10 +257,8 @@ public class AdminService
         catch (final Exception e)
         {
             log.error(e.getMessage(), e);
+            return new ResponseWrapper(-1 , "timeout");
         }
-
-        return new ResponseWrapper();
-
     }
 
     public ResponseWrapper placeOrder(
@@ -319,9 +312,8 @@ public class AdminService
         catch (final Exception e)
         {
             log.error(e.getMessage(), e);
+            return new ResponseWrapper(-1 , "timeout");
         }
-
-        return new ResponseWrapper();
     }
 
     public ResponseWrapper submitAdminMessage(
@@ -379,9 +371,8 @@ public class AdminService
         catch (final Exception e)
         {
             log.error(e.getMessage(), e);
+            return new ResponseWrapper(-1 , "timeout");
         }
-
-        return new ResponseWrapper();
     }
 
     public ResponseWrapper cancelOrder(
@@ -419,9 +410,8 @@ public class AdminService
         catch (final Exception e)
         {
             log.error(e.getMessage(), e);
+            return new ResponseWrapper(-1 , "timeout");
         }
-
-        return new ResponseWrapper();
     }
 
 
@@ -477,8 +467,7 @@ public class AdminService
         catch (final Exception e)
         {
             log.error(e.getMessage(), e);
+            return new ResponseWrapper(-1 , "timeout");
         }
-
-        return new ResponseWrapper();
     }
 }

@@ -21,23 +21,23 @@ Running the samples in Docker is the easiest way to get started. See the [docker
 - Java 21
 - Gradle 8.5
 
-# Runtime requirements
-
-- Linux/macOS (if you want to run the samples in your local environment; windows currently untested)
-- Docker Compose 2.x - see [docker readme](docker/readme.md) for more details
-- Kubernetes 1.26.x  - see [kubernetes readme](kubernetes/readme.md) for more details
-- Minikube 1.31.x - if running Kubernetes with minikube. See [kubernetes readme](kubernetes/readme.md) for more details
-
 # Linux
 du@LAPTOP-1CS3JJSU:/mnt/c/code/github/aeron-io-samples$ ./cluster/build/distributions/cluster/bin/cluster --add-opens java.base/sun.nio.ch=ALL-UNNAMED io.aeron.samples.ClusterApp
+
+# Useful commands & Options
 netstat -lntu
 sudo ncat -l 9999
 wsl hostname -I
+--add-opens java.base/sun.nio.ch=ALL-UNNAMED
 -XX:+UnlockExperimentalVMOptions -XX:+UseZGC -XX:MaxGCPauseMillis=1
 
 # Compile
 Build & Install ObjectLayout project 
 mvn build install
+update DATA_PATH in two MatchingEngine.properties files:
+
+DATA_PATH=D:\\Users\\r.jahdasa\\code\\aeron-io-samples\\data -> DATA_PATH: $HOME/data
+
 
 # Run
 1. run cluster

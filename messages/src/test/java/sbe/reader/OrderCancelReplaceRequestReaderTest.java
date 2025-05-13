@@ -28,6 +28,7 @@ public class OrderCancelReplaceRequestReaderTest {
     private DirectBuffer build(){
         OrderCancelReplaceRequestBuilder orderCancelReplaceRequestBuilder = new OrderCancelReplaceRequestBuilder();
         orderCancelReplaceRequestBuilder.compID(1);
+        orderCancelReplaceRequestBuilder.traderId(1);
 
         String clientOrderId = BuilderUtil.fill("2", OrderCancelReplaceRequestEncoder.clientOrderIdLength());
         orderCancelReplaceRequestBuilder.clientOrderId(clientOrderId.getBytes());

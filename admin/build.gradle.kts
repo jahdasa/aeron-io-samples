@@ -51,7 +51,11 @@ dependencies {
 }
 
 application {
-    mainClass.set("io.aeron.samples.admin.Admin")
+    mainClass.set("io.aeron.samples.admin.AdminApp")
+    applicationDefaultJvmArgs = listOf(
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--add-opens=java.base/java.lang=ALL-UNNAMED"
+    )
 }
 
 sourceSets {

@@ -39,7 +39,7 @@ public class OrderCancelRequestReaderTest {
         orderCancelRequestBuilder.origClientOrderId(origClientOrderId.getBytes());
         orderCancelRequestBuilder.securityId(1);
 
-        orderCancelRequestBuilder.tradeId(1)
+        orderCancelRequestBuilder.traderId(1)
                                  .side(SideEnum.Buy)
                                  .orderBook(OrderBookEnum.Regular)
                                  .limitPrice(1000);

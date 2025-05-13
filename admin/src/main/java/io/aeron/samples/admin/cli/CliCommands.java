@@ -17,7 +17,7 @@
 package io.aeron.samples.admin.cli;
 
 import org.agrona.ExpandableArrayBuffer;
-import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
+import org.agrona.concurrent.ringbuffer.RingBuffer;
 import org.jline.reader.LineReader;
 import picocli.CommandLine;
 import picocli.shell.jline3.PicocliCommands;
@@ -40,7 +40,7 @@ import java.io.PrintWriter;
 public class CliCommands implements Runnable
 {
     PrintWriter out;
-    private OneToOneRingBuffer adminChannel;
+    private RingBuffer adminChannel;
 
     /**
      * Parent for all the commands
@@ -72,7 +72,7 @@ public class CliCommands implements Runnable
      *
      * @param adminChannel the admin client
      */
-    public void setAdminChannel(final OneToOneRingBuffer adminChannel)
+    public void setAdminChannel(final RingBuffer adminChannel)
     {
         this.adminChannel = adminChannel;
     }

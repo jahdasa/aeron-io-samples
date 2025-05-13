@@ -1,7 +1,6 @@
 package io.aeron.samples.admin.client;
 
-//import gateway.client.GatewayClient;
-//import gateway.client.GatewayClientImpl;
+import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import org.agrona.DirectBuffer;
 import sbe.builder.*;
@@ -43,21 +42,21 @@ public class Client {
     private long staticPriceReference;
     private long dynamicPriceReference;
 
-//    private NonBlockingSemaphore mktDataUpdateSemaphore = new NonBlockingSemaphore(1);
-//    private NonBlockingSemaphore snapShotSemaphore = new NonBlockingSemaphore(1);
-
     public Client(ClientData clientData, int securityId){
         this.clientData = clientData;
         this.securityId = securityId;
     }
 
+    private static final IntObjectMap<ClientData> clientDataMap = new IntObjectHashMap<>();
+
     public static Client newInstance(int clientId, int securityId) throws Exception {
-        // Define the client ID corresponding the client to be logged in as well as the security ID corresponding to the security in which they will trade
-        // Load the simulation settings as well as all client data (ports, passwords and IDs)
-        Properties properties = loadedProperties( PROPERTIES_FILE);
-        String dataPath = properties.get("DATA_PATH").toString();
-        IntObjectMap<ClientData> clientData = ClientData.loadClientDataData(dataPath);
-        return new Client(clientData.get(clientId), securityId);
+        if(clientDataMap.isEmpty())
+        {
+            Properties properties = loadedProperties( PROPERTIES_FILE);
+            String dataPath = properties.get("DATA_PATH").toString();
+            clientDataMap.putAll(ClientData.loadClientDataData(dataPath));
+        }
+        return new Client(clientDataMap.get(clientId), securityId);
     }
 
     private static final String PROPERTIES_FILE =  "MatchingEngine.properties";
@@ -270,7 +269,7 @@ public class Client {
                 .clientOrderId(clientOrderId.getBytes())
                 .origClientOrderId(origClientOrderId.getBytes())
                 .securityId(securityId)
-                .tradeId(traderId)
+                .traderId(traderId)
                 .orderType(OrdTypeEnum.valueOf(orderType))
                 .timeInForce(TimeInForceEnum.valueOf(timeInForce))
                 .expireTime("20211230-23:00:00".getBytes())

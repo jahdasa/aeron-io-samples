@@ -70,7 +70,7 @@ public class MessageGenerator {
         orderCancelReplaceRequestBuilder.origClientOrderId(origClientOrderId.getBytes());
         orderCancelReplaceRequestBuilder.securityId(1);
 
-        orderCancelReplaceRequestBuilder.tradeId(1);
+        orderCancelReplaceRequestBuilder.traderId(1);
 
         String account = BuilderUtil.fill("test", OrderCancelReplaceRequestEncoder.accountLength());
         orderCancelReplaceRequestBuilder.account(account.getBytes());

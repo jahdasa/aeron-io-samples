@@ -12,7 +12,8 @@ import org.agrona.concurrent.AgentRunner;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingMillisIdleStrategy;
 import org.agrona.concurrent.UnsafeBuffer;
-import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
+import org.agrona.concurrent.ringbuffer.ManyToOneRingBuffer;
+import org.agrona.concurrent.ringbuffer.RingBuffer;
 import org.springframework.stereotype.Service;
 import sbe.builder.BuilderUtil;
 import sbe.msg.*;
@@ -32,9 +33,9 @@ import static org.agrona.concurrent.ringbuffer.RingBufferDescriptor.TRAILER_LENG
 public class AdminService
 {
     final UnsafeBuffer adminClusterBuffer =
-            new UnsafeBuffer(BufferUtil.allocateDirectAligned(128*1024*1024 + TRAILER_LENGTH, 8));
+            new UnsafeBuffer(BufferUtil.allocateDirectAligned(1024*1024*1024 + TRAILER_LENGTH, 8));
 
-    final OneToOneRingBuffer adminClusterChannel = new OneToOneRingBuffer(adminClusterBuffer);
+    final RingBuffer adminClusterChannel = new ManyToOneRingBuffer(adminClusterBuffer);
 
     final AtomicBoolean running = new AtomicBoolean(true);
     final IdleStrategy idleStrategy = new SleepingMillisIdleStrategy();

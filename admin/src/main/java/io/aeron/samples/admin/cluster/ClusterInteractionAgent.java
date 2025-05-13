@@ -34,7 +34,7 @@ import org.agrona.concurrent.Agent;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.MessageHandler;
 import org.agrona.concurrent.SystemEpochClock;
-import org.agrona.concurrent.ringbuffer.OneToOneRingBuffer;
+import org.agrona.concurrent.ringbuffer.RingBuffer;
 import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
 import sbe.msg.*;
@@ -54,7 +54,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private static final String INGRESS_CHANNEL = "aeron:udp?term-length=64k";
     private final MutableDirectBuffer sendBuffer = new ExpandableDirectByteBuffer(1024);
     private long lastHeartbeatTime = Long.MIN_VALUE;
-    private final OneToOneRingBuffer adminClusterComms;
+    private final RingBuffer adminClusterComms;
     private final IdleStrategy idleStrategy;
     private final AtomicBoolean runningFlag;
     private final PendingMessageManager pendingMessageManager;
@@ -94,7 +94,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
      * @param runningFlag the flag to indicate if the REPL is still running
      */
     public ClusterInteractionAgent(
-        final OneToOneRingBuffer adminClusterChannel,
+        final RingBuffer adminClusterChannel,
         final IdleStrategy idleStrategy,
         final AtomicBoolean runningFlag)
     {

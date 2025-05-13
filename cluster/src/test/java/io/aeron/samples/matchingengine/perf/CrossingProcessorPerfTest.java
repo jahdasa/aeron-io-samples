@@ -6,12 +6,14 @@ import dao.OrderBookDAO;
 import dao.TraderDAO;
 import orderBook.OrderBook;
 import org.agrona.DirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 import sbe.builder.NewOrderBuilder;
 import sbe.msg.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.Properties;
 
@@ -21,6 +23,7 @@ import java.util.Properties;
 public class CrossingProcessorPerfTest {
     public Properties properties;
     public NewOrderBuilder newOrderBuilder = new NewOrderBuilder();
+    UnsafeBuffer encodeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(114));
 
     public  void loadProperties(String propertiesFile) throws IOException {
         //try(InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propertiesFile)) {
@@ -53,7 +56,7 @@ public class CrossingProcessorPerfTest {
                 .minQuantity(1000)
                 .limitPrice(1000)
                 .stopPrice(0)
-                .build();
+                .build(encodeBuffer, 0);
     }
 
     public static void main(String[] args) throws Exception {

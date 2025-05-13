@@ -8,12 +8,14 @@ import dao.TraderDAO;
 import io.aeron.shadow.org.HdrHistogram.Histogram;
 import orderBook.OrderBook;
 import org.agrona.DirectBuffer;
+import org.agrona.concurrent.UnsafeBuffer;
 import sbe.builder.NewOrderBuilder;
 import sbe.msg.*;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.util.Properties;
 
@@ -23,6 +25,7 @@ import java.util.Properties;
 public class CrossingProcessorHDRTest {
     public Properties properties;
     public NewOrderBuilder newOrderBuilder = new NewOrderBuilder();
+    UnsafeBuffer encodeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(114));
 
     static Histogram histogram = new Histogram(3600000000000L, 3);
     static long WARMUP_EXECUTIONS = 1000;
@@ -59,7 +62,7 @@ public class CrossingProcessorHDRTest {
                 .minQuantity(1000)
                 .limitPrice(1000)
                 .stopPrice(0)
-                .build();
+                .build(encodeBuffer, 0);
     }
 
     public void addOrder(CrossingProcessor crossingProcessor) throws Exception{

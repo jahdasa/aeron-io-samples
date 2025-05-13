@@ -3,6 +3,8 @@ package io.aeron.samples.admin.controller;
 import io.aeron.samples.admin.model.ResponseWrapper;
 import io.aeron.samples.admin.service.AdminService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -97,7 +99,7 @@ public class AdminController
      * Endpoint to submit a buy limit order
      */
     @PostMapping(path = "/v1/place-order")
-    public ResponseWrapper submitOrder(
+    public ResponseEntity<ResponseWrapper> placeOrder(
             @RequestParam(defaultValue = "1") final int securityId,
             @RequestParam final String clientOrderId,
             @RequestParam final long volume,
@@ -112,19 +114,25 @@ public class AdminController
             @RequestParam final int client
             ) throws Exception
     {
-        return adminService.placeOrder(
-            securityId,
-            clientOrderId,
-            volume,
-            price,
-            side,
-            orderType,
-            timeInForce,
-            displayQuantity,
-            minQuantity,
-            stopPrice,
-            traderId,
-            client);
+        final ResponseWrapper responseWrapper = adminService.placeOrder(
+                securityId,
+                clientOrderId,
+                volume,
+                price,
+                side,
+                orderType,
+                timeInForce,
+                displayQuantity,
+                minQuantity,
+                stopPrice,
+                traderId,
+                client);
+
+        HttpStatus status = HttpStatus.OK;
+        if(responseWrapper.getStatus() < 0) {
+            status = HttpStatus.BAD_GATEWAY;
+        }
+        return new ResponseEntity<>(responseWrapper, status);
     }
 
     // admin-tid@type@security@reqid@trader@client

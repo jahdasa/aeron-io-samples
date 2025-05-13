@@ -3,11 +3,13 @@ package io.aeron.samples.admin.service;
 import io.aeron.samples.admin.cli.*;
 import io.aeron.samples.admin.client.Client;
 import io.aeron.samples.admin.cluster.ClusterInteractionAgent;
+import io.aeron.samples.admin.model.BaseError;
 import io.aeron.samples.admin.model.ResponseWrapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.BufferUtil;
 import org.agrona.DirectBuffer;
+import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.AgentRunner;
 import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.SleepingMillisIdleStrategy;
@@ -277,34 +279,48 @@ public class AdminService
         int clientId) throws Exception
     {
         final Client client = Client.newInstance(clientId, securityId);
-        final DirectBuffer buffer = client.placeOrder(
-                clientOrderId,
-                volume,
-                price,
-                side,
-                orderType,
-                timeInForce,
-                displayQuantity,
-                minQuantity,
-                stopPrice,
-                traderId
-        );
 
-        clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
+        final int claimIndex = adminClusterChannel.tryClaim(10, 114);
 
-        final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
-                SideEnum.valueOf(side).value() + "@" +
-                securityId + "@" +
-                clientOrderId.trim() + "@" +
-                traderId + "@" +
-                clientId;
+        if (claimIndex < 0)
+        {
+            log.error("Failed to claim space in ring buffer for new order");
+            return new ResponseWrapper(-2, null, new BaseError("Failed to accept more new order"));
+        }
 
-        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-        clusterInteractionAgent.onComplete(correlationId, response);
+        try
+        {
+            final MutableDirectBuffer buffer = adminClusterChannel.buffer();
 
-        adminClusterChannel.write(10, buffer, 0, client.getNewOrderEncodedLength());
+            client.placeOrder(
+                    buffer,
+                    claimIndex,
+                    clientOrderId,
+                    volume,
+                    price,
+                    side,
+                    orderType,
+                    timeInForce,
+                    displayQuantity,
+                    minQuantity,
+                    stopPrice,
+                    traderId
+            );
 
-        try {
+            clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
+
+            final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
+                    SideEnum.valueOf(side).value() + "@" +
+                    securityId + "@" +
+                    clientOrderId.trim() + "@" +
+                    traderId + "@" +
+                    clientId;
+
+            final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
+            clusterInteractionAgent.onComplete(correlationId, response);
+
+            adminClusterChannel.commit(claimIndex);
+
             final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
             log.info("Response: {}", responseWrapper.getData());
 
@@ -312,9 +328,19 @@ public class AdminService
         }
         catch (final Exception e)
         {
-            log.error(e.getMessage(), e);
-            return new ResponseWrapper(-1 , "timeout");
+            String error = e.getMessage();
+            try
+            {
+                adminClusterChannel.abort(claimIndex);
+            }
+            catch (final Exception e1)
+            {
+                log.error(error + ", abort error: " + e1.getMessage(), e1);
+            }
+            log.error("Failed to write order to ring buffer: " + error, e);
+            return new ResponseWrapper(-3, null, new BaseError(e.getMessage()));
         }
+
     }
 
     public ResponseWrapper submitAdminMessage(
@@ -364,7 +390,7 @@ public class AdminService
         adminClusterChannel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
 
         try {
-            final ResponseWrapper responseWrapper = response.get(60, TimeUnit.SECONDS);
+            final ResponseWrapper responseWrapper = response.get(15, TimeUnit.SECONDS);
             log.info("Response: {}", responseWrapper.getData());
 
             return responseWrapper;

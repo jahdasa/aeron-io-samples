@@ -1,6 +1,7 @@
 package sbe.builder;
 
 import org.agrona.DirectBuffer;
+import org.agrona.MutableDirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import sbe.msg.*;
 
@@ -10,7 +11,6 @@ public class NewOrderBuilder {
     private int bufferIndex;
     private NewOrderEncoder newOrder;
     private MessageHeaderEncoder messageHeader;
-    private UnsafeBuffer encodeBuffer;
     private int messageEncodedLength;
 
     private int compID;
@@ -36,7 +36,6 @@ public class NewOrderBuilder {
     public NewOrderBuilder(){
         newOrder = new NewOrderEncoder();
         messageHeader = new MessageHeaderEncoder();
-        encodeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(BUFFER_SIZE));
 
         clientOrderId = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.clientOrderIdLength()));
         account = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.accountLength()));
@@ -137,9 +136,9 @@ public class NewOrderBuilder {
         return this;
     }
 
-    public DirectBuffer build(){
-        bufferIndex = 0;
-        messageHeader.wrap(encodeBuffer, bufferIndex)
+    public DirectBuffer build(final MutableDirectBuffer buffer, final int offset){
+        bufferIndex = offset;
+        messageHeader.wrap(buffer, bufferIndex)
                 .blockLength(newOrder.sbeBlockLength())
                 .templateId(newOrder.sbeTemplateId())
                 .schemaId(newOrder.sbeSchemaId())
@@ -147,7 +146,7 @@ public class NewOrderBuilder {
                 .compID(compID);
 
         bufferIndex += messageHeader.encodedLength();
-        newOrder.wrap(encodeBuffer, bufferIndex)
+        newOrder.wrap(buffer, bufferIndex)
                 .putClientOrderId(clientOrderId.byteArray(),0)
                 .securityId(securityId)
                 .traderId(traderId)
@@ -169,7 +168,7 @@ public class NewOrderBuilder {
 
         messageEncodedLength = messageHeader.encodedLength() + newOrder.encodedLength();
 
-        return encodeBuffer;
+        return buffer;
     }
 
 }

@@ -3,6 +3,7 @@ package io.aeron.samples.admin.client;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import org.agrona.DirectBuffer;
+import org.agrona.MutableDirectBuffer;
 import sbe.builder.*;
 import sbe.msg.*;
 
@@ -183,6 +184,8 @@ public class Client {
 */
 
     public DirectBuffer placeOrder(
+        final MutableDirectBuffer buffer,
+        final int claimIndex,
         String clientOrderId,
         final long volume,
         final long price,
@@ -208,7 +211,7 @@ public class Client {
                 .limitPrice(price)
                 .stopPrice(stopPrice)
                 .traderId(traderId)
-                .build();
+                .build(buffer, claimIndex);
 
         System.out.println("Message=OrderAdd|OrderId=" + clientOrderId.trim() + "|Type=" + orderType + "|Side=" + side + "|Volume=" + volume + "(" + displayQuantity + ")" + "|Price=" + price + "|StopPrice=" + stopPrice + "|TIF=" + timeInForce + "|MES=" + minQuantity);
         return directBuffer;

@@ -1,15 +1,19 @@
 package sbe.builder;
 
+import org.agrona.concurrent.UnsafeBuffer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import sbe.msg.*;
 import org.agrona.DirectBuffer;
+
+import java.nio.ByteBuffer;
 
 /**
  * Created by dharmeshsing on 18/02/17.
  */
 public class NewOrderBuilderTest {
     private NewOrderBuilder newOrderBuilder = new NewOrderBuilder();
+    UnsafeBuffer encodeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(114));
 
     @Test
     public void testNewOrder(){
@@ -38,7 +42,7 @@ public class NewOrderBuilderTest {
                 .minQuantity(0)
                 .limitPrice(price)
                 .stopPrice(0)
-                .build();
+                .build(encodeBuffer, 0);
 
         return directBuffer;
     }

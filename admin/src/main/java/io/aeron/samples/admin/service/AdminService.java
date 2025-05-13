@@ -363,7 +363,7 @@ public class AdminService
         adminClusterChannel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
 
         try {
-            final ResponseWrapper responseWrapper = response.get(15, TimeUnit.SECONDS);
+            final ResponseWrapper responseWrapper = response.get(60, TimeUnit.SECONDS);
             log.info("Response: {}", responseWrapper.getData());
 
             return responseWrapper;

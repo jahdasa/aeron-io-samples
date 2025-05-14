@@ -183,7 +183,7 @@ Message=OrderCancel|OrderId=3204
 2025-05-12T14:28:59.839+03:30  INFO 29588 --- [AdminApp] [nio-8080-exec-9] i.a.samples.admin.service.AdminService   : Response: OrderViewResponse(correlationId=9@2@1@-3204@1@1, securityId=1, traderId=1, clientOrderId=-3204               , orderId=13, submittedTime=1747047539834, priceValue=1000.0, orderQuantity=0, side=Sell)
 
 
-## Step by step build
+# Short Step by step build
 To skip a part, use -x, for example `-x check` to ignore check styles or `-x test` to ignore tests.
 
 ```bash
@@ -195,6 +195,8 @@ To skip a part, use -x, for example `-x check` to ignore check styles or `-x tes
 ```
 
 ## Run single cluster node and admin in two separate terminals
+First, set up `DATA_PATH`. Then:
+
 ```bash
 ./gradlew runSingleNodeCluster
 

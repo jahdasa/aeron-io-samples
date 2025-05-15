@@ -99,184 +99,19 @@ public class AdminService
         command.run();
     }
 
-   /**
-    * method to handle the command execution
-    *
-    * @param id command name
-    * @param name command input
-    */
-    public void addParticipant(
-        final int id,
-        final String name)
-    {
-        final CliCommands parent = new CliCommands();
-        parent.setAdminChannel(adminClusterChannel);
-
-        final AddParticipant command = new AddParticipant();
-        command.setParent(parent);
-
-        final String correlationId = UUID.randomUUID().toString();
-        command.setCorrelationId(correlationId);
-
-        command.setParticipantId(id);
-        command.setParticipantName(name);
-
-        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-        clusterInteractionAgent.onComplete(correlationId, response);
-
-        command.run();
-
-        try {
-            ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-        }
-        catch (final Exception e)
-        {
-            log.error(e.getMessage(), e);
-        }
-    }
-
-    /**
-     * method to handle the command execution
-     *
-     */
-    public ResponseWrapper listParticipants()
-    {
-        final CliCommands parent = new CliCommands();
-        parent.setAdminChannel(adminClusterChannel);
-
-        final ListParticipants command = new ListParticipants();
-        command.setParent(parent);
-
-        final String correlationId = UUID.randomUUID().toString();
-        command.setCorrelationId(correlationId);
-
-        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-        clusterInteractionAgent.onComplete(correlationId, response);
-
-        command.run();
-
-        try {
-            ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
-        }
-        catch (final Exception e)
-        {
-            log.error(e.getMessage(), e);
-            return new ResponseWrapper(-1 , "timeout");
-        }
-    }
-
-    public ResponseWrapper addAuction(final String name, final int participantId, final int duration)
-    {
-        final CliCommands parent = new CliCommands();
-        parent.setAdminChannel(adminClusterChannel);
-
-        final AddAuction command = new AddAuction();
-        command.setParent(parent);
-
-        final String correlationId = UUID.randomUUID().toString();
-        command.setCorrelationId(correlationId);
-
-        command.setParticipantId(participantId);
-        command.setAuctionName(name);
-        command.setDuration(duration);
-
-        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-        clusterInteractionAgent.onComplete(correlationId, response);
-
-        command.run();
-
-        try {
-            ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
-        }
-        catch (final Exception e)
-        {
-            log.error(e.getMessage(), e);
-            return new ResponseWrapper(-1 , "timeout");
-        }
-    }
-
-    public ResponseWrapper listActions()
-    {
-        final CliCommands parent = new CliCommands();
-        parent.setAdminChannel(adminClusterChannel);
-
-        final ListAuctions command = new ListAuctions();
-        command.setParent(parent);
-
-        final String correlationId = UUID.randomUUID().toString();
-        command.setCorrelationId(correlationId);
-
-        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-        clusterInteractionAgent.onComplete(correlationId, response);
-
-        command.run();
-
-        try {
-            ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
-        }
-        catch (final Exception e)
-        {
-            log.error(e.getMessage(), e);
-            return new ResponseWrapper(-1 , "timeout");
-        }
-    }
-
-    public ResponseWrapper addAuctionBid(final long auctionId, final int participantId, final long price)
-    {
-        final CliCommands parent = new CliCommands();
-        parent.setAdminChannel(adminClusterChannel);
-
-        final AddAuctionBid command = new AddAuctionBid();
-        command.setParent(parent);
-
-        final String correlationId = UUID.randomUUID().toString();
-        command.setCorrelationId(correlationId);
-
-        command.setParticipantId(participantId);
-        command.setAuctionId(auctionId);
-        command.setPrice(price);
-
-        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-        clusterInteractionAgent.onComplete(correlationId, response);
-
-        command.run();
-
-        try {
-            ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
-        }
-        catch (final Exception e)
-        {
-            log.error(e.getMessage(), e);
-            return new ResponseWrapper(-1 , "timeout");
-        }
-    }
-
     public ResponseWrapper placeOrder(
         final int securityId,
         String clientOrderId,
-        long volume,
-        long price,
-        String side,
-        String orderType,
-        String timeInForce,
-        long displayQuantity,
-        long minQuantity,
-        long stopPrice,
-        int traderId,
-        int clientId) throws Exception
+        final long volume,
+        final long price,
+        final String side,
+        final String orderType,
+        final String timeInForce,
+        final long displayQuantity,
+        final long minQuantity,
+        final long stopPrice,
+        final int traderId,
+        final int clientId) throws Exception
     {
         final Client client = Client.newInstance(clientId, securityId);
 
@@ -316,8 +151,7 @@ public class AdminService
                     traderId + "@" +
                     clientId;
 
-            final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-            clusterInteractionAgent.onComplete(correlationId, response);
+            final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
 
             adminClusterChannel.commit(claimIndex);
 
@@ -384,8 +218,7 @@ public class AdminService
 
         log.info("CorrelationId: {}", correlationId);
 
-        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-        clusterInteractionAgent.onComplete(correlationId, response);
+        final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
 
         adminClusterChannel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
 
@@ -423,8 +256,7 @@ public class AdminService
 
         log.info("CorrelationId: {}", correlationId);
 
-        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-        clusterInteractionAgent.onComplete(correlationId, response);
+        final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
 
         adminClusterChannel.write(10, buffer, 0, client.getCancelOrderEncodedLength());
 
@@ -480,8 +312,7 @@ public class AdminService
 
         log.info("CorrelationId: {}", correlationId);
 
-        final CompletableFuture<ResponseWrapper> response = new CompletableFuture<>();
-        clusterInteractionAgent.onComplete(correlationId, response);
+        final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
 
         adminClusterChannel.write(10, buffer, 0, client.getReplaceOrderEncodedLength());
 

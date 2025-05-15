@@ -1,24 +1,6 @@
-/*
- * Copyright 2023 Adaptive Financial Consulting
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.aeron.samples.admin.cluster;
 
 import io.aeron.samples.admin.model.*;
-import io.aeron.samples.cluster.protocol.AddAuctionBidResult;
-import io.aeron.samples.cluster.protocol.AddAuctionResult;
 import org.agrona.concurrent.EpochClock;
 import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
@@ -77,38 +59,6 @@ public class PendingMessageManager
      * Mark a message as received
      * @param correlationId the correlation id of the message
      */
-    public void markMessageAsReceived(final String correlationId)
-    {
-        final boolean exist = trackedMessagesMap.containsKey(correlationId);
-
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-        if (exist)
-        {
-            replySuccess(correlationId, new AddParticipantResponse(correlationId, Collections.emptyList()));
-            trackedMessagesMap.remove(correlationId);
-        }
-    }
-
-    /**
-     * Mark a message as received
-     * @param correlationId the correlation id of the message
-     */
-    public void markCreateAuctionMessageAsReceived(final String correlationId, final long auctionId, final AddAuctionResult result)
-    {
-        final boolean exist = trackedMessagesMap.containsKey(correlationId);
-
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-        if (exist)
-        {
-            replySuccess(correlationId, new CreateAuctionResponse(correlationId, auctionId, result));
-            trackedMessagesMap.remove(correlationId);
-        }
-    }
-
-    /**
-     * Mark a message as received
-     * @param correlationId the correlation id of the message
-     */
     public void markOrderViewMessageAsReceived(
         final String correlationId,
         final long securityId,
@@ -138,62 +88,6 @@ public class PendingMessageManager
                     side
             );
             replySuccess(correlationId, responseData);
-            trackedMessagesMap.remove(correlationId);
-        }
-    }
-
-
-    /**
-     * Mark a message as received
-     * @param correlationId the correlation id of the message
-     */
-    public void markListParticipantsMessageAsReceived(
-        final String correlationId,
-        final List<ParticipantDTO> participantsList)
-    {
-        final boolean exist = trackedMessagesMap.containsKey(correlationId);
-
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-        if (exist)
-        {
-            replySuccess(correlationId, new AddParticipantResponse(correlationId, participantsList));
-            trackedMessagesMap.remove(correlationId);
-        }
-    }
-
-    /**
-     * Mark a message as received
-     * @param correlationId the correlation id of the message
-     */
-    public void markAddAuctionBidMessageAsReceived(
-            final String correlationId,
-            final long auctionId,
-            final AddAuctionBidResult result)
-    {
-        final boolean exist = trackedMessagesMap.containsKey(correlationId);
-
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-        if (exist)
-        {
-            replySuccess(correlationId, new AddAuctionBidResponse(correlationId, auctionId, result));
-            trackedMessagesMap.remove(correlationId);
-        }
-    }
-
-    /**
-     * Mark a message as received
-     * @param correlationId the correlation id of the message
-     */
-    public void markListAuctionsMessageAsReceived(
-            final String correlationId,
-            final List<ActionDTO> actions)
-    {
-        final boolean exist = trackedMessagesMap.containsKey(correlationId);
-
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
-        if (exist)
-        {
-            replySuccess(correlationId, new ListActionsResponse(correlationId, actions));
             trackedMessagesMap.remove(correlationId);
         }
     }
@@ -259,9 +153,13 @@ public class PendingMessageManager
         LineReaderHelper.log(lineReader, message, color);
     }
 
-    public void onComplete(String correlationId, CompletableFuture<ResponseWrapper> future)
+    public CompletableFuture<ResponseWrapper> onComplete(String correlationId)
     {
+        final CompletableFuture<ResponseWrapper> future = new CompletableFuture<>();
+
         futures.put(correlationId, future);
+
+        return future;
     }
 
     public void replySuccess(String correlationId, BaseResponse responseData) {

@@ -1,11 +1,13 @@
 package io.aeron.samples.admin.model;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @RequiredArgsConstructor
 public class LimitOrderBookDTO extends BaseResponse implements Serializable

@@ -36,62 +36,6 @@ public class AdminController
         adminService.disconnect();
     }
 
-    /**
-     * method to handle the command execution
-     *
-     * @param id command name
-     * @param name command input
-     */
-    @PostMapping(path = "/v1/add-participant")
-    public void addParticipant(
-            @RequestParam(defaultValue = "0") final int id,
-            @RequestParam final String name)
-    {
-        adminService.addParticipant(id, name);
-    }
-
-    /**
-     * method to handle the command execution
-     */
-    @GetMapping(path = "/v1/list-participants", produces = "application/json")
-    public ResponseWrapper addParticipant()
-    {
-        return adminService.listParticipants();
-    }
-
-    /**
-     * method to handle the command execution
-     */
-    @PostMapping(path = "/v1/add-auction", produces = "application/json")
-    public ResponseWrapper addAuction(
-        @RequestParam final String name,
-        @RequestParam(defaultValue = "0") final int participantId,
-        @RequestParam(defaultValue = "25") final int duration)
-    {
-        return adminService.addAuction(name, participantId, duration);
-    }
-
-    /**
-     * method to handle the command execution
-     */
-    @GetMapping(path = "/v1/list-auctions", produces = "application/json")
-    public ResponseWrapper listAuctions()
-    {
-        return adminService.listActions();
-    }
-
-    /**
-     * method to handle the command execution
-     */
-    @PostMapping(path = "/v1/add-auction-bid", produces = "application/json")
-    public ResponseWrapper addAuctionBid(
-            @RequestParam final long auctionId,
-            @RequestParam final int participantId,
-            @RequestParam final long price)
-    {
-        return adminService.addAuctionBid(auctionId, participantId, price);
-    }
-
     // placeorder-tid@side@security@clientOrderId@trader@client
     // clientOrderId@security@side@placeOrder@trader@client
     // clientOrderId@security@fc@trader@client

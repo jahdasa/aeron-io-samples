@@ -1,26 +1,9 @@
-/*
- * Copyright 2023 Adaptive Financial Consulting
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package io.aeron.samples.admin.cluster;
 
 import io.aeron.Publication;
 import io.aeron.cluster.client.AeronCluster;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
-import io.aeron.samples.admin.client.Client;
 import io.aeron.samples.admin.model.ResponseWrapper;
 import io.aeron.samples.cluster.ClusterConfig;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderDecoder;
@@ -66,11 +49,6 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
     private final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
     private final ConnectClusterDecoder connectClusterDecoder = new ConnectClusterDecoder();
-    private final AddAuctionDecoder addAuctionDecoder = new AddAuctionDecoder();
-    private final AddParticipantDecoder addParticipantDecoder = new AddParticipantDecoder();
-    private final AddAuctionBidDecoder addAuctionBidDecoder = new AddAuctionBidDecoder();
-    private final ListParticipantsDecoder listParticipantsDecoder = new ListParticipantsDecoder();
-    private final ListAuctionsDecoder listAuctionsDecoder = new ListAuctionsDecoder();
 
     private final MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
     private final CreateAuctionCommandEncoder createAuctionCommandEncoder = new CreateAuctionCommandEncoder();
@@ -150,11 +128,6 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         {
             case ConnectClusterDecoder.TEMPLATE_ID -> processConnectCluster(buffer, offset);
             case DisconnectClusterDecoder.TEMPLATE_ID -> processDisconnectCluster();
-            case AddAuctionDecoder.TEMPLATE_ID -> processAddAuction(messageHeaderDecoder, buffer, offset);
-            case AddParticipantDecoder.TEMPLATE_ID -> processAddParticipant(messageHeaderDecoder, buffer, offset);
-            case AddAuctionBidDecoder.TEMPLATE_ID -> processAddAuctionBid(messageHeaderDecoder, buffer, offset);
-            case ListAuctionsDecoder.TEMPLATE_ID -> processListAuctions(messageHeaderDecoder, buffer, offset);
-            case ListParticipantsDecoder.TEMPLATE_ID -> processListParticipants(messageHeaderDecoder, buffer, offset);
             case NewOrderDecoder.TEMPLATE_ID -> processNowOrder(messageHeaderDecoder, buffer, offset);
             case AdminDecoder.TEMPLATE_ID -> processAdminMessage(messageHeaderDecoder, buffer, offset);
             case OrderCancelRequestDecoder.TEMPLATE_ID -> processCancelOrder(messageHeaderDecoder, buffer, offset);
@@ -257,134 +230,6 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         disconnectCluster();
         connectionState = ConnectionState.NOT_CONNECTED;
         log("Cluster disconnected", AttributedStyle.GREEN);
-    }
-
-    /**
-     * Marshals the CLI protocol to cluster protocol for Adding an Auction
-     * @param messageHeaderDecoder the message header decoder
-     * @param buffer the buffer containing the message
-     * @param offset the offset of the message
-     */
-    private void processAddAuction(
-        final MessageHeaderDecoder messageHeaderDecoder,
-        final MutableDirectBuffer buffer,
-        final int offset)
-    {
-//        final String correlationId = UUID.randomUUID().toString();
-
-        addAuctionDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        final String correlationId = addAuctionDecoder.correlationId();
-
-        createAuctionCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
-
-        createAuctionCommandEncoder.createdByParticipantId(addAuctionDecoder.createdByParticipantId());
-        createAuctionCommandEncoder.startTime(addAuctionDecoder.startTime());
-        createAuctionCommandEncoder.endTime(addAuctionDecoder.endTime());
-        createAuctionCommandEncoder.correlationId(correlationId);
-        createAuctionCommandEncoder.name(addAuctionDecoder.name());
-        createAuctionCommandEncoder.description(addAuctionDecoder.description());
-
-        pendingMessageManager.addMessage(correlationId, "add-auction");
-
-        retryingClusterOffer(sendBuffer, 0, MessageHeaderEncoder.ENCODED_LENGTH +
-            createAuctionCommandEncoder.encodedLength());
-    }
-
-    /**
-     * Marshals the CLI protocol to cluster protocol for Adding a Participant
-     * @param messageHeaderDecoder the message header decoder
-     * @param buffer the buffer containing the message
-     * @param offset the offset of the message
-     */
-    private void processAddParticipant(
-        final MessageHeaderDecoder messageHeaderDecoder,
-        final MutableDirectBuffer buffer,
-        final int offset)
-    {
-//        final String correlationId = UUID.randomUUID().toString();
-
-        addParticipantDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        final String correlationId = addParticipantDecoder.correlationId();
-
-        addParticipantCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
-
-        pendingMessageManager.addMessage(correlationId, "add-participant");
-
-        addParticipantCommandEncoder.participantId(addParticipantDecoder.participantId());
-        addParticipantCommandEncoder.correlationId(correlationId);
-        addParticipantCommandEncoder.name(addParticipantDecoder.name());
-
-        retryingClusterOffer(sendBuffer, 0, MessageHeaderEncoder.ENCODED_LENGTH +
-            addParticipantCommandEncoder.encodedLength());
-    }
-
-    /**
-     * Marshals the CLI protocol to cluster protocol for Adding a Bid to an auction
-     * @param messageHeaderDecoder the message header decoder
-     * @param buffer the buffer containing the message
-     * @param offset the offset of the message
-     */
-    private void processAddAuctionBid(
-        final MessageHeaderDecoder messageHeaderDecoder,
-        final MutableDirectBuffer buffer,
-        final int offset)
-    {
-//        final String correlationId = UUID.randomUUID().toString();
-
-        addAuctionBidDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        final String correlationId = addAuctionBidDecoder.correlationId();
-
-        addAuctionBidCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
-
-        addAuctionBidCommandEncoder.auctionId(addAuctionBidDecoder.auctionId());
-        addAuctionBidCommandEncoder.addedByParticipantId(addAuctionBidDecoder.addedByParticipantId());
-        addAuctionBidCommandEncoder.price(addAuctionBidDecoder.price());
-        addAuctionBidCommandEncoder.correlationId(correlationId);
-        pendingMessageManager.addMessage(correlationId, "add-auction-bid");
-
-        retryingClusterOffer(sendBuffer, 0, MessageHeaderEncoder.ENCODED_LENGTH +
-            addAuctionBidCommandEncoder.encodedLength());
-    }
-
-    /**
-     * Marshals the CLI protocol to cluster protocol for Listing all participants
-     */
-    private void processListParticipants(
-        final MessageHeaderDecoder messageHeaderDecoder,
-        final MutableDirectBuffer buffer,
-        final int offset)
-    {
-//        final String correlationId = UUID.randomUUID().toString();
-
-        listParticipantsDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        final String correlationId = listParticipantsDecoder.correlationId();
-
-        listParticipantsCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
-        listParticipantsCommandEncoder.correlationId(correlationId);
-        pendingMessageManager.addMessage(correlationId, "list-participants");
-        retryingClusterOffer(sendBuffer, 0, MessageHeaderEncoder.ENCODED_LENGTH +
-            listParticipantsCommandEncoder.encodedLength());
-    }
-
-    /**
-     * Marshals the CLI protocol to cluster protocol for Listing all auctions
-     */
-    private void processListAuctions(
-        final MessageHeaderDecoder messageHeaderDecoder,
-        final MutableDirectBuffer buffer,
-        final int offset)
-    {
-//        final String correlationId = UUID.randomUUID().toString();
-
-        listAuctionsDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        final String correlationId = listAuctionsDecoder.correlationId();
-
-        listAuctionsCommandEncoder.wrapAndApplyHeader(sendBuffer, 0, messageHeaderEncoder);
-
-        listAuctionsCommandEncoder.correlationId(correlationId);
-        pendingMessageManager.addMessage(correlationId, "list-auctions");
-        retryingClusterOffer(sendBuffer, 0, MessageHeaderEncoder.ENCODED_LENGTH +
-            listAuctionsCommandEncoder.encodedLength());
     }
 
     /**
@@ -526,8 +371,8 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         runningFlag.set(false);
     }
 
-    public void onComplete(final String correlationId, final CompletableFuture<ResponseWrapper> future)
+    public CompletableFuture<ResponseWrapper> onComplete(final String correlationId)
     {
-        pendingMessageManager.onComplete(correlationId, future);
+        return pendingMessageManager.onComplete(correlationId);
     }
 }

@@ -34,9 +34,8 @@ import java.io.PrintWriter;
         "Hit @|magenta ALT-S|@ to toggle tailtips.",
         ""},
     subcommands = {
-        AddParticipant.class, PicocliCommands.ClearScreen.class, CommandLine.HelpCommand.class,
-        ConnectCluster.class, DisconnectCluster.class, AddAuction.class, AddAuctionBid.class,
-        ListAuctions.class, ListParticipants.class})
+        PicocliCommands.ClearScreen.class, CommandLine.HelpCommand.class,
+        ConnectCluster.class, DisconnectCluster.class})
 public class CliCommands implements Runnable
 {
     PrintWriter out;

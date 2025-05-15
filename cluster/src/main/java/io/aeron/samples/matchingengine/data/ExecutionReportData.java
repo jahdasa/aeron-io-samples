@@ -9,6 +9,7 @@ import org.agrona.concurrent.UnsafeBuffer;
 import org.joda.time.Instant;
 import sbe.builder.BuilderUtil;
 import sbe.builder.ExecutionReportBuilder;
+import sbe.builder.NewInstrumentCompleteBuilder;
 import sbe.builder.OrderViewBuilder;
 import sbe.msg.*;
 
@@ -29,11 +30,13 @@ public enum ExecutionReportData {
 
     private ExecutionReportBuilder reportBuilder;
     private OrderViewBuilder orderViewBuilder;
+    private final NewInstrumentCompleteBuilder newInstrumentCompleteBuilder;
 
     ExecutionReportData(){
         this.fillGroups = new LongIntHashMap();
         this.reportBuilder = new ExecutionReportBuilder();
         this.orderViewBuilder = new OrderViewBuilder();
+        this.newInstrumentCompleteBuilder = new NewInstrumentCompleteBuilder();
     }
 
     public void reset(){
@@ -43,6 +46,7 @@ public enum ExecutionReportData {
         rejectCode = RejectCode.NULL_VAL;
         reportBuilder.reset();
         orderViewBuilder.reset();
+        newInstrumentCompleteBuilder.reset();
     }
 
     public void addFillGroup(long price, int quantity){
@@ -161,11 +165,30 @@ public enum ExecutionReportData {
                 .securityId((int)securityId);
     }
 
-    public DirectBuffer getOrderView(){
+    public DirectBuffer buildNewInstrumentReport(
+        final int securityId,
+        final String code,
+        final NewInstrumentCompleteStatus status)
+    {
+        return newInstrumentCompleteBuilder.compID(getCompID())
+            .securityId(securityId)
+            .code(code)
+            .status(status)
+            .build();
+    }
+
+    public DirectBuffer getOrderView()
+    {
         return orderViewBuilder.build();
     }
 
-    public int getOrderViewMessageLength(){
+    public int getOrderViewMessageLength()
+    {
         return orderViewBuilder.getMessageLength();
+    }
+
+    public int getNewInstrumentCompleteMessageLength()
+    {
+        return newInstrumentCompleteBuilder.getMessageLength();
     }
 }

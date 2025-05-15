@@ -8,13 +8,13 @@ import io.aeron.samples.matchingengine.data.ExecutionReportData;
 import io.aeron.samples.matchingengine.data.HDRData;
 import io.aeron.samples.matchingengine.data.MarketData;
 import io.aeron.samples.matchingengine.engine.MatchingEngine;
+import io.aeron.samples.matchingengine.parser.TradeGatewayParser;
 import leafNode.OrderEntry;
 import orderBook.OrderBook;
-import io.aeron.samples.matchingengine.parser.TradeGatewayParser;
 import org.agrona.DirectBuffer;
-import sbe.msg.AdminDecoder;
-import sbe.msg.AdminTypeEnum;
-import sbe.msg.BusinessRejectEnum;
+import org.joda.time.Instant;
+import sbe.builder.BuilderUtil;
+import sbe.msg.*;
 import sbe.msg.marketData.SessionChangedReasonEnum;
 import sbe.msg.marketData.TradingSessionDecoder;
 import sbe.msg.marketData.TradingSessionEnum;
@@ -22,13 +22,14 @@ import sbe.msg.marketData.TradingSessionEnum;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class   CrossingProcessor implements LOBManager {
+public class CrossingProcessor implements LOBManager {
 
     public static AtomicInteger sequenceNumber = new AtomicInteger();
     private TradeGatewayParser tradeGatewayParser;
     private LongObjectHashMap<OrderBook> orderBooks;
     private boolean clientMarketDataRequest;
     private boolean clientMarketDepthRequest;
+    private boolean adminRequest;
 
     public CrossingProcessor(LongObjectHashMap<OrderBook> orderBooks){
         this.orderBooks = orderBooks;
@@ -41,17 +42,23 @@ public class   CrossingProcessor implements LOBManager {
     }
 
     @Override
-    public DirectBuffer processOrder(DirectBuffer message) {
+    public DirectBuffer processOrder(DirectBuffer message)
+    {
         ExecutionReportData.INSTANCE.reset();
         MarketData.INSTANCE.reset();
         BusinessRejectReportData.INSTANCE.reset();
         BusinessRejectEnum rejectEnum = BusinessRejectEnum.NULL_VAL;
+
         clientMarketDataRequest = false;
         clientMarketDepthRequest = false;
+        adminRequest = false;
 
-        try {
+        try
+        {
             tradeGatewayParser.parse(message);
-        } catch (UnsupportedEncodingException e) {
+        }
+        catch (final UnsupportedEncodingException e)
+        {
             //TODO: handle exception
             e.printStackTrace();
             return null;
@@ -59,14 +66,36 @@ public class   CrossingProcessor implements LOBManager {
 
         int template = tradeGatewayParser.getTemplateId();
 
-        if(template == AdminDecoder.TEMPLATE_ID){
+        if (template == AdminDecoder.TEMPLATE_ID)
+        {
             processAdminMessage(tradeGatewayParser.getAdminTypeEnum(), tradeGatewayParser.getSecurityId());
-        } else if(template == TradingSessionDecoder.TEMPLATE_ID){
-            changeTradingSession(tradeGatewayParser.getSecurityId(), tradeGatewayParser.getTradingSessionEnum(),SessionChangedReasonEnum.ScheduledTransition);
-        } else {
-            OrderEntry orderEntry = tradeGatewayParser.getOrderEntry();
-            int securityId = tradeGatewayParser.getSecurityId();
-            processOrder(template,securityId,orderEntry);
+        }
+        else if (template == TradingSessionDecoder.TEMPLATE_ID)
+        {
+            changeTradingSession(
+                tradeGatewayParser.getSecurityId(),
+                tradeGatewayParser.getTradingSessionEnum(),
+                SessionChangedReasonEnum.ScheduledTransition);
+        }
+        else if (template == NewInstrumentDecoder.TEMPLATE_ID)
+        {
+            adminRequest = true;
+
+            final NewInstrumentCompleteStatus status = processNewInstrumentMessage(
+                tradeGatewayParser.getSecurityId(),
+                tradeGatewayParser.getInstrumentCode(),
+                tradeGatewayParser.getInstrumentName());
+
+            return ExecutionReportData.INSTANCE.buildNewInstrumentReport(
+                tradeGatewayParser.getSecurityId(),
+                tradeGatewayParser.getInstrumentCode(),
+                status);
+        }
+        else
+        {
+            final OrderEntry orderEntry = tradeGatewayParser.getOrderEntry();
+            final int securityId = tradeGatewayParser.getSecurityId();
+            processOrder(template, securityId, orderEntry);
 
             return ExecutionReportData.INSTANCE.buildExecutionReport(orderEntry, securityId);
         }
@@ -83,6 +112,11 @@ public class   CrossingProcessor implements LOBManager {
     @Override
     public boolean isClientMarketDepthRequest() {
         return clientMarketDepthRequest;
+    }
+
+    @Override
+    public boolean isAdminRequest() {
+        return adminRequest;
     }
 
     private void changeTradingSession(int securityId, TradingSessionEnum newTradingSession, SessionChangedReasonEnum sessionChangedReason){
@@ -137,6 +171,29 @@ public class   CrossingProcessor implements LOBManager {
             case EndMessage:MarketData.INSTANCE.addEndMessage(securityId);break;
             default: return;
         }
+    }
+
+    private NewInstrumentCompleteStatus processNewInstrumentMessage(
+        final int securityId,
+        final String instrumentCode,
+        final String instrumentName)
+    {
+        final boolean exist = orderBooks.containsKey(securityId);
+
+        if (exist)
+        {
+            return NewInstrumentCompleteStatus.DuplicatedSecurityIdOrCode;
+        }
+
+        final OrderBook orderBook = new OrderBook(securityId);
+        orderBooks.put(securityId, orderBook);
+
+        MatchingContext.INSTANCE.setOrderBookTradingSession(securityId, TradingSessionEnum.ContinuousTrading);
+
+        clientMarketDataRequest = false;
+        clientMarketDepthRequest = false;
+
+        return NewInstrumentCompleteStatus.Successful;
     }
 
     private void warmupComplete(){

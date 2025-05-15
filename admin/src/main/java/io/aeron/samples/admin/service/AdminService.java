@@ -328,4 +328,64 @@ public class AdminService
             return new ResponseWrapper(-1 , "timeout");
         }
     }
+
+    public ResponseWrapper newInstrument(
+        final int securityId,
+        final String code,
+        final String name,
+        final int clientId) throws Exception
+    {
+        final Client client = Client.newInstance(clientId, securityId);
+
+        final int claimIndex = adminClusterChannel.tryClaim(10, 114);
+
+        if (claimIndex < 0)
+        {
+            log.error("Failed to claim space in ring buffer for new order");
+            return new ResponseWrapper(-2, null, new BaseError("Failed to accept more new order"));
+        }
+
+        try
+        {
+            final MutableDirectBuffer buffer = adminClusterChannel.buffer();
+
+            client.newInstrument(
+                    buffer,
+                    claimIndex,
+                    securityId,
+                    code,
+                    name
+            );
+
+            // newinstrument-tid@security@code@client
+            final String correlationId = NewInstrumentDecoder.TEMPLATE_ID + "@" +
+                    securityId + "@" +
+                    code + "@" +
+                    clientId;
+
+            final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
+
+            adminClusterChannel.commit(claimIndex);
+
+            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
+            log.info("Response: {}", responseWrapper.getData());
+
+            return responseWrapper;
+        }
+        catch (final Exception e)
+        {
+            String error = e.getMessage();
+            try
+            {
+                adminClusterChannel.abort(claimIndex);
+            }
+            catch (final Exception e1)
+            {
+                log.error(error + ", abort error: " + e1.getMessage(), e1);
+            }
+            log.error("Failed to write command to ring buffer: " + error, e);
+            return new ResponseWrapper(-3, null, new BaseError(e.getMessage()));
+        }
+
+    }
 }

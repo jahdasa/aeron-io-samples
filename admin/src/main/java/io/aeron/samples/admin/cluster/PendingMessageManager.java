@@ -7,6 +7,7 @@ import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import sbe.msg.NewInstrumentCompleteStatus;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -251,6 +252,27 @@ public class PendingMessageManager
 
             replySuccess(correlationId, data);
             partialData.remove(correlationId);
+            trackedMessagesMap.remove(correlationId);
+        }
+    }
+
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markNewInstrumentMessageAsReceived(
+            final String correlationId,
+            final int secutiryId,
+            final String code,
+            final NewInstrumentCompleteStatus status
+    )
+    {
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
+
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            replySuccess(correlationId, new NewInstrumentResponse(correlationId, secutiryId, code, status));
             trackedMessagesMap.remove(correlationId);
         }
     }

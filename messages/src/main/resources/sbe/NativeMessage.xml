@@ -39,6 +39,10 @@
             <validValue name="RecoveryServiceResumed" description="Recovery Service Resumed">1</validValue>
             <validValue name="RecoveryServiceUnavailable" description="Recovery Service Unavailable">2</validValue>
         </enum>
+        <enum name="NewInstrumentCompleteStatus" encodingType="int32">
+            <validValue name="Successful" description="Successful">0</validValue>
+            <validValue name="DuplicatedSecurityIdOrCode" description="Duplicated securityId or code">1</validValue>
+        </enum>
         <enum name="OrdTypeEnum" encodingType="uint8">
             <validValue name="Market" description="Market">1</validValue>
             <validValue name="Limit" description="Limit">2</validValue>
@@ -195,6 +199,18 @@
 
     <me:message name="SystemStatus" id="8" description="System Status Message">
         <field name="status" id="1" type="SystemStatusEnum"/>
+    </me:message>
+
+    <me:message name="NewInstrument" id="40" description="New Instrument Message">
+        <field name="securityId" id="1" type="int32"/>
+        <field name="code" id="2" type="idString10"/>
+        <field name="name" id="3" type="idString30"/>
+    </me:message>
+
+    <me:message name="NewInstrumentComplete" id="41" description="New Instrument Complete Message">
+        <field name="securityId" id="1" type="int32"/>
+        <field name="code" id="2" type="idString10"/>
+        <field name="status" id="3" type="NewInstrumentCompleteStatus"/>
     </me:message>
 
     <!-- Client Messages -->

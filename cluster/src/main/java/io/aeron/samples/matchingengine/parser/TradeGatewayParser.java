@@ -14,17 +14,25 @@ import sbe.msg.marketData.TradingSessionEnum;
 
 import java.io.UnsupportedEncodingException;
 
-public class TradeGatewayParser {
+public class TradeGatewayParser
+{
     private MessageHeaderDecoder messageHeader = new MessageHeaderDecoder();
+
     private OrderEntry orderEntry;
     private NewOrderParser newOrderParser;
     private OrderCancelRequestParser orderCancelRequestParser;
     private OrderCancelReplaceRequestParser orderCancelReplaceRequestParser;
     private TradingSessionParser tradingSessionParser;
     private AdminMessageParser adminMessageParser;
+    private NewInstrumentMessageParser newInstrumentMessageParser;
+
     private TradingSessionEnum tradingSessionEnum;
     private AdminTypeEnum adminTypeEnum;
+
     private int securityId;
+    private String instrumentCode;
+    private String instrumentName;
+
     private int bufferIndex;
     private int templateId;
     private int actingBlockLength;
@@ -38,6 +46,7 @@ public class TradeGatewayParser {
         orderCancelReplaceRequestParser = new OrderCancelReplaceRequestParser();
         tradingSessionParser = new TradingSessionParser();
         adminMessageParser = new AdminMessageParser();
+        newInstrumentMessageParser = new NewInstrumentMessageParser();
     }
 
     private void init(DirectBuffer buffer){
@@ -57,21 +66,36 @@ public class TradeGatewayParser {
         orderEntry.setSubmittedTime(System.nanoTime());
     }
 
-    public void parse(DirectBuffer buffer) throws UnsupportedEncodingException{
+    public void parse(DirectBuffer buffer) throws UnsupportedEncodingException {
         init(buffer);
 
-        if(templateId == NewOrderEncoder.TEMPLATE_ID){
+        if (templateId == NewOrderEncoder.TEMPLATE_ID)
+        {
             parseNewOrder(buffer);
-        }else if(templateId == OrderCancelRequestEncoder.TEMPLATE_ID){
+        }
+        else if (templateId == OrderCancelRequestEncoder.TEMPLATE_ID)
+        {
             parseCancelOrderRequest(buffer);
-        }else if(templateId == OrderCancelReplaceRequestEncoder.TEMPLATE_ID){
+        }
+        else if (templateId == OrderCancelReplaceRequestEncoder.TEMPLATE_ID)
+        {
             parseCancelReplaceOrderRequest(buffer);
-        }else if(templateId == TradingSessionDecoder.TEMPLATE_ID){
+        }
+        else if (templateId == TradingSessionDecoder.TEMPLATE_ID)
+        {
             parseTradingSession(buffer);
-        }else if(templateId == AdminDecoder.TEMPLATE_ID){
+        }
+        else if (templateId == AdminDecoder.TEMPLATE_ID)
+        {
             parseAdminMessage(buffer);
-        }else if(templateId == LOBEncoder.TEMPLATE_ID){
+        }
+        else if (templateId == LOBEncoder.TEMPLATE_ID)
+        {
             parseAdminMessage(buffer);
+        }
+        else if (templateId == NewInstrumentEncoder.TEMPLATE_ID)
+        {
+            parseNewInstrumentMessage(buffer);
         }
     }
 
@@ -100,6 +124,14 @@ public class TradeGatewayParser {
         adminMessageParser.decode(buffer, bufferIndex, actingBlockLength, actingVersion);
         adminTypeEnum = adminMessageParser.getAdminTypeEnum();
         securityId = adminMessageParser.getSecurityId();
+    }
+
+    private void parseNewInstrumentMessage(DirectBuffer buffer) throws UnsupportedEncodingException
+    {
+        newInstrumentMessageParser.decode(buffer, bufferIndex, actingBlockLength, actingVersion);
+        securityId = newInstrumentMessageParser.getSecurityId();
+        instrumentCode = newInstrumentMessageParser.getCode();
+        instrumentName = newInstrumentMessageParser.getName();
     }
 
 
@@ -136,5 +168,15 @@ public class TradeGatewayParser {
 
     public AdminTypeEnum getAdminTypeEnum() {
         return adminTypeEnum;
+    }
+
+    public String getInstrumentCode()
+    {
+        return instrumentCode;
+    }
+
+    public String getInstrumentName()
+    {
+        return instrumentName;
     }
 }

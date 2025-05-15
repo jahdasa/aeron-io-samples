@@ -96,8 +96,9 @@ public enum MatchingContext {
         this.orderType = orderType;
     }
 
-    public void setOrderBookTradingSession(long securityId, TradingSessionEnum tradingSession){
-        orderBookTradingSession.put(securityId,tradingSession);
+    public void setOrderBookTradingSession(long securityId, TradingSessionEnum tradingSession)
+    {
+        orderBookTradingSession.put(securityId, tradingSession);
     }
 
     public TradingSessionEnum getOrderBookTradingSession(long securityId){

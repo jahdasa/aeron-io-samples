@@ -141,4 +141,19 @@ public class AdminController
             traderId,
             client);
     }
+
+    // newinstrument-tid@security@code@client
+    @PostMapping(path = "/v1/new-instrument")
+    public ResponseWrapper newInstrument(
+            @RequestParam final int securityId,
+            @RequestParam final String code,
+            @RequestParam final String name,
+            @RequestParam final int client) throws Exception
+    {
+        return adminService.newInstrument(
+            securityId,
+            code,
+            name,
+            client);
+    }
 }

@@ -31,7 +31,9 @@ public class Client {
     private OrderCancelReplaceRequestBuilder orderCancelReplaceRequestBuilder = new OrderCancelReplaceRequestBuilder()
             .account("account123".getBytes())
             .orderBook(OrderBookEnum.Regular);
+
     private AdminBuilder adminBuilder = new AdminBuilder();
+    private NewInstrumentBuilder newInstrumentBuilder = new NewInstrumentBuilder();
 
     private ClientData clientData;
     private long bid;
@@ -216,6 +218,25 @@ public class Client {
         System.out.println("Message=OrderAdd|OrderId=" + clientOrderId.trim() + "|Type=" + orderType + "|Side=" + side + "|Volume=" + volume + "(" + displayQuantity + ")" + "|Price=" + price + "|StopPrice=" + stopPrice + "|TIF=" + timeInForce + "|MES=" + minQuantity);
         return directBuffer;
     }
+
+    public DirectBuffer newInstrument(
+            final MutableDirectBuffer buffer,
+            final int claimIndex,
+            final int securityId,
+            final String code,
+            final String name)
+    {
+        final DirectBuffer directBuffer = newInstrumentBuilder.compID(clientData.getCompID())
+                .securityId(securityId)
+                .code(code)
+                .name(name)
+                .build(buffer, claimIndex);
+
+        System.out.println("Message=NewInstrument|SecurityId=" + securityId + "|Code=" + code + "|Name=" + name);
+
+        return directBuffer;
+    }
+
     public int getNewOrderEncodedLength() {
         return newOrderBuilder.messageEncodedLength();
     }

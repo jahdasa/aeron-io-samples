@@ -16,12 +16,6 @@
 
 package io.aeron.samples.matchingengine.infra;
 
-import com.carrotsearch.hppc.LongObjectHashMap;
-import com.carrotsearch.hppc.ObjectArrayList;
-import com.carrotsearch.hppc.cursors.LongObjectCursor;
-import com.carrotsearch.hppc.cursors.ObjectCursor;
-import dao.OrderBookDAO;
-import dao.TraderDAO;
 import io.aeron.ExclusivePublication;
 import io.aeron.Image;
 import io.aeron.cluster.codecs.CloseReason;
@@ -29,30 +23,11 @@ import io.aeron.cluster.service.ClientSession;
 import io.aeron.cluster.service.Cluster;
 import io.aeron.cluster.service.ClusteredService;
 import io.aeron.logbuffer.Header;
-import io.aeron.samples.domain.auctions.Auctions;
-import io.aeron.samples.domain.participants.Participants;
 import io.aeron.samples.infra.*;
-import io.aeron.samples.matchingengine.crossing.CrossingProcessor;
-import io.aeron.samples.matchingengine.crossing.LOBManager;
-import io.aeron.samples.matchingengine.crossing.MatchingContext;
-import io.aeron.samples.matchingengine.crossing.tradingSessions.TradingSessionFactory;
-import io.aeron.samples.matchingengine.data.ExecutionReportData;
-import io.aeron.samples.matchingengine.data.HDRData;
-import io.aeron.samples.matchingengine.data.MarketData;
 import io.aeron.samples.matchingengine.engine.MatchingEngine;
-import orderBook.OrderBook;
 import org.agrona.DirectBuffer;
-import org.agrona.concurrent.UnsafeBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sbe.msg.marketData.TradingSessionEnum;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The clustered service for the auction application.
@@ -66,23 +41,7 @@ public class MatchingEngineClusteredService implements ClusteredService
     private final ClusterClientResponder clusterClientResponder = new ClusterClientResponderImpl(context);
     private final TimerManager timerManager = new TimerManager(context);
 
-/*    private final Participants participants = new Participants(clusterClientResponder);
-    private final Auctions auctions = new Auctions(
-        context,
-        participants,
-        clusterClientResponder,
-        timerManager);*/
-
-//    private final SnapshotManager snapshotManager = new SnapshotManager(auctions, participants, context);
-//    private final MatchingEngineSbeDemuxer sbeDemuxer = new MatchingEngineSbeDemuxer(clusterClientResponder);
-
     MatchingEngine matchingEngine;
-//
-//    private LOBManager lobManager;
-//    private UnsafeBuffer temp = new UnsafeBuffer(ByteBuffer.allocate(106));
-//    private LongObjectHashMap<OrderBook> orderBooks;
-//    private static AtomicBoolean running = new AtomicBoolean(false);
-//    private static long startTime;
 
     @Override
     public void onStart(final Cluster cluster, final Image snapshotImage)

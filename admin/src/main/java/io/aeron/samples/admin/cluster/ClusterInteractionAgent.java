@@ -63,6 +63,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private final AdminDecoder adminDecoder = new AdminDecoder();
     private final OrderCancelRequestDecoder orderCancelRequestDecoder = new OrderCancelRequestDecoder();
     private final OrderCancelReplaceRequestDecoder orderCancelReplaceRequestDecoder = new OrderCancelReplaceRequestDecoder();
+    private final NewInstrumentDecoder newInstrumentDecoder = new NewInstrumentDecoder();
 
 
     /**
@@ -132,8 +133,25 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             case AdminDecoder.TEMPLATE_ID -> processAdminMessage(messageHeaderDecoder, buffer, offset);
             case OrderCancelRequestDecoder.TEMPLATE_ID -> processCancelOrder(messageHeaderDecoder, buffer, offset);
             case OrderCancelReplaceRequestDecoder.TEMPLATE_ID -> processReplaceOrder(messageHeaderDecoder, buffer, offset);
+            case NewInstrumentDecoder.TEMPLATE_ID -> processNewInstrument(messageHeaderDecoder, buffer, offset);
             default -> log("Unknown message type: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
         }
+    }
+
+    private void processNewInstrument(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
+        log("Process new instrument" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+
+        newInstrumentDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+        // newinstrument-tid@security@code@client
+        final String correlationId = NewInstrumentDecoder.TEMPLATE_ID + "@" +
+                newInstrumentDecoder.securityId() + "@" +
+                newInstrumentDecoder.code().trim() + "@" +
+                sbeMessageHeaderDecoder.compID();
+
+        pendingMessageManager.addMessage(correlationId, "new-instrument");
+
+        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + newInstrumentDecoder.encodedLength());
     }
 
     private void processReplaceOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {

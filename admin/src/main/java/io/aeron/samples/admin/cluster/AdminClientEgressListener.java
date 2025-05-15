@@ -83,6 +83,26 @@ public class AdminClientEgressListener implements EgressListener
 
         switch (messageHeaderDecoder.templateId())
         {
+            case NewInstrumentCompleteDecoder.TEMPLATE_ID ->
+            {
+                NewInstrumentCompleteDecoder completeDecoder = new NewInstrumentCompleteDecoder();
+                completeDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+                final int securityId = completeDecoder.securityId();
+                final String code = completeDecoder.code();
+                NewInstrumentCompleteStatus status = completeDecoder.status();
+
+
+                log("New instrument complete: " + NewInstrumentCompleteDecoder.TEMPLATE_ID,
+                    AttributedStyle.YELLOW);
+
+                final String correlationId = NewInstrumentDecoder.TEMPLATE_ID + "@" +
+                        securityId + "@" +
+                        code.trim() + "@" +
+                        "1";
+
+                pendingMessageManager.markNewInstrumentMessageAsReceived(correlationId, securityId, code, status);
+            }
             case MarketDepthDecoder.TEMPLATE_ID ->
             {
                 MarketDepthDecoder marketDepthDecoder = new MarketDepthDecoder();
@@ -133,7 +153,7 @@ public class AdminClientEgressListener implements EgressListener
                 });
 
                 log(
-                        "securityId: " + securityId +
+                    "securityId: " + securityId +
                                 " b-t/v: " + bidTotal + "@" + bidTotalVolume + " o-t/v: " + offerTotal + "@" + offerTotalVolume , AttributedStyle.YELLOW);
 
                 marketDepthDTO.setBidTotalVolume(bidTotalVolume.get());
@@ -439,7 +459,7 @@ public class AdminClientEgressListener implements EgressListener
 
                 final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
                         AdminTypeEnum.BestBidOfferRequest.name() + "@" +
-                        "1" + "@" +
+                        instrumentId + "@" +
                         "1" + "@" +
                         "1" + "@" +
                         "1";

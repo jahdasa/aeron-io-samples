@@ -7,7 +7,6 @@ import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.ObjectArrayList;
 import com.carrotsearch.hppc.cursors.LongObjectCursor;
 import com.carrotsearch.hppc.cursors.ObjectCursor;
-import io.aeron.logbuffer.FragmentHandler;
 import io.aeron.logbuffer.Header;
 import io.aeron.samples.infra.SessionMessageContext;
 import io.aeron.samples.matchingengine.crossing.CrossingProcessor;
@@ -26,7 +25,6 @@ import org.agrona.concurrent.UnsafeBuffer;
 import sbe.msg.marketData.MessageHeaderDecoder;
 import sbe.msg.marketData.TradingSessionEnum;
 import sbe.msg.marketData.UnitHeaderDecoder;
-import sbe.msg.marketData.UnitHeaderEncoder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -170,58 +168,75 @@ public class  MatchingEngine {
     }
 
 
-    public void onFragment(DirectBuffer buffer, int offset, int length, Header header, SessionMessageContext context) {
+    public void onFragment(DirectBuffer buffer, int offset, int length, Header header, SessionMessageContext context)
+    {
         long startTime = System.nanoTime();
 
         try {
             temp.wrap(buffer, offset, length);
-            DirectBuffer report = lobManager.processOrder(temp);
-            if (lobManager.isClientMarketDataRequest() || lobManager.isClientMarketDepthRequest()) {
+
+            final DirectBuffer report = lobManager.processOrder(temp);
+
+            if (lobManager.isClientMarketDataRequest() || lobManager.isClientMarketDepthRequest())
+            {
                 publishClientMktData(context);
             }
-            else {
-                publishReportToTradingGateway(report, context);
+            else if(lobManager.isAdminRequest())
+            {
+                int messageLength = ExecutionReportData.INSTANCE.getNewInstrumentCompleteMessageLength();
+                publishReportToTradingGateway(report, context, messageLength);
+            }
+            else
+            {
+                int messageLength = ExecutionReportData.INSTANCE.getExecutionReportMessageLength();
+                publishReportToTradingGateway(report, context, messageLength);
+
                 publishToMarketDataGateway(context);
             }
 
             HDRData.INSTANCE.updateHDR(startTime);
             HDRData.INSTANCE.storeHDRStats();
-            if (running.get() == false) {
+
+            if (running.get() == false)
+            {
                 stop();
             }
             System.out.println("Time taken to process order: " + (System.nanoTime() - startTime) + " ns" + ", l/i " + OrderListImpl.counter + "@" + OrderListImpl.OrderListIterator.counter);
-            ;
-        }catch(Exception e){
+        } catch (Exception e)
+        {
             e.printStackTrace();
         }
     }
 
-    private void publishReportToTradingGateway(DirectBuffer buffer, SessionMessageContext context){
-//        tradingGatewayPublisher.send(buffer);
-        context.reply(buffer, 0 , ExecutionReportData.INSTANCE.getExecutionReportMessageLength());
+    private void publishReportToTradingGateway(
+        final DirectBuffer buffer,
+        final SessionMessageContext context,
+        final int length)
+    {
+        context.reply(buffer, 0 , length);
     }
 
-    private void publishToMarketDataGateway(SessionMessageContext context){
+    private void publishToMarketDataGateway(SessionMessageContext context)
+    {
         DirectBuffer header = MarketData.INSTANCE.buildUnitHeader();
 
         unitHeaderDecoder.wrapAndApplyHeader(header, 0 , messageHeaderDecoder);
-//      marketDataPublisher.send(header);
         context.reply(header, 0 , messageHeaderDecoder.encodedLength() + unitHeaderDecoder.encodedLength());
 
         ObjectArrayList<DirectBuffer> messages = MarketData.INSTANCE.getMktDataMessages();
         IntArrayList mktDataLength = MarketData.INSTANCE.getMktDataLength();
-//        System.out.println("Number of messages: " + messages.size() + " mktDataLength: " + mktDataLength.size());
+
         for(ObjectCursor<DirectBuffer> cursor : messages)
         {
             context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
-//            marketDataPublisher.send(cursor.value);
         }
 
-        DirectBuffer orderViewBuffer = ExecutionReportData.INSTANCE.getOrderView();
-        if(orderViewBuffer != null) {
+        final DirectBuffer orderViewBuffer = ExecutionReportData.INSTANCE.getOrderView();
+
+        if(orderViewBuffer != null)
+        {
             int messageLength = ExecutionReportData.INSTANCE.getOrderViewMessageLength();
             context.reply(orderViewBuffer, 0 , messageLength);
-//            marketDataPublisher.send(orderViewBuffer);
         }
     }
 

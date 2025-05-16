@@ -41,6 +41,9 @@ public class OrderBook {
     private LongArrayList prices;
     private ObjectArrayList<Trade> trades;
 
+    private String code = "NULL";
+    private String name = "NULL";
+
     public long getSecurityId() {
         return securityId;
     }
@@ -82,6 +85,13 @@ public class OrderBook {
     }
 
     public enum SIDE {BID,OFFER};
+
+    public OrderBook(final long securityId, final String code, final String name)
+    {
+        this(securityId);
+        this.code = code;
+        this.name = name;
+    }
 
     public OrderBook(long securityId) {
         Comparator<Long> priceComp = Comparator.comparingLong(e -> e.longValue());
@@ -444,5 +454,22 @@ public class OrderBook {
 
     public static SIDE getSide(int side){
         return side== 1 ? OrderBook.SIDE.BID : OrderBook.SIDE.OFFER;
+    }
+
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

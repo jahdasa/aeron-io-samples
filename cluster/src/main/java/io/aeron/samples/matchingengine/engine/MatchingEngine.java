@@ -70,7 +70,8 @@ public class  MatchingEngine {
         try {
             loadProperties(PROPERTIES_FILE);
             initTraders();
-            orderBooks = initOrderBooks();
+//            orderBooks = initOrderBooks();
+            orderBooks = new LongObjectHashMap<>();
             initCrossingProcessor(orderBooks);
 //            initGatewaySubscriber();
 //            initTradingGatewayPublisher();
@@ -154,7 +155,8 @@ public class  MatchingEngine {
 
     private void clearOrderBooks(){
         Iterator<LongObjectCursor<OrderBook>> iterator = orderBooks.iterator();
-        while (iterator.hasNext()) {
+        while (iterator.hasNext())
+        {
            iterator.next().value.freeAll();
         }
     }
@@ -183,14 +185,11 @@ public class  MatchingEngine {
             }
             else if(lobManager.isAdminRequest())
             {
-                int messageLength = ExecutionReportData.INSTANCE.getNewInstrumentCompleteMessageLength();
-                publishReportToTradingGateway(report, context, messageLength);
+                publishReportToTradingGateway(report, context, lobManager.reportMessageLength());
             }
             else
             {
-                int messageLength = ExecutionReportData.INSTANCE.getExecutionReportMessageLength();
-                publishReportToTradingGateway(report, context, messageLength);
-
+                publishReportToTradingGateway(report, context, lobManager.reportMessageLength());
                 publishToMarketDataGateway(context);
             }
 
@@ -243,11 +242,11 @@ public class  MatchingEngine {
     UnitHeaderDecoder unitHeaderDecoder = new UnitHeaderDecoder();
     MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
 
-    private void publishClientMktData(SessionMessageContext context){
+    private void publishClientMktData(SessionMessageContext context)
+    {
         DirectBuffer header = MarketData.INSTANCE.buildUnitHeader();
 
         unitHeaderDecoder.wrapAndApplyHeader(header, 0 , messageHeaderDecoder);
-//      marketDataPublisher.send(header);
         context.reply(header, 0 , messageHeaderDecoder.encodedLength() + unitHeaderDecoder.encodedLength());
 
         if(MarketData.INSTANCE.isSnapShotRequest()){
@@ -258,9 +257,11 @@ public class  MatchingEngine {
             MarketData.INSTANCE.calcMarketDepth(context);
         }
 
-        ObjectArrayList<DirectBuffer> messages = MarketData.INSTANCE.getMktDataMessages();
-        IntArrayList mktDataLength = MarketData.INSTANCE.getMktDataLength();
-        for(ObjectCursor<DirectBuffer> cursor : messages){
+        final ObjectArrayList<DirectBuffer> messages = MarketData.INSTANCE.getMktDataMessages();
+        final IntArrayList mktDataLength = MarketData.INSTANCE.getMktDataLength();
+
+        for(final ObjectCursor<DirectBuffer> cursor : messages)
+        {
             context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
         }
     }

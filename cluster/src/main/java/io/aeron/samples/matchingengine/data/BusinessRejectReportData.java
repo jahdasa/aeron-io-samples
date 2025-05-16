@@ -7,7 +7,8 @@ import sbe.msg.BusinessRejectEnum;
 import sbe.msg.ExecutionReportDecoder;
 import sbe.msg.RejectCode;
 
-public enum BusinessRejectReportData {
+public enum BusinessRejectReportData
+{
     INSTANCE;
 
     private int compID;

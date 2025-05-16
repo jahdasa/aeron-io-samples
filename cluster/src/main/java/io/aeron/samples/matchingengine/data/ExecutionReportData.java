@@ -2,18 +2,15 @@ package io.aeron.samples.matchingengine.data;
 
 import com.carrotsearch.hppc.LongIntHashMap;
 import io.aeron.samples.matchingengine.crossing.CrossingProcessor;
-import dao.TraderDAO;
 import leafNode.OrderEntry;
 import org.agrona.DirectBuffer;
 import org.agrona.concurrent.UnsafeBuffer;
 import org.joda.time.Instant;
-import sbe.builder.BuilderUtil;
-import sbe.builder.ExecutionReportBuilder;
-import sbe.builder.NewInstrumentCompleteBuilder;
-import sbe.builder.OrderViewBuilder;
+import sbe.builder.*;
 import sbe.msg.*;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 
 public enum ExecutionReportData {
     INSTANCE;
@@ -31,12 +28,14 @@ public enum ExecutionReportData {
     private ExecutionReportBuilder reportBuilder;
     private OrderViewBuilder orderViewBuilder;
     private final NewInstrumentCompleteBuilder newInstrumentCompleteBuilder;
+    private final ListInstrumentsResponseBuilder listInstrumentsResponseBuilder;
 
     ExecutionReportData(){
         this.fillGroups = new LongIntHashMap();
         this.reportBuilder = new ExecutionReportBuilder();
         this.orderViewBuilder = new OrderViewBuilder();
         this.newInstrumentCompleteBuilder = new NewInstrumentCompleteBuilder();
+        this.listInstrumentsResponseBuilder = new ListInstrumentsResponseBuilder();
     }
 
     public void reset(){
@@ -47,6 +46,7 @@ public enum ExecutionReportData {
         reportBuilder.reset();
         orderViewBuilder.reset();
         newInstrumentCompleteBuilder.reset();
+        listInstrumentsResponseBuilder.reset();
     }
 
     public void addFillGroup(long price, int quantity){
@@ -177,6 +177,16 @@ public enum ExecutionReportData {
             .build();
     }
 
+    public DirectBuffer buildListInstrumentsReport(
+            final String correlationId,
+            final List<ListInstrumentsResponseBuilder.Instrument> instruments)
+    {
+        return listInstrumentsResponseBuilder.compID(getCompID())
+                .correlation(correlationId)
+                .addInstruments(instruments)
+                .build();
+    }
+
     public DirectBuffer getOrderView()
     {
         return orderViewBuilder.build();
@@ -190,5 +200,10 @@ public enum ExecutionReportData {
     public int getNewInstrumentCompleteMessageLength()
     {
         return newInstrumentCompleteBuilder.getMessageLength();
+    }
+
+    public int getListInstrumentResponseMessageLength()
+    {
+        return listInstrumentsResponseBuilder.getMessageLength();
     }
 }

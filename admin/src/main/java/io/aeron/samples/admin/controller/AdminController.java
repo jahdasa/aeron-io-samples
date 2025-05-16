@@ -1,11 +1,16 @@
 package io.aeron.samples.admin.controller;
 
+import io.aeron.samples.admin.model.InstrumentDTO;
+import io.aeron.samples.admin.model.NewInstrumentResponse;
+import io.aeron.samples.admin.model.NewInstrumentsBatchResponse;
 import io.aeron.samples.admin.model.ResponseWrapper;
 import io.aeron.samples.admin.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Admin controller for the cluster main class, working on a direct connection to the cluster
@@ -155,5 +160,39 @@ public class AdminController
             code,
             name,
             client);
+    }
+
+    // newinstrument-tid@security@code@client
+    @PostMapping(path = "/v1/new-instruments-batch")
+    public ResponseWrapper newInstrumentsBatch(
+            @RequestParam final int client,
+            @RequestBody final List<InstrumentDTO> instruments) throws Exception
+    {
+        final NewInstrumentsBatchResponse response = new NewInstrumentsBatchResponse();
+
+        instruments.forEach(instrumentDTO ->
+        {
+            try {
+                final ResponseWrapper responseWrapper = adminService.newInstrument(
+                        instrumentDTO.getSecurityId(),
+                        instrumentDTO.getCode(),
+                        instrumentDTO.getName(),
+                        client);
+
+                response.getInstrumentResponses().add((NewInstrumentResponse) responseWrapper.getData());
+            } catch (final Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        return new ResponseWrapper(200, response, null);
+    }
+
+    // correlationId@client
+    @GetMapping(path = "/v1/list-instruments")
+    public ResponseWrapper listInstruments(
+            @RequestParam final int client) throws Exception
+    {
+        return adminService.listInstruments(client);
     }
 }

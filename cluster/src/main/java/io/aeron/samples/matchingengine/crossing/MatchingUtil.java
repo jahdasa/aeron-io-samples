@@ -172,8 +172,8 @@ public class MatchingUtil {
 
     }
 
-    public static void publishBestBidOffer(OrderBook orderBook){
-        publishBestBidOffer(orderBook,orderEntry);
+    public static void publishBestBidOffer(final OrderBook orderBook){
+        publishBestBidOffer(orderBook, orderEntry);
     }
 
     public static boolean isEnableCircuitBreaker() {

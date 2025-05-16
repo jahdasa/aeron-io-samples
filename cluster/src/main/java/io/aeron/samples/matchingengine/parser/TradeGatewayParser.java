@@ -25,6 +25,7 @@ public class TradeGatewayParser
     private TradingSessionParser tradingSessionParser;
     private AdminMessageParser adminMessageParser;
     private NewInstrumentMessageParser newInstrumentMessageParser;
+    private ListInstrumentsMessageParser listInstrumentsMessageParser;
 
     private TradingSessionEnum tradingSessionEnum;
     private AdminTypeEnum adminTypeEnum;
@@ -32,6 +33,7 @@ public class TradeGatewayParser
     private int securityId;
     private String instrumentCode;
     private String instrumentName;
+    private String correlationId;
 
     private int bufferIndex;
     private int templateId;
@@ -47,6 +49,7 @@ public class TradeGatewayParser
         tradingSessionParser = new TradingSessionParser();
         adminMessageParser = new AdminMessageParser();
         newInstrumentMessageParser = new NewInstrumentMessageParser();
+        listInstrumentsMessageParser = new ListInstrumentsMessageParser();
     }
 
     private void init(DirectBuffer buffer){
@@ -97,6 +100,10 @@ public class TradeGatewayParser
         {
             parseNewInstrumentMessage(buffer);
         }
+        else if (templateId == ListInstrumentsMessageRequestDecoder.TEMPLATE_ID)
+        {
+            parseListInstrumentsMessage(buffer);
+        }
     }
 
     private void parseNewOrder(DirectBuffer buffer) throws UnsupportedEncodingException {
@@ -132,6 +139,12 @@ public class TradeGatewayParser
         securityId = newInstrumentMessageParser.getSecurityId();
         instrumentCode = newInstrumentMessageParser.getCode();
         instrumentName = newInstrumentMessageParser.getName();
+    }
+
+    private void parseListInstrumentsMessage(DirectBuffer buffer)
+    {
+        listInstrumentsMessageParser.decode(buffer, bufferIndex, actingBlockLength, actingVersion);
+        correlationId = listInstrumentsMessageParser.getCorrelationId();
     }
 
 
@@ -178,5 +191,10 @@ public class TradeGatewayParser
     public String getInstrumentName()
     {
         return instrumentName;
+    }
+
+    public String getCorrelationId()
+    {
+        return correlationId;
     }
 }

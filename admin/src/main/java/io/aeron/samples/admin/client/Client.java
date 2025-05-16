@@ -34,6 +34,7 @@ public class Client {
 
     private AdminBuilder adminBuilder = new AdminBuilder();
     private NewInstrumentBuilder newInstrumentBuilder = new NewInstrumentBuilder();
+    private ListInstrumentsBuilder  listInstrumentsBuilder = new ListInstrumentsBuilder();
 
     private ClientData clientData;
     private long bid;
@@ -235,6 +236,18 @@ public class Client {
         System.out.println("Message=NewInstrument|SecurityId=" + securityId + "|Code=" + code + "|Name=" + name);
 
         return directBuffer;
+    }
+
+    public void listInstruments(
+            final MutableDirectBuffer buffer,
+            final int claimIndex,
+            final String correlationId)
+    {
+        final DirectBuffer directBuffer = listInstrumentsBuilder.compID(clientData.getCompID())
+                .correlationId(correlationId)
+                .build(buffer, claimIndex);
+
+        System.out.println("Message=ListInstruments|CorrelationId=" + correlationId);
     }
 
     public int getNewOrderEncodedLength() {

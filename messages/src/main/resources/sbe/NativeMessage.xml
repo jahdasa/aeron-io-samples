@@ -149,6 +149,11 @@
             <type name="numInGroup" primitiveType="uint16" semanticType="NumInGroup"/>
         </composite>
 
+        <composite name="instrumentGroup" description="instrument group dimensions">
+            <type name="blockLength" primitiveType="uint16"/>
+            <type name="numInGroup" primitiveType="uint16" semanticType="NumInGroup"/>
+        </composite>
+
         <type name="idString6" length="6" primitiveType="char" semanticType="String"/>
         <type name="idString8" length="8" primitiveType="char" semanticType="String"/>
         <type name="idString10" length="10" primitiveType="char" semanticType="String"/>
@@ -211,6 +216,19 @@
         <field name="securityId" id="1" type="int32"/>
         <field name="code" id="2" type="idString10"/>
         <field name="status" id="3" type="NewInstrumentCompleteStatus"/>
+    </me:message>
+
+    <me:message name="ListInstrumentsMessageRequest" id="42" description="List Instruments Message Request Message">
+        <field name="correlationId" id="1" type="idString30"/>
+    </me:message>
+
+    <me:message name="ListInstrumentsMessageResponse" id="43" description="List Instruments Message Response Message">
+        <field name="correlationId" id="1" type="idString30"/>
+        <group name="instruments" id="2" dimensionType="instrumentGroup">
+            <field name="securityId" id="1" type="int32"/>
+            <field name="code" id="2" type="idString10"/>
+            <field name="name" id="3" type="idString30"/>
+        </group>
     </me:message>
 
     <!-- Client Messages -->
@@ -337,6 +355,8 @@
         <field name="clientOrderId" id="4" type="idString20"/>
         <field name="orderId" id="5" type="int32"/>
         <field name="transactTime" id="6" type="uint64"/>
+        <field name="securityId" id="7" type="int32"/>
+        <field name="clientId" id="9" type="int32"/>
     </me:message>
 
     <me:message name="VWAP" id="95" description="Bid and Offer VWAP">
@@ -354,7 +374,6 @@
             <field name="orderCount" id="3" type="uint16"/>
             <field name="quantity" id="4" type="uint64"/>
         </group>
-
     </me:message>
 
 </me:messageSchema>

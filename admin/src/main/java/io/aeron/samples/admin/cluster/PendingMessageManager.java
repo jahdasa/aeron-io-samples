@@ -52,6 +52,7 @@ public class PendingMessageManager
 
         final long timeoutAt = current.time() + TIMEOUT_MS;
         final PendingMessage message = new PendingMessage(timeoutAt, correlationId, messageType);
+
         trackedMessagesMap.put(correlationId, message);
         trackedMessages.add(message);
     }
@@ -154,7 +155,7 @@ public class PendingMessageManager
         LineReaderHelper.log(lineReader, message, color);
     }
 
-    public CompletableFuture<ResponseWrapper> onComplete(String correlationId)
+    public CompletableFuture<ResponseWrapper> onComplete(final String correlationId)
     {
         final CompletableFuture<ResponseWrapper> future = new CompletableFuture<>();
 
@@ -252,6 +253,26 @@ public class PendingMessageManager
 
             replySuccess(correlationId, data);
             partialData.remove(correlationId);
+            trackedMessagesMap.remove(correlationId);
+        }
+    }
+
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markListInstrumentsMessageAsReceived(
+            final String correlationId,
+            final List<InstrumentDTO> instruments
+    )
+    {
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
+
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            instruments.sort(Comparator.comparing(InstrumentDTO::getSecurityId));
+            replySuccess(correlationId, new ListInstrumentsResponse(correlationId, instruments));
             trackedMessagesMap.remove(correlationId);
         }
     }

@@ -38,6 +38,7 @@ public enum MarketData {
     private AdminBuilder adminBuilder = new AdminBuilder();
     private VWAPBuilder vwapBuilder = new VWAPBuilder();
     private MarketDepthBuilder marketDepthBuilder = new MarketDepthBuilder();
+
     private int sequenceNumber;
     private long securityId;
     private int compID;
@@ -208,7 +209,8 @@ public enum MarketData {
         resetMarketDepthBuilder(orderBook.getSecurityId());
     }
 
-    public void lobSnapShot(SessionMessageContext context) {
+    public void lobSnapShot(SessionMessageContext context)
+    {
         DirectBuffer adminMessage = getAdminMessage(AdminTypeEnum.StartLOB, orderBook.getSecurityId(), compID);
         context.reply(adminMessage, 0, adminBuilder.getMessageLength());
 
@@ -280,7 +282,8 @@ public enum MarketData {
 
 
 
-    public void calcVWAP(OrderBook orderBook){
+    public void calcVWAP(OrderBook orderBook)
+    {
         vwapBuilder.securityId((int) orderBook.getSecurityId());
         vwapBuilder.compID(compID);
 
@@ -335,7 +338,7 @@ public enum MarketData {
         marketDepthBuilder.securityId((int) orderBook.getSecurityId());
         marketDepthBuilder.compID(compID);
 
-        DirectBuffer adminMessage = getAdminMessage(AdminTypeEnum.StartMarketDepth, orderBook.getSecurityId(), compID);
+        final DirectBuffer adminMessage = getAdminMessage(AdminTypeEnum.StartMarketDepth, orderBook.getSecurityId(), compID);
         context.reply(adminMessage, 0, adminBuilder.getMessageLength());
 
         int count = 0;
@@ -451,7 +454,8 @@ public enum MarketData {
         return orderBook;
     }
 
-    public void setOrderBook(OrderBook orderBook) {
+    public void setOrderBook(OrderBook orderBook)
+    {
         this.orderBook = orderBook;
     }
 

@@ -1,6 +1,7 @@
 package io.aeron.samples.matchingengine.crossing;
 
 import com.carrotsearch.hppc.LongObjectHashMap;
+import com.carrotsearch.hppc.cursors.LongObjectCursor;
 import io.aeron.samples.matchingengine.crossing.tradingSessions.TradingSessionFactory;
 import io.aeron.samples.matchingengine.crossing.tradingSessions.TradingSessionProcessor;
 import io.aeron.samples.matchingengine.data.BusinessRejectReportData;
@@ -12,14 +13,16 @@ import io.aeron.samples.matchingengine.parser.TradeGatewayParser;
 import leafNode.OrderEntry;
 import orderBook.OrderBook;
 import org.agrona.DirectBuffer;
-import org.joda.time.Instant;
-import sbe.builder.BuilderUtil;
+import sbe.builder.ListInstrumentsResponseBuilder;
 import sbe.msg.*;
 import sbe.msg.marketData.SessionChangedReasonEnum;
 import sbe.msg.marketData.TradingSessionDecoder;
 import sbe.msg.marketData.TradingSessionEnum;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CrossingProcessor implements LOBManager {
@@ -91,6 +94,16 @@ public class CrossingProcessor implements LOBManager {
                 tradeGatewayParser.getInstrumentCode(),
                 status);
         }
+        else if (template == ListInstrumentsMessageRequestDecoder.TEMPLATE_ID)
+        {
+            adminRequest = true;
+
+            final List<ListInstrumentsResponseBuilder.Instrument> instruments = processListInstrumentsMessage();
+
+            return ExecutionReportData.INSTANCE.buildListInstrumentsReport(
+                tradeGatewayParser.getCorrelationId(),
+                instruments);
+        }
         else
         {
             final OrderEntry orderEntry = tradeGatewayParser.getOrderEntry();
@@ -136,7 +149,8 @@ public class CrossingProcessor implements LOBManager {
         tradingSessionProcessor.startSession(orderBook);
     }
 
-    public void processOrder(int template,int securityId,OrderEntry orderEntry){
+    public void processOrder(final int template, final int securityId, final OrderEntry orderEntry)
+    {
         OrderBook orderBook = orderBooks.get(securityId);
         MatchingContext.INSTANCE.setTemplateId(template);
 
@@ -145,7 +159,8 @@ public class CrossingProcessor implements LOBManager {
             tradingSessionProcessor.process(orderBook, orderEntry);
         }
 
-        if(orderBook.isCircuitBreakerBreached()){
+        if(orderBook.isCircuitBreakerBreached())
+        {
             changeTradingSession(securityId, TradingSessionEnum.VolatilityAuctionCall, SessionChangedReasonEnum.CircuitBreakerTripped);
         }
     }
@@ -155,21 +170,42 @@ public class CrossingProcessor implements LOBManager {
         return TradingSessionFactory.getTradingSessionProcessor(tradingSessionEnum);
     }
 
-    private void processAdminMessage(AdminTypeEnum adminTypeEnum, int securityId){
-        switch(adminTypeEnum){
-            case WarmUpComplete:warmupComplete();break;
-            case SimulationComplete:simulationComplete();break;
-            case LOB: lobSnapShot(securityId);break;
-            case VWAP: calculateVWAP(securityId);break;
-            case MarketDepth: calculateMarketDepth(securityId);break;
-            case ShutDown:{
+    private void processAdminMessage(final AdminTypeEnum adminTypeEnum, final int securityId)
+    {
+        switch (adminTypeEnum)
+        {
+            case WarmUpComplete:
+                warmupComplete();
+                break;
+            case SimulationComplete:
+                simulationComplete();
+                break;
+            case LOB:
+                lobSnapShot(securityId);
+                break;
+            case VWAP:
+                calculateVWAP(securityId);
+                break;
+            case MarketDepth:
+                calculateMarketDepth(securityId);
+                break;
+            case ShutDown:
+            {
                 MarketData.INSTANCE.addShutDownRequest();
                 MatchingEngine.setRunning(false);
-            }break;
-            case BestBidOfferRequest:resendBBO(securityId);break;
-            case StartMessage:MarketData.INSTANCE.addStartMessage(securityId);break;
-            case EndMessage:MarketData.INSTANCE.addEndMessage(securityId);break;
-            default: return;
+            }
+            break;
+            case BestBidOfferRequest:
+                resendBBO(securityId);
+                break;
+            case StartMessage:
+                MarketData.INSTANCE.addStartMessage(securityId);
+                break;
+            case EndMessage:
+                MarketData.INSTANCE.addEndMessage(securityId);
+                break;
+            default:
+                return;
         }
     }
 
@@ -185,7 +221,7 @@ public class CrossingProcessor implements LOBManager {
             return NewInstrumentCompleteStatus.DuplicatedSecurityIdOrCode;
         }
 
-        final OrderBook orderBook = new OrderBook(securityId);
+        final OrderBook orderBook = new OrderBook(securityId, instrumentCode, instrumentName);
         orderBooks.put(securityId, orderBook);
 
         MatchingContext.INSTANCE.setOrderBookTradingSession(securityId, TradingSessionEnum.ContinuousTrading);
@@ -194,6 +230,26 @@ public class CrossingProcessor implements LOBManager {
         clientMarketDepthRequest = false;
 
         return NewInstrumentCompleteStatus.Successful;
+    }
+
+    private List<ListInstrumentsResponseBuilder.Instrument> processListInstrumentsMessage()
+    {
+        final List<ListInstrumentsResponseBuilder.Instrument> instruments = new ArrayList<>();
+
+        final Iterator<LongObjectCursor<OrderBook>> iterator = orderBooks.iterator();
+        while (iterator.hasNext())
+        {
+            final LongObjectCursor<OrderBook> orderBook = iterator.next();
+            instruments.add(new ListInstrumentsResponseBuilder.Instrument(
+                    (int) orderBook.value.getSecurityId(),
+                    orderBook.value.getCode(),
+                    orderBook.value.getName()));
+        }
+
+        clientMarketDataRequest = false;
+        clientMarketDepthRequest = false;
+
+        return instruments;
     }
 
     private void warmupComplete(){
@@ -209,25 +265,49 @@ public class CrossingProcessor implements LOBManager {
         HDRData.INSTANCE.storeHDRStats();
     }
 
-    private void lobSnapShot(int securityId){
+    private void lobSnapShot(int securityId)
+    {
         clientMarketDataRequest = true;
         MarketData.INSTANCE.setSnapShotRequest(true);
+        MarketData.INSTANCE.setSecurityId(securityId);
         MarketData.INSTANCE.setOrderBook(orderBooks.get(securityId));
     }
 
-    private void calculateVWAP(int securityId){
+    private void calculateVWAP(final int securityId)
+    {
+        final OrderBook orderBook = orderBooks.get(securityId);
+
         clientMarketDataRequest = true;
-        MarketData.INSTANCE.calcVWAP(orderBooks.get(securityId));
+        MarketData.INSTANCE.calcVWAP(orderBook);
     }
 
-    private void calculateMarketDepth(int securityId){
+    private void calculateMarketDepth(int securityId)
+    {
         clientMarketDepthRequest = true;
         MarketData.INSTANCE.setMarketDepthRequest(true);
         MarketData.INSTANCE.setOrderBook(orderBooks.get(securityId));
     }
 
-    private void resendBBO(int securityId){
+    private void resendBBO(int securityId)
+    {
         clientMarketDataRequest = true;
         MatchingUtil.publishBestBidOffer(orderBooks.get(securityId));
+    }
+
+    @Override
+    public int reportMessageLength()
+    {
+        int templateId = tradeGatewayParser.getTemplateId();
+
+        if(templateId == NewInstrumentDecoder.TEMPLATE_ID)
+        {
+            return ExecutionReportData.INSTANCE.getNewInstrumentCompleteMessageLength();
+        }
+        if(templateId == ListInstrumentsMessageRequestDecoder.TEMPLATE_ID)
+        {
+            return ExecutionReportData.INSTANCE.getListInstrumentResponseMessageLength();
+        }
+
+        return ExecutionReportData.INSTANCE.getExecutionReportMessageLength();
     }
 }

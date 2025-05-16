@@ -8,8 +8,6 @@ import io.aeron.samples.admin.model.ResponseWrapper;
 import io.aeron.samples.cluster.ClusterConfig;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderDecoder;
 import io.aeron.samples.cluster.admin.protocol.*;
-import io.aeron.samples.cluster.protocol.MessageHeaderEncoder;
-import io.aeron.samples.cluster.protocol.*;
 import org.agrona.DirectBuffer;
 import org.agrona.ExpandableDirectByteBuffer;
 import org.agrona.MutableDirectBuffer;
@@ -50,13 +48,6 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
     private final ConnectClusterDecoder connectClusterDecoder = new ConnectClusterDecoder();
 
-    private final MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
-    private final CreateAuctionCommandEncoder createAuctionCommandEncoder = new CreateAuctionCommandEncoder();
-    private final AddParticipantCommandEncoder addParticipantCommandEncoder = new AddParticipantCommandEncoder();
-    private final AddAuctionBidCommandEncoder addAuctionBidCommandEncoder = new AddAuctionBidCommandEncoder();
-    private final ListParticipantsCommandEncoder listParticipantsCommandEncoder = new ListParticipantsCommandEncoder();
-    private final ListAuctionsCommandEncoder listAuctionsCommandEncoder = new ListAuctionsCommandEncoder();
-
     private final sbe.msg.MessageHeaderDecoder sbeMessageHeaderDecoder = new sbe.msg.MessageHeaderDecoder();
 
     private final NewOrderDecoder newOrderDecoder = new NewOrderDecoder();
@@ -64,6 +55,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private final OrderCancelRequestDecoder orderCancelRequestDecoder = new OrderCancelRequestDecoder();
     private final OrderCancelReplaceRequestDecoder orderCancelReplaceRequestDecoder = new OrderCancelReplaceRequestDecoder();
     private final NewInstrumentDecoder newInstrumentDecoder = new NewInstrumentDecoder();
+    private final ListInstrumentsMessageRequestDecoder listInstrumentsMessageRequestDecoder = new ListInstrumentsMessageRequestDecoder();
 
 
     /**
@@ -134,8 +126,20 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             case OrderCancelRequestDecoder.TEMPLATE_ID -> processCancelOrder(messageHeaderDecoder, buffer, offset);
             case OrderCancelReplaceRequestDecoder.TEMPLATE_ID -> processReplaceOrder(messageHeaderDecoder, buffer, offset);
             case NewInstrumentDecoder.TEMPLATE_ID -> processNewInstrument(messageHeaderDecoder, buffer, offset);
+            case ListInstrumentsMessageRequestDecoder.TEMPLATE_ID -> processListInstruments(messageHeaderDecoder, buffer, offset);
             default -> log("Unknown message type: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
         }
+    }
+
+    private void processListInstruments(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
+        log("Process list instrument " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+
+        listInstrumentsMessageRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+        final String correlationId = listInstrumentsMessageRequestDecoder.correlationId();
+        pendingMessageManager.addMessage(correlationId.trim(), "list-instruments");
+
+        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + listInstrumentsMessageRequestDecoder.encodedLength());
     }
 
     private void processNewInstrument(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {

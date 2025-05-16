@@ -9,4 +9,5 @@ public interface LOBManager {
     boolean isClientMarketDataRequest();
     boolean isClientMarketDepthRequest();
     boolean isAdminRequest();
+    int reportMessageLength();
 }

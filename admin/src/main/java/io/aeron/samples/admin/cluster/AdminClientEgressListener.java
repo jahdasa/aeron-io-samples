@@ -19,6 +19,7 @@ package io.aeron.samples.admin.cluster;
 import io.aeron.cluster.client.EgressListener;
 import io.aeron.cluster.codecs.EventCode;
 import io.aeron.logbuffer.Header;
+import io.aeron.samples.admin.model.InstrumentDTO;
 import io.aeron.samples.admin.model.LimitOrderBookDTO;
 import io.aeron.samples.admin.model.MarketDepthDTO;
 import io.aeron.samples.cluster.protocol.MessageHeaderDecoder;
@@ -83,6 +84,27 @@ public class AdminClientEgressListener implements EgressListener
 
         switch (messageHeaderDecoder.templateId())
         {
+            case ListInstrumentsMessageResponseDecoder.TEMPLATE_ID ->
+            {
+                final ListInstrumentsMessageResponseDecoder decoder = new ListInstrumentsMessageResponseDecoder();
+                decoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+                final String correlationId = decoder.correlationId();
+
+                final List<InstrumentDTO> instrumentDTOS = new ArrayList<>();
+
+                decoder.instruments().forEach(instrument ->
+                {
+                    final int securityId = instrument.securityId();
+                    final String code = instrument.code().trim();
+                    final String name = instrument.name().trim();
+
+                    instrumentDTOS.add(new InstrumentDTO(securityId, code, name));
+
+                });
+
+                pendingMessageManager.markListInstrumentsMessageAsReceived(correlationId.trim(), instrumentDTOS);
+            }
             case NewInstrumentCompleteDecoder.TEMPLATE_ID ->
             {
                 NewInstrumentCompleteDecoder completeDecoder = new NewInstrumentCompleteDecoder();

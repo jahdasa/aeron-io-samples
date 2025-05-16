@@ -2,6 +2,11 @@ import http from 'k6/http';
 import { check, sleep } from 'k6';
 
 
+function getRandomNumber(min, max)
+{
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function randomClientOrderId()
 {
     const prefix = 10000000000;
@@ -37,6 +42,8 @@ export default function () {
 
     const volume = randomVolume();
     const payload = {
+        // securityId: getRandomNumber(101, 109),
+        securityId: 101,
         clientOrderId: randomClientOrderId(),
         volume: volume,
         price: randomPrice(),

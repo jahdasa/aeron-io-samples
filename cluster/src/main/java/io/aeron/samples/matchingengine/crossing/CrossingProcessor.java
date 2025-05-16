@@ -268,6 +268,7 @@ public class CrossingProcessor implements LOBManager {
     private void lobSnapShot(int securityId)
     {
         clientMarketDataRequest = true;
+
         MarketData.INSTANCE.setSnapShotRequest(true);
         MarketData.INSTANCE.setSecurityId(securityId);
         MarketData.INSTANCE.setOrderBook(orderBooks.get(securityId));
@@ -278,6 +279,7 @@ public class CrossingProcessor implements LOBManager {
         final OrderBook orderBook = orderBooks.get(securityId);
 
         clientMarketDataRequest = true;
+        MarketData.INSTANCE.setSecurityId(securityId);
         MarketData.INSTANCE.calcVWAP(orderBook);
     }
 
@@ -285,12 +287,14 @@ public class CrossingProcessor implements LOBManager {
     {
         clientMarketDepthRequest = true;
         MarketData.INSTANCE.setMarketDepthRequest(true);
+        MarketData.INSTANCE.setSecurityId(securityId);
         MarketData.INSTANCE.setOrderBook(orderBooks.get(securityId));
     }
 
     private void resendBBO(int securityId)
     {
         clientMarketDataRequest = true;
+        MarketData.INSTANCE.setSecurityId(securityId);
         MatchingUtil.publishBestBidOffer(orderBooks.get(securityId));
     }
 

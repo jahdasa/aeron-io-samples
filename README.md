@@ -47,7 +47,68 @@ DATA_PATH=D:\\Users\\r.jahdasa\\code\\aeron-io-samples\\data -> DATA_PATH: $HOME
 1. connect
 curl --location --request POST 'localhost:8080/api/v1/connect'
 
-2. place order sell
+
+2. create instruments
+   curl --location 'http://localhost:8080/api/v1/new-instruments-batch?client=1' \
+   --header 'Content-Type: application/json' \
+   --data '[
+   {
+   "securityId": 101,
+   "code": "BTCIRT",
+   "name": "BITCOIN/IRAN-TOMAN"
+   },
+   {
+   "securityId": 102,
+   "code": "USDTIRT",
+   "name": "USDT/IRAN-TOMAN"
+   },
+   {
+   "securityId": 103,
+   "code": "ETHIRT",
+   "name": "ETHERIUM/IRAN-TOMAN"
+   },
+   {
+   "securityId": 104,
+   "code": "DOGEIRT",
+   "name": "DOGE-COIN/IRAN-TOMAN"
+   },
+   {
+   "securityId": 105,
+   "code": "BNBIRT",
+   "name": "BINANCE-COIN/IRAN-TOMAN"
+   },
+   {
+   "securityId": 106,
+   "code": "BTCUSDT",
+   "name": "BITCOIN/USDT"
+   },
+   {
+   "securityId": 107,
+   "code": "ETHUSDT",
+   "name": "ETHERIUM/USDT"
+   },
+   {
+   "securityId": 108,
+   "code": "DOGEUSDT",
+   "name": "DOGE-COIN/USDT"
+   },
+   {
+   "securityId": 109,
+   "code": "BNBUSDT",
+   "name": "BINANCE-COIN/USDT"
+   },
+   {
+   "securityId": 110,
+   "code": "EOSUSDT",
+   "name": "EOS/USDT"
+   }
+   ]'
+
+3. list instruments
+
+curl --location 'http://localhost:8080/api/v1/list-instruments?client=1'
+
+4. place order sell
 curl --location 'http://localhost:8080/api/v1/place-order' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
 --data-urlencode 'clientOrderId=3209' \
@@ -62,10 +123,10 @@ curl --location 'http://localhost:8080/api/v1/place-order' \
 --data-urlencode 'traderId=1' \
 --data-urlencode 'client=1'
 
-3. place order buy
+5. place order buy
 curl --location 'http://localhost:8080/api/v1/place-order' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
---data-urlencode 'securityId=1' \
+--data-urlencode 'securityId=101' \
 --data-urlencode 'clientOrderId=55770' \
 --data-urlencode 'volume=1000' \
 --data-urlencode 'price=40000000' \
@@ -78,10 +139,10 @@ curl --location 'http://localhost:8080/api/v1/place-order' \
 --data-urlencode 'traderId=1' \
 --data-urlencode 'client=1'
 
-4. replace order
+6. replace order
 curl --location 'http://localhost:8080/api/v1/replace-order' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
---data-urlencode 'securityId=1' \
+--data-urlencode 'securityId=101' \
 --data-urlencode 'clientOrderId=3209' \
 --data-urlencode 'volume=1000' \
 --data-urlencode 'price=10000000' \
@@ -94,22 +155,22 @@ curl --location 'http://localhost:8080/api/v1/replace-order' \
 --data-urlencode 'traderId=1' \
 --data-urlencode 'client=1'
 
-5. get LOB
+7. get LOB
 curl --location 'http://localhost:8080/api/v1/submit-admin-message?securityId=1&adminMessageType=LOB&trader=1&client=1&requestId=1'
 
-6. get VWAP
+8. get VWAP
 curl --location 'http://localhost:8080/api/v1/submit-admin-message?requestId=1&securityId=1&adminMessageType=VWAP&trader=1&client=1'
 
-7. get BBO
+9. get BBO
 curl --location 'http://localhost:8080/api/v1/submit-admin-message?requestId=1&securityId=1&adminMessageType=BestBidOfferRequest&trader=1&client=1'
 
-8. get Market Depth
+10. get Market Depth
 curl --location 'http://localhost:8080/api/v1/submit-admin-message?securityId=1&adminMessageType=MarketDepth&requestId=1&trader=1&client=1'
 
-9. get cancel order
+11. get cancel order
 curl --location 'http://localhost:8080/api/v1/cancel-order' \
 --header 'Content-Type: application/x-www-form-urlencoded' \
---data-urlencode 'securityId=1' \
+--data-urlencode 'securityId=101' \
 --data-urlencode 'clientOrderId=3204' \
 --data-urlencode 'side=Sell' \
 --data-urlencode 'price=10000000' \

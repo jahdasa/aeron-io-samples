@@ -68,6 +68,7 @@ public class ClusterApp
         //await DNS resolution of all the hostnames
         hostAddresses.forEach(ClusterApp::awaitDnsResolution);
 
+        LOGGER.info("config: aeron-directory: {}", clusterConfig.mediaDriverContext().aeronDirectoryName());
         try (
             ClusteredMediaDriver ignored = ClusteredMediaDriver.launch(
                 clusterConfig.mediaDriverContext(),

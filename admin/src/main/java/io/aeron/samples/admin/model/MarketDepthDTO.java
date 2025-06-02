@@ -31,5 +31,6 @@ public class MarketDepthDTO  extends BaseResponse implements Serializable
         BigDecimal price;
         sbe.msg.SideEnum side;
         BigDecimal quantity;
+        BigDecimal total;
     }
 }

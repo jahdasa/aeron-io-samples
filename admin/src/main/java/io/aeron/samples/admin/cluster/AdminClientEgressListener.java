@@ -289,7 +289,7 @@ public class AdminClientEgressListener implements EgressListener
                         "1" + "@" +
                         "1";
 
-                    pendingMessageManager.markAdminMessageAsReceived(correlationId);
+                    pendingMessageManager.markMarketDepth(correlationId);
                 }
                 else if(adminTypeEnum == AdminTypeEnum.EndLOB)
                 {

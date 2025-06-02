@@ -8,7 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import sbe.msg.NewInstrumentCompleteStatus;
+import sbe.msg.SideEnum;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -210,8 +212,6 @@ public class PendingMessageManager
             aggData.setBidTotalVolume(aggData.getBidTotalVolume() + marketDepthDTO.getBidTotalVolume());
             aggData.setAskTotal(aggData.getAskTotal() + marketDepthDTO.getAskTotal());
             aggData.setBidTotal(aggData.getBidTotal() + marketDepthDTO.getBidTotal());
-
-            aggData.getLines().reversed().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice));
         }
     }
 
@@ -251,6 +251,66 @@ public class PendingMessageManager
             if(wrapper != null)
             {
                 data = wrapper.getData();
+            }
+
+            replySuccess(correlationId, data);
+            partialData.remove(correlationId);
+            trackedMessagesMap.remove(correlationId);
+        }
+    }
+
+    /**
+     * Mark a message as received
+     * @param correlationId the correlation id of the message
+     */
+    public void markMarketDepth(final String correlationId)
+    {
+        final boolean exist = trackedMessagesMap.containsKey(correlationId);
+
+        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        if (exist)
+        {
+            final ResponseWrapper wrapper = partialData.get(correlationId);
+
+            MarketDepthDTO data = new MarketDepthDTO();
+            if(wrapper != null)
+            {
+                data = (MarketDepthDTO) wrapper.getData();
+                List<MarketDepthDTO.MarketDepthLine> lines = data.getLines();
+
+                lines.reversed().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice));
+
+                for (MarketDepthDTO.MarketDepthLine currentLine : lines)
+                {
+                    BigDecimal total = BigDecimal.ZERO;
+
+                    for (final MarketDepthDTO.MarketDepthLine line : lines)
+                    {
+                        if (currentLine.getSide() != line.getSide())
+                        {
+                            continue;
+                        }
+
+                        if(currentLine.getSide() == SideEnum.Buy)
+                        {
+                            if (currentLine.getPrice().compareTo(line.getPrice()) <= 0)
+                            {
+                                total = total.add(line.getQuantity());
+                            }
+                        }
+
+                        if(currentLine.getSide() == SideEnum.Sell)
+                        {
+                            if (line.getPrice().compareTo(currentLine.getPrice()) <= 0)
+                            {
+                                total = total.add(line.getQuantity());
+                            }
+                        }
+
+                    }
+
+                    currentLine.setTotal(total);
+                }
             }
 
             replySuccess(correlationId, data);

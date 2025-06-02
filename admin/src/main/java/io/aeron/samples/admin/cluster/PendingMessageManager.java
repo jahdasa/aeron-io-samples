@@ -210,6 +210,8 @@ public class PendingMessageManager
             aggData.setBidTotalVolume(aggData.getBidTotalVolume() + marketDepthDTO.getBidTotalVolume());
             aggData.setAskTotal(aggData.getAskTotal() + marketDepthDTO.getAskTotal());
             aggData.setBidTotal(aggData.getBidTotal() + marketDepthDTO.getBidTotal());
+
+            aggData.getLines().reversed().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice));
         }
     }
 

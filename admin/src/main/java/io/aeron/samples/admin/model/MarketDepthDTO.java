@@ -1,10 +1,12 @@
 package io.aeron.samples.admin.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
@@ -25,8 +27,9 @@ public class MarketDepthDTO  extends BaseResponse implements Serializable
     public static class MarketDepthLine implements Serializable
     {
         long count;
-        double price;
+
+        BigDecimal price;
         sbe.msg.SideEnum side;
-        long quantity;
+        BigDecimal quantity;
     }
 }

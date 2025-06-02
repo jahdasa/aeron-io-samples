@@ -249,11 +249,13 @@ public class  MatchingEngine {
         unitHeaderDecoder.wrapAndApplyHeader(header, 0 , messageHeaderDecoder);
         context.reply(header, 0 , messageHeaderDecoder.encodedLength() + unitHeaderDecoder.encodedLength());
 
-        if(MarketData.INSTANCE.isSnapShotRequest()){
+        if(MarketData.INSTANCE.isSnapShotRequest())
+        {
             MarketData.INSTANCE.lobSnapShot(context);
         }
 
-        if(MarketData.INSTANCE.isMarketDepthRequest()){
+        if(MarketData.INSTANCE.isMarketDepthRequest())
+        {
             MarketData.INSTANCE.calcMarketDepth(context);
         }
 

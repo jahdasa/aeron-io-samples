@@ -182,30 +182,25 @@ public enum MarketData {
         marketDepthBuilder.compID(compID);
     }
 
-    private void publishLOBSnapShot(SessionMessageContext context){
+    private void publishLOBSnapShot(SessionMessageContext context)
+    {
         mktData.add(lobBuilder.build());
         mktDataLength.add(lobBuilder.getMessageLength());
 
-        for(ObjectCursor<DirectBuffer> cursor : mktData){
-//            marketDataPublisher.send(cursor.value);
+        for(ObjectCursor<DirectBuffer> cursor : mktData)
+        {
             context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
         }
         resetLOBBuilder(orderBook.getSecurityId());
-
-//        try {
-//            Thread.sleep(100);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
     }
 
-    private void publishMarketDepth(SessionMessageContext context){
+    private void publishMarketDepth(final SessionMessageContext context)
+    {
         mktData.add(marketDepthBuilder.build());
         mktDataLength.add(marketDepthBuilder.getMessageLength());
 
-        for(ObjectCursor<DirectBuffer> cursor : mktData){
-            context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
-        }
+        context.reply(marketDepthBuilder.build(), 0 , marketDepthBuilder.getMessageLength());
+
         resetMarketDepthBuilder(orderBook.getSecurityId());
     }
 
@@ -334,7 +329,8 @@ public enum MarketData {
         mktDataLength.add(vwapBuilder.getMessageLength());
     }
 
-    public void calcMarketDepth(SessionMessageContext context){
+    public void calcMarketDepth(SessionMessageContext context)
+    {
         marketDepthBuilder.securityId((int) orderBook.getSecurityId());
         marketDepthBuilder.compID(compID);
 
@@ -349,17 +345,19 @@ public enum MarketData {
 
         BPlusTree<Long, OrderList> bidTree = orderBook.getBidTree();
 
-        for(int i=prices.length - 1; i>=0; i--){
-            if(prices[i] == 0){
+        for(int i=prices.length - 1; i>=0; i--)
+        {
+            if(prices[i] == 0)
+            {
                 continue;
             }
 
-            OrderList bidList = bidTree.get(prices[i]);
+            final OrderList bidList = bidTree.get(prices[i]);
             int bidCount = 0;
             long bidTotalVolume = 0L;
 
-            if(bidList != null){
-
+            if(bidList != null)
+            {
                 bidCount = bidList.size();
                 if(bidCount == 0L)
                 {
@@ -370,30 +368,35 @@ public enum MarketData {
                 count++;
             }
 
-            if(count == 1000){
+            if(count == 100)
+            {
                 publishMarketDepth(context);
                 count = 0;
                 System.out.println("Published large MarketDepth");
             }
         }
 
-        if(count != 0) {
+        if(count != 0)
+        {
             publishMarketDepth(context);
         }
 
         count = 0;
-        BPlusTree<Long, OrderList> offerTree = orderBook.getOfferTree();
+        final BPlusTree<Long, OrderList> offerTree = orderBook.getOfferTree();
 
-        for(int i=prices.length - 1; i>=0; i--){
-            if(prices[i] == 0){
+        for(int i=prices.length - 1; i>=0; i--)
+        {
+            if(prices[i] == 0)
+            {
                 continue;
             }
 
-            OrderList offerList = offerTree.get(prices[i]);
+            final OrderList offerList = offerTree.get(prices[i]);
             int offerCount = 0;
             long offerTotalVolume = 0L;
 
-            if(offerList != null){
+            if(offerList != null)
+            {
                 offerCount = offerList.size();
                 if(offerCount == 0L)
                 {
@@ -405,7 +408,8 @@ public enum MarketData {
                 count++;
             }
 
-            if(count == 200){
+            if(count == 100)
+            {
                 publishMarketDepth(context);
                 count = 0;
                 System.out.println("Published large MarketDepth");
@@ -413,7 +417,8 @@ public enum MarketData {
         }
 
 
-        if(count != 0) {
+        if(count != 0)
+        {
             publishMarketDepth(context);
         }
 

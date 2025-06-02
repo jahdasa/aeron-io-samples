@@ -89,6 +89,7 @@ public class AdminController
      * Endpoint to submit a buy limit order
      */
     @GetMapping(path = "/v1/submit-admin-message")
+    @CrossOrigin(origins = "*")
     public ResponseWrapper submitAdminMessage(
             @RequestParam final long requestId,
             @RequestParam(defaultValue = "1") final int securityId,

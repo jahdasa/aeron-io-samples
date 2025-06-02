@@ -33,6 +33,8 @@ import sbe.msg.marketData.*;
 import sbe.msg.marketData.PriceDecoder;
 import sbe.msg.marketData.SideEnum;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
@@ -151,26 +153,27 @@ public class AdminClientEgressListener implements EgressListener
 
                     double priceValue = priceDecoder.mantissa() * Math.pow(10, priceDecoder.exponent());
 
-                    if(side== sbe.msg.SideEnum.Buy){
+                    if(side == sbe.msg.SideEnum.Buy)
+                    {
                         bidTotalVolume.addAndGet(quantity);
                         bidTotal.addAndGet((long) (quantity*priceValue));
                     }
-                    else
+                    else if(side == sbe.msg.SideEnum.Sell)
                     {
                         offerTotalVolume.addAndGet(quantity);
                         offerTotal.addAndGet((long) (quantity*priceValue));
                     }
 
                     log(
-                            "securityId: " + securityId +
-                                    " side: " + side +
-                                    "@" + count + "@" + quantity + "@" + priceValue, AttributedStyle.YELLOW);
+                        "securityId: " + securityId +
+                                " side: " + side +
+                                "@" + count + "@" + quantity + "@" + priceValue, AttributedStyle.YELLOW);
 
                     MarketDepthDTO.MarketDepthLine line = new MarketDepthDTO.MarketDepthLine();
                     line.setCount(count);
-                    line.setPrice(priceValue);
+                    line.setPrice(BigDecimal.valueOf(priceValue).setScale(2, RoundingMode.HALF_UP));
                     line.setSide(side);
-                    line.setQuantity(quantity);
+                    line.setQuantity(BigDecimal.valueOf(quantity).divide(BigDecimal.valueOf(1000_000), 8, RoundingMode.HALF_UP));
                     lines.add(line);
                 });
 

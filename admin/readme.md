@@ -72,3 +72,6 @@ This approach is typical for gateways, for example you may have a web socket gat
 
 - `Main-Class: io.aeron.samples.admin.AdminApi`
 - `Add-Opens: java.base/sun.nio.ch`
+
+
+AERON_DRIVER_DIR=C:\code\github\aeron-io-samples\admin\aeron-driver

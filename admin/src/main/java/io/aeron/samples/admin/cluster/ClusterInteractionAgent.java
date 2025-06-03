@@ -20,6 +20,7 @@ import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
 import sbe.msg.*;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -294,7 +295,9 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             .threadingMode(ThreadingMode.SHARED)
             .dirDeleteOnStart(true)
             .errorHandler(this::logError)
-            .dirDeleteOnShutdown(true));
+            .dirDeleteOnShutdown(true)
+            .aeronDirectoryName(getAeronDriverDir().getAbsolutePath()));
+
         aeronCluster = AeronCluster.connect(
             new AeronCluster.Context()
                 .egressListener(adminClientEgressListener)
@@ -396,5 +399,16 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     public CompletableFuture<ResponseWrapper> onComplete(final String correlationId)
     {
         return pendingMessageManager.onComplete(correlationId);
+    }
+
+    private static File getAeronDriverDir()
+    {
+        final String baseDir = System.getenv("AERON_DRIVER_DIR");
+        if (null == baseDir || baseDir.isEmpty())
+        {
+            return new File(System.getProperty("user.dir"), "me-admin-client");
+        }
+
+        return new File(baseDir);
     }
 }

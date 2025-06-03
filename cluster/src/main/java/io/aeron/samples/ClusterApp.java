@@ -61,6 +61,7 @@ public class ClusterApp
         clusterConfig.baseDir(getBaseDir(nodeId));
         clusterConfig.mediaDriverContext().threadingMode(ThreadingMode.DEDICATED);
         clusterConfig.archiveContext().threadingMode(ArchiveThreadingMode.DEDICATED);
+        clusterConfig.aeronDirectoryName(getAeronDriverDir(nodeId).getAbsolutePath());
 
         //this may need tuning for your environment.
         clusterConfig.consensusModuleContext().leaderHeartbeatTimeoutNs(TimeUnit.SECONDS.toNanos(3));
@@ -94,6 +95,22 @@ public class ClusterApp
         if (null == baseDir || baseDir.isEmpty())
         {
             return new File(System.getProperty("user.dir"), "node" + nodeId);
+        }
+
+        return new File(baseDir);
+    }
+
+    /***
+     * Get the base directory for the cluster configuration
+     * @param nodeId node id
+     * @return base directory
+     */
+    private static File getAeronDriverDir(final int nodeId)
+    {
+        final String baseDir = System.getenv("AERON_DRIVER_DIR");
+        if (null == baseDir || baseDir.isEmpty())
+        {
+            return new File(System.getProperty("user.dir"), "driver-node" + nodeId);
         }
 
         return new File(baseDir);

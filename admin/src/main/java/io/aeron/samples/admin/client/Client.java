@@ -322,28 +322,31 @@ public class Client {
         return directBuffer;
     }
 
-    public DirectBuffer calcVWAP() {
-        DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
-                    .securityId(securityId)
-                    .adminMessage(AdminTypeEnum.VWAP)
-                    .build();
+    public DirectBuffer calcVWAP()
+    {
+        final DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
+                .securityId(securityId)
+                .adminMessage(AdminTypeEnum.VWAP)
+                .build();
 
         return buffer;
     }
 
-    public DirectBuffer lobSnapshot() {
-        DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
-                .securityId(securityId)
-                .adminMessage(AdminTypeEnum.LOB)
-                .build();
+    public DirectBuffer lobSnapshot()
+    {
+        final DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
+            .securityId(securityId)
+            .adminMessage(AdminTypeEnum.LOB)
+            .build();
         return buffer;
     }
 
-    public DirectBuffer marketDepth() {
-        DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
-                .securityId(securityId)
-                .adminMessage(AdminTypeEnum.MarketDepth)
-                .build();
+    public DirectBuffer marketDepth()
+    {
+        final DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
+            .securityId(securityId)
+            .adminMessage(AdminTypeEnum.MarketDepth)
+            .build();
         return buffer;
     }
 

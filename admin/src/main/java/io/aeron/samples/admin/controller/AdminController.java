@@ -96,7 +96,8 @@ public class AdminController
             @RequestParam final String adminMessageType,
             @RequestParam final long trader,
             @RequestParam final int client
-            ) throws Exception {
+            ) throws Exception
+    {
         return adminService.submitAdminMessage(securityId, adminMessageType, requestId, trader, client);
     }
 

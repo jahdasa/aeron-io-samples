@@ -187,10 +187,8 @@ public enum MarketData {
         mktData.add(lobBuilder.build());
         mktDataLength.add(lobBuilder.getMessageLength());
 
-        for(ObjectCursor<DirectBuffer> cursor : mktData)
-        {
-            context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
-        }
+        context.reply(lobBuilder.build(), 0 , lobBuilder.getMessageLength());
+
         resetLOBBuilder(orderBook.getSecurityId());
     }
 
@@ -216,20 +214,25 @@ public enum MarketData {
         resetLOBBuilder(orderBook.getSecurityId());
 
         Iterator<Map.Entry<Long, OrderList>> bidIterator = (BPlusTree.BPlusTreeIterator) orderBook.getBidTree().iterator();
-        while (bidIterator.hasNext()) {
+        while (bidIterator.hasNext())
+        {
             Map.Entry<Long, OrderList> orderList = bidIterator.next();
             if (orderList != null) {
                 Iterator<OrderListCursor> iterator = orderList.getValue().iterator();
-                while (iterator.hasNext()) {
-                    OrderEntry currentOrder = iterator.next().value;
+                while (iterator.hasNext())
+                {
+                    final OrderEntry currentOrder = iterator.next().value;
 
-                    lobBuilder.addOrder(currentOrder.getClientOrderId(), (int) currentOrder.getOrderId(),
-                            currentOrder.getQuantity(),
-                            sbe.msg.SideEnum.get(currentOrder.getSide()),
-                            currentOrder.getPrice());
+                    lobBuilder.addOrder(
+                        currentOrder.getClientOrderId(),
+                        (int) currentOrder.getOrderId(),
+                        currentOrder.getQuantity(),
+                        sbe.msg.SideEnum.get(currentOrder.getSide()),
+                        currentOrder.getPrice());
 
                     count++;
-                    if(count == 100){
+                    if(count == 100)
+                    {
                         publishLOBSnapShot(context);
                         count = 0;
                         System.out.println("Published large LOB");
@@ -238,13 +241,23 @@ public enum MarketData {
             }
         }
 
-        Iterator<Map.Entry<Long, OrderList>> offerIterator = (BPlusTree.BPlusTreeIterator) orderBook.getOfferTree().iterator();
-        while (offerIterator.hasNext()) {
+        if(count != 0)
+        {
+            publishLOBSnapShot(context);
+        }
+
+        count = 0;
+        final Iterator<Map.Entry<Long, OrderList>> offerIterator = orderBook.getOfferTree().iterator();
+
+        while (offerIterator.hasNext())
+        {
             Map.Entry<Long, OrderList> orderList = offerIterator.next();
-            if (orderList != null) {
+            if (orderList != null)
+            {
                 Iterator<OrderListCursor> iterator = orderList.getValue().iterator();
-                while (iterator.hasNext()) {
-                    OrderEntry currentOrder = iterator.next().value;
+                while (iterator.hasNext())
+                {
+                    final OrderEntry currentOrder = iterator.next().value;
 
                     lobBuilder.addOrder(currentOrder.getClientOrderId(), (int) currentOrder.getOrderId(),
                             currentOrder.getQuantity(),
@@ -252,7 +265,8 @@ public enum MarketData {
                             currentOrder.getPrice());
 
                     count++;
-                    if(count == 100){
+                    if(count == 100)
+                    {
                         publishLOBSnapShot(context);
                         count = 0;
                     }
@@ -260,19 +274,18 @@ public enum MarketData {
             }
         }
 
-        if(count != 0) {
+        if(count != 0)
+        {
             publishLOBSnapShot(context);
         }
 
-//        marketDataPublisher.send(getAdminMessage(AdminTypeEnum.EndLOB, orderBook.getSecurityId(), compID));
-        DirectBuffer adminMessage1 = getAdminMessage(AdminTypeEnum.EndLOB, orderBook.getSecurityId(), compID);
-        context.reply(adminMessage1, 0, adminBuilder.getMessageLength());
+        DirectBuffer adminMessageEndLOB = getAdminMessage(AdminTypeEnum.EndLOB, orderBook.getSecurityId(), compID);
+        context.reply(adminMessageEndLOB, 0, adminBuilder.getMessageLength());
 
         setSnapShotRequest(false);
         setMarketDepthRequest(false);
         setOrderBook(null);
         reset();
-        //System.out.println("Publish end orders");
     }
 
 

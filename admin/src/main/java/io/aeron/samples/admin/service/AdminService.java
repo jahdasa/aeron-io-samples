@@ -178,13 +178,13 @@ public class AdminService
     }
 
     public ResponseWrapper submitAdminMessage(
-        int securityId,
-        String adminMessageType,
+        final int securityId,
+        final String adminMessageType,
         final long requestId,
         final long traderId,
-        final int clientId) throws Exception {
-
-        Client client = Client.newInstance(clientId, securityId);
+        final int clientId) throws Exception
+    {
+        final Client client = Client.newInstance(clientId, securityId);
 
         DirectBuffer buffer = null;
         if(adminMessageType.equals("LOB"))

@@ -169,7 +169,7 @@ public class AdminClientEgressListener implements EgressListener
                                 " side: " + side +
                                 "@" + count + "@" + quantity + "@" + priceValue, AttributedStyle.YELLOW);
 
-                    MarketDepthDTO.MarketDepthLine line = new MarketDepthDTO.MarketDepthLine();
+                    final MarketDepthDTO.MarketDepthLine line = new MarketDepthDTO.MarketDepthLine();
                     line.setCount(count);
                     line.setPrice(BigDecimal.valueOf(priceValue).setScale(2, RoundingMode.HALF_UP));
                     line.setSide(side);

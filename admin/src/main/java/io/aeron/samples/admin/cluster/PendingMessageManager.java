@@ -10,11 +10,11 @@ import org.springframework.http.HttpStatus;
 import sbe.msg.NewInstrumentCompleteStatus;
 import sbe.msg.SideEnum;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
 
 /**
  * Responsible for keeping track of pending messages and their timeouts
@@ -194,9 +194,12 @@ public class PendingMessageManager
         future.complete(response);
     }
 
-    public void markMarketDataMessageAsReceived(String correlationId, MarketDepthDTO marketDepthDTO) {
+    public void markMarketDataMessageAsReceived(String correlationId, MarketDepthDTO marketDepthDTO)
+    {
         LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+
         final ResponseWrapper responseWrapper = partialData.get(correlationId);
+
         if(responseWrapper == null)
         {
             var response = new ResponseWrapper();
@@ -215,8 +218,10 @@ public class PendingMessageManager
         }
     }
 
-    public void markLOBMessageAsReceived(String correlationId, LimitOrderBookDTO limitOrderBookDTO) {
+    public void markLOBMessageAsReceived(String correlationId, LimitOrderBookDTO limitOrderBookDTO)
+    {
         LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+
         final ResponseWrapper responseWrapper = partialData.get(correlationId);
         if(responseWrapper == null)
         {
@@ -276,42 +281,46 @@ public class PendingMessageManager
             if(wrapper != null)
             {
                 data = (MarketDepthDTO) wrapper.getData();
-                List<MarketDepthDTO.MarketDepthLine> lines = data.getLines();
+                final List<MarketDepthDTO.MarketDepthLine> lines = data.getLines();
 
-                lines.reversed().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice));
+                final List<MarketDepthDTO.MarketDepthLine> bidOrders = lines.stream()
+                        .filter(line -> line.getSide() == SideEnum.Buy)
+                        .sorted(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed())
+                        .toList();
 
-                for (MarketDepthDTO.MarketDepthLine currentLine : lines)
+                final MarketDepthDTO.MarketDepthLine firstBid = bidOrders.getFirst();
+                if(firstBid != null)
                 {
-                    BigDecimal total = BigDecimal.ZERO;
-
-                    for (final MarketDepthDTO.MarketDepthLine line : lines)
-                    {
-                        if (currentLine.getSide() != line.getSide())
-                        {
-                            continue;
-                        }
-
-                        if(currentLine.getSide() == SideEnum.Buy)
-                        {
-                            if (currentLine.getPrice().compareTo(line.getPrice()) <= 0)
-                            {
-                                total = total.add(line.getQuantity());
-                            }
-                        }
-
-                        if(currentLine.getSide() == SideEnum.Sell)
-                        {
-                            if (line.getPrice().compareTo(currentLine.getPrice()) <= 0)
-                            {
-                                total = total.add(line.getQuantity());
-                            }
-                        }
-
-                    }
-
-                    currentLine.setTotal(total);
+                    firstBid.setTotal(firstBid.getQuantity());
                 }
+
+                for (int i = 1; i < bidOrders.size(); i++)
+                {
+                    final MarketDepthDTO.MarketDepthLine current = bidOrders.get(i);
+                    current.setTotal(current.getQuantity().add(bidOrders.get(i - 1).getTotal()));
+                }
+
+                final List<MarketDepthDTO.MarketDepthLine> askOrders = lines.stream()
+                        .filter(line -> line.getSide() == SideEnum.Sell)
+                        .sorted(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice))
+                        .toList();
+
+
+                final MarketDepthDTO.MarketDepthLine firstAsk = askOrders.getFirst();
+                if(firstAsk != null)
+                {
+                    firstAsk.setTotal(firstAsk.getQuantity());
+                }
+
+                for (int i = 1; i < askOrders.size(); i++)
+                {
+                    final MarketDepthDTO.MarketDepthLine current = askOrders.get(i);
+                    current.setTotal(current.getQuantity().add(askOrders.get(i - 1).getTotal()));
+                }
+
             }
+
+            data.getLines().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed());
 
             replySuccess(correlationId, data);
             partialData.remove(correlationId);

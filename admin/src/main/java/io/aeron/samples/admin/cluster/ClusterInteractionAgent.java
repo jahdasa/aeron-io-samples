@@ -17,8 +17,6 @@ import org.agrona.concurrent.IdleStrategy;
 import org.agrona.concurrent.MessageHandler;
 import org.agrona.concurrent.SystemEpochClock;
 import org.agrona.concurrent.ringbuffer.RingBuffer;
-import org.jline.reader.LineReader;
-import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -93,7 +91,11 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             lastHeartbeatTime = now;
             if (connectionState == ConnectionState.CONNECTED)
             {
-                aeronCluster.sendKeepAlive();
+                if(!aeronCluster.sendKeepAlive())
+                {
+                    LOGGER.warn("Send keep alive failed, try to connect again");
+                    connectToCluster(basePort, port, clusterHosts, localHostName);
+                }
             }
         }
 
@@ -295,6 +297,10 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         }
     }
 
+    int basePort;
+    int port;
+    String clusterHosts;
+    String localHostName;
 
     /**
      * Opens the cluster connection
@@ -304,8 +310,27 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private void processConnectCluster(final MutableDirectBuffer buffer, final int offset)
     {
         connectClusterDecoder.wrapAndApplyHeader(buffer, offset, messageHeaderDecoder);
-        connectCluster(connectClusterDecoder.baseport(), connectClusterDecoder.port(),
-            connectClusterDecoder.clusterHosts(), connectClusterDecoder.localhostName());
+
+        basePort = connectClusterDecoder.baseport();
+        port = connectClusterDecoder.port();
+        clusterHosts = connectClusterDecoder.clusterHosts();
+        localHostName = connectClusterDecoder.localhostName();
+
+        connectToCluster(basePort, port, clusterHosts, localHostName);
+    }
+
+    private void connectToCluster(
+        final int basePort,
+        final int port,
+        final String clusterHosts,
+        final String localHostName)
+    {
+        connectCluster(
+            basePort,
+            port,
+            clusterHosts,
+            localHostName);
+
         connectionState = ConnectionState.CONNECTED;
     }
 
@@ -405,6 +430,9 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
                 else if (result == Publication.NOT_CONNECTED || result == Publication.MAX_POSITION_EXCEEDED)
                 {
                     LOGGER.error("Cluster is not connected, or maximum position has been exceeded. Message lost.");
+
+                    connectToCluster(basePort, port, clusterHosts, localHostName);
+
                     return false;
                 }
 
@@ -415,6 +443,9 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             while (retries < RETRY_COUNT);
 
             LOGGER.error("Failed to send message to cluster. Message lost.");
+
+            connectToCluster(basePort, port, clusterHosts, localHostName);
+
             return false;
         }
         else

@@ -22,7 +22,9 @@ import sbe.msg.*;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.agrona.concurrent.ringbuffer.RingBufferDescriptor.TRAILER_LENGTH;
@@ -42,17 +44,22 @@ public class AdminService
     final AtomicBoolean running = new AtomicBoolean(true);
     final IdleStrategy idleStrategy = new SleepingMillisIdleStrategy();
 
+    final Client client = Client.newInstance(1);
+
     ClusterInteractionAgent clusterInteractionAgent;
 
     @PostConstruct
     public void postConstruct()
     {
-        try {
+        try
+        {
             clusterInteractionAgent = new ClusterInteractionAgent(
                 adminClusterChannel,
                 idleStrategy,
                 running);
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             throw new RuntimeException(e);
         }
 
@@ -111,10 +118,8 @@ public class AdminService
         final long minQuantity,
         final long stopPrice,
         final int traderId,
-        final int clientId) throws Exception
+        final int clientId)
     {
-        final Client client = Client.newInstance(clientId, securityId);
-
         final int claimIndex = adminClusterChannel.tryClaim(10, 114);
 
         if (claimIndex < 0)
@@ -123,58 +128,39 @@ public class AdminService
             return new ResponseWrapper(-2, null, new BaseError("Failed to accept more new order"));
         }
 
-        try
-        {
-            final MutableDirectBuffer buffer = adminClusterChannel.buffer();
+        final MutableDirectBuffer buffer = adminClusterChannel.buffer();
 
-            client.placeOrder(
-                    buffer,
-                    claimIndex,
-                    clientOrderId,
-                    volume,
-                    price,
-                    side,
-                    orderType,
-                    timeInForce,
-                    displayQuantity,
-                    minQuantity,
-                    stopPrice,
-                    traderId
-            );
+        client.placeOrder(
+            securityId,
+            buffer,
+            claimIndex,
+            clientOrderId,
+            volume,
+            price,
+            side,
+            orderType,
+            timeInForce,
+            displayQuantity,
+            minQuantity,
+            stopPrice,
+            traderId,
+            clientId
+        );
 
-            clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
+        clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
 
-            final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
-                    SideEnum.valueOf(side).value() + "@" +
-                    securityId + "@" +
-                    clientOrderId.trim() + "@" +
-                    traderId + "@" +
-                    clientId;
+        final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
+                SideEnum.valueOf(side).value() + "@" +
+                securityId + "@" +
+                clientOrderId.trim() + "@" +
+                traderId + "@" +
+                clientId;
 
-            final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
+        final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
-            adminClusterChannel.commit(claimIndex);
+        commit(claimIndex);
 
-            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
-        }
-        catch (final Exception e)
-        {
-            String error = e.getMessage();
-            try
-            {
-                adminClusterChannel.abort(claimIndex);
-            }
-            catch (final Exception e1)
-            {
-                log.error(error + ", abort error: " + e1.getMessage(), e1);
-            }
-            log.error("Failed to write order to ring buffer: " + error, e);
-            return new ResponseWrapper(-3, null, new BaseError(e.getMessage()));
-        }
-
+        return await(future);
     }
 
     public ResponseWrapper submitAdminMessage(
@@ -182,30 +168,20 @@ public class AdminService
         final String adminMessageType,
         final long requestId,
         final long traderId,
-        final int clientId) throws Exception
+        final int clientId)
     {
-        final Client client = Client.newInstance(clientId, securityId);
+        DirectBuffer buffer;
 
-        DirectBuffer buffer = null;
-        if(adminMessageType.equals("LOB"))
+        switch (adminMessageType)
         {
-            buffer = client.lobSnapshot();
-        }
-        else if(adminMessageType.equals("VWAP"))
-        {
-            buffer = client.calcVWAP();
-        }
-        else if(adminMessageType.equals("MarketDepth"))
-        {
-            buffer = client.marketDepth();
-        }
-        else if(adminMessageType.equals("BestBidOfferRequest"))
-        {
-            buffer = client.bbo();
-        }
-        else
-        {
-            return new ResponseWrapper();
+            case "LOB" -> buffer = client.lobSnapshot(securityId, clientId);
+            case "VWAP" -> buffer = client.calcVWAP(securityId, clientId);
+            case "MarketDepth" -> buffer = client.marketDepth(securityId, clientId);
+            case "BestBidOfferRequest" -> buffer = client.bbo(securityId, clientId);
+            default ->
+            {
+                return new ResponseWrapper();
+            }
         }
 
         // admin-tid@type@security@reqid@traderId@client
@@ -218,21 +194,11 @@ public class AdminService
 
         log.info("CorrelationId: {}", correlationId);
 
-        final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
+        final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
         adminClusterChannel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
 
-        try {
-            final ResponseWrapper responseWrapper = response.get(15, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
-        }
-        catch (final Exception e)
-        {
-            log.error(e.getMessage(), e);
-            return new ResponseWrapper(-1 , "timeout");
-        }
+        return await(future);
     }
 
     public ResponseWrapper cancelOrder(
@@ -241,10 +207,9 @@ public class AdminService
         final String side,
         final long price,
         final int traderId,
-        final int clientId) throws Exception
+        final int clientId)
     {
-        final Client client = Client.newInstance(clientId, securityId);
-        DirectBuffer buffer = client.cancelOrder(clientOrderId, side, price, traderId);
+        final DirectBuffer buffer = client.cancelOrder(securityId, clientOrderId, side, price, traderId, clientId);
 
         // cancelorder-tid@side@security@clientOrderId@trader@client
         final String correlationId = NewOrderEncoder.TEMPLATE_ID + "@" +
@@ -256,21 +221,11 @@ public class AdminService
 
         log.info("CorrelationId: {}", correlationId);
 
-        final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
+        final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
         adminClusterChannel.write(10, buffer, 0, client.getCancelOrderEncodedLength());
 
-        try {
-            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
-        }
-        catch (final Exception e)
-        {
-            log.error(e.getMessage(), e);
-            return new ResponseWrapper(-1 , "timeout");
-        }
+        return await(future);
     }
 
 
@@ -286,10 +241,10 @@ public class AdminService
         long minQuantity,
         long stopPrice,
         int traderId,
-        int clientId) throws Exception
+        int clientId)
     {
-        final Client client = Client.newInstance(1, securityId);
         final DirectBuffer buffer = client.replaceOrder(
+            securityId,
             clientOrderId,
             volume,
             price,
@@ -299,7 +254,8 @@ public class AdminService
             displayQuantity,
             minQuantity,
             stopPrice,
-            traderId
+            traderId,
+            clientId
         );
 
         // neworder-tid@side@security@clientOrderId@trader@client
@@ -312,31 +268,19 @@ public class AdminService
 
         log.info("CorrelationId: {}", correlationId);
 
-        final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
+        final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
         adminClusterChannel.write(10, buffer, 0, client.getReplaceOrderEncodedLength());
 
-        try {
-            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.debug("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
-        }
-        catch (final Exception e)
-        {
-            log.error(e.getMessage(), e);
-            return new ResponseWrapper(-1 , "timeout");
-        }
+        return await(future);
     }
 
     public ResponseWrapper newInstrument(
         final int securityId,
         final String code,
         final String name,
-        final int clientId) throws Exception
+        final int clientId)
     {
-        final Client client = Client.newInstance(clientId, securityId);
-
         final int claimIndex = adminClusterChannel.tryClaim(10, 114);
 
         if (claimIndex < 0)
@@ -345,53 +289,33 @@ public class AdminService
             return new ResponseWrapper(-2, null, new BaseError("Failed to accept more new order"));
         }
 
-        try
-        {
-            final MutableDirectBuffer buffer = adminClusterChannel.buffer();
+        final MutableDirectBuffer buffer = adminClusterChannel.buffer();
 
-            client.newInstrument(
-                    buffer,
-                    claimIndex,
-                    securityId,
-                    code,
-                    name
-            );
+        client.newInstrument(
+                clientId,
+                buffer,
+                claimIndex,
+                securityId,
+                code,
+                name
+        );
 
-            // newinstrument-tid@security@code@client
-            final String correlationId = NewInstrumentDecoder.TEMPLATE_ID + "@" +
-                    securityId + "@" +
-                    code + "@" +
-                    clientId;
+        // newinstrument-tid@security@code@client
+        final String correlationId = NewInstrumentDecoder.TEMPLATE_ID + "@" +
+                securityId + "@" +
+                code + "@" +
+                clientId;
 
-            final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
+        final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
 
-            adminClusterChannel.commit(claimIndex);
+        commit(claimIndex);
 
-            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
-        }
-        catch (final Exception e)
-        {
-            String error = e.getMessage();
-            try
-            {
-                adminClusterChannel.abort(claimIndex);
-            }
-            catch (final Exception e1)
-            {
-                log.error(error + ", abort error: " + e1.getMessage(), e1);
-            }
-            log.error("Failed to write command to ring buffer: " + error, e);
-            return new ResponseWrapper(-3, null, new BaseError(e.getMessage()));
-        }
+        return await(response);
     }
+
 
     public ResponseWrapper listInstruments(final int clientId) throws Exception
     {
-        final Client client = Client.newInstance(clientId, 1);
-
         final int claimIndex = adminClusterChannel.tryClaim(10, 114);
 
         if (claimIndex < 0)
@@ -400,43 +324,62 @@ public class AdminService
             return new ResponseWrapper(-2, null, new BaseError("Failed to accept more new order"));
         }
 
+        final MutableDirectBuffer buffer = adminClusterChannel.buffer();
+
+        // newinstrument-tid@timestamp@client
+        final String correlationId = ListInstrumentsMessageRequestDecoder.TEMPLATE_ID + "@" +
+            System.currentTimeMillis() + "@" +
+            clientId;
+
+        final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
+
+        client.listInstruments(
+                clientId,
+                buffer,
+                claimIndex,
+                correlationId
+        );
+
+        commit(claimIndex);
+
+        return await(future);
+    }
+
+    private static ResponseWrapper await(final CompletableFuture<ResponseWrapper> future)
+    {
+        String error;
         try
         {
-            final MutableDirectBuffer buffer = adminClusterChannel.buffer();
+            final ResponseWrapper response = future.get(5, TimeUnit.SECONDS);
+            log.info("Response: {}", response);
 
-            // newinstrument-tid@timestamp@client
-            final String correlationId = ListInstrumentsMessageRequestDecoder.TEMPLATE_ID + "@" +
-                System.currentTimeMillis() + "@" +
-                clientId;
+            return response;
+        }
+        catch (final TimeoutException e)
+        {
+            error = "Timeout error";
+        }
+        catch (final InterruptedException e)
+        {
+            error = "Interrupted error";
+        }
+        catch (final ExecutionException e)
+        {
+            error = "Execution error";
+        }
+        return new ResponseWrapper(-3, null, new BaseError(error));
+    }
 
-            client.listInstruments(
-                    buffer,
-                    claimIndex,
-                    correlationId
-            );
-
-            final CompletableFuture<ResponseWrapper> response = clusterInteractionAgent.onComplete(correlationId);
-
+    private void commit(int claimIndex)
+    {
+        try
+        {
             adminClusterChannel.commit(claimIndex);
-
-            final ResponseWrapper responseWrapper = response.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", responseWrapper.getData());
-
-            return responseWrapper;
         }
         catch (final Exception e)
         {
-            String error = e.getMessage();
-            try
-            {
-                adminClusterChannel.abort(claimIndex);
-            }
-            catch (final Exception e1)
-            {
-                log.error(error + ", abort error: " + e1.getMessage(), e1);
-            }
-            log.error("Failed to write command to ring buffer: " + error, e);
-            return new ResponseWrapper(-3, null, new BaseError(e.getMessage()));
+            log.error("Failed to write command to ring buffer: {} ", e.getMessage(), e);
+            adminClusterChannel.abort(claimIndex);
         }
     }
 }

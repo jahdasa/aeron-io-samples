@@ -4,6 +4,7 @@ import io.aeron.Publication;
 import io.aeron.cluster.client.AeronCluster;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
+import io.aeron.samples.admin.model.BaseError;
 import io.aeron.samples.admin.model.ResponseWrapper;
 import io.aeron.samples.cluster.ClusterConfig;
 import io.aeron.samples.cluster.admin.protocol.MessageHeaderDecoder;
@@ -20,6 +21,7 @@ import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import sbe.msg.*;
 
 import java.io.File;
@@ -135,7 +137,8 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         }
     }
 
-    private void processListInstruments(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
+    private void processListInstruments(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset)
+    {
         LOGGER.info("Process list instrument " + messageHeaderDecoder.templateId());
 
         listInstrumentsMessageRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
@@ -143,7 +146,20 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         final String correlationId = listInstrumentsMessageRequestDecoder.correlationId();
         pendingMessageManager.addMessage(correlationId.trim(), "list-instruments");
 
-        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + listInstrumentsMessageRequestDecoder.encodedLength());
+        boolean success = retryingClusterOffer(
+                buffer,
+                offset,
+                sbeMessageHeaderDecoder.encodedLength() + listInstrumentsMessageRequestDecoder.encodedLength());
+
+        if(!success)
+        {
+            HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+            if (connectionState == ConnectionState.CONNECTED)
+            {
+                status = HttpStatus.BAD_GATEWAY;
+            }
+            pendingMessageManager.replyFail(correlationId.trim(), new BaseError("Not connected to cluster"), status);
+        }
     }
 
     private void processNewInstrument(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
@@ -325,7 +341,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
      * @param offset offset of the message
      * @param length length of the message
      */
-    private void retryingClusterOffer(final DirectBuffer buffer, final int offset, final int length)
+    private boolean retryingClusterOffer(final DirectBuffer buffer, final int offset, final int length)
     {
         if (connectionState == ConnectionState.CONNECTED)
         {
@@ -335,7 +351,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
                 final long result = aeronCluster.offer(buffer, offset, length);
                 if (result > 0L)
                 {
-                    return;
+                    return true;
                 }
                 else if (result == Publication.ADMIN_ACTION || result == Publication.BACK_PRESSURED)
                 {
@@ -344,7 +360,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
                 else if (result == Publication.NOT_CONNECTED || result == Publication.MAX_POSITION_EXCEEDED)
                 {
                     LOGGER.error("Cluster is not connected, or maximum position has been exceeded. Message lost.");
-                    return;
+                    return false;
                 }
 
                 idleStrategy.idle();
@@ -354,10 +370,12 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             while (retries < RETRY_COUNT);
 
             LOGGER.error("Failed to send message to cluster. Message lost.");
+            return false;
         }
         else
         {
             LOGGER.error("Not connected to cluster. Connect first");
+            return false;
         }
     }
 

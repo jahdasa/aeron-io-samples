@@ -27,27 +27,26 @@ public class Client
     private ListInstrumentsBuilder  listInstrumentsBuilder = new ListInstrumentsBuilder();
 
     private ClientData clientData;
-    private int securityId;
 
-    public Client(final ClientData clientData, final int securityId)
+    public Client(final ClientData clientData)
     {
         this.clientData = clientData;
-        this.securityId = securityId;
     }
 
     private static final IntObjectMap<ClientData> clientDataMap = new IntObjectHashMap<>();
 
-    public static Client newInstance(int clientId, int securityId) throws Exception
+    public static Client newInstance(int clientId)
     {
         if(clientDataMap.isEmpty())
         {
             final ClientData clientData = new ClientData(clientId);
             clientDataMap.put(clientId, clientData);
         }
-        return new Client(clientDataMap.get(clientId), securityId);
+        return new Client(clientDataMap.get(clientId));
     }
 
     public DirectBuffer placeOrder(
+        final int securityId,
         final MutableDirectBuffer buffer,
         final int claimIndex,
         String clientOrderId,
@@ -59,11 +58,12 @@ public class Client
         final long displayQuantity,
         final long minQuantity,
         final long stopPrice,
-        final int traderId)
+        final int traderId,
+        final int clientId)
     {
         clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
 
-        final DirectBuffer directBuffer = newOrderBuilder.compID(clientData.getCompID())
+        final DirectBuffer directBuffer = newOrderBuilder.compID(clientId)
                 .clientOrderId(clientOrderId.getBytes())
                 .securityId(securityId)
                 .orderType(OrdTypeEnum.valueOf(orderType))
@@ -82,13 +82,14 @@ public class Client
     }
 
     public DirectBuffer newInstrument(
+            final int clientId,
             final MutableDirectBuffer buffer,
             final int claimIndex,
             final int securityId,
             final String code,
             final String name)
     {
-        final DirectBuffer directBuffer = newInstrumentBuilder.compID(clientData.getCompID())
+        final DirectBuffer directBuffer = newInstrumentBuilder.compID(clientId)
                 .securityId(securityId)
                 .code(code)
                 .name(name)
@@ -100,11 +101,12 @@ public class Client
     }
 
     public void listInstruments(
+            final int clientId,
             final MutableDirectBuffer buffer,
             final int claimIndex,
             final String correlationId)
     {
-        final DirectBuffer directBuffer = listInstrumentsBuilder.compID(clientData.getCompID())
+        final DirectBuffer directBuffer = listInstrumentsBuilder.compID(clientId)
                 .correlationId(correlationId)
                 .build(buffer, claimIndex);
 
@@ -127,10 +129,12 @@ public class Client
     }
 
     public DirectBuffer cancelOrder(
-        String originalClientOrderId,
-        String side,
-        long price,
-        int traderId)
+        final int securityId,
+        final String originalClientOrderId,
+        final String side,
+        final long price,
+        final int traderId,
+        final int clientId)
     {
         final String origClientOrderId = BuilderUtil.fill(
             originalClientOrderId,
@@ -140,7 +144,7 @@ public class Client
             "-" + originalClientOrderId,
             OrderCancelRequestEncoder.clientOrderIdLength());
 
-        DirectBuffer directBuffer = orderCancelRequestBuilder.compID(clientData.getCompID())
+        DirectBuffer directBuffer = orderCancelRequestBuilder.compID(clientId)
                 .clientOrderId(clientOrderId.getBytes())
                 .origClientOrderId(origClientOrderId.getBytes())
                 .securityId(securityId)
@@ -156,6 +160,7 @@ public class Client
     }
 
     public DirectBuffer replaceOrder(
+            int securityId,
             String originalClientOrderId,
             long volume,
             long price,
@@ -165,7 +170,8 @@ public class Client
             long displayQuantity,
             long minQuantity,
             long stopPrice,
-            int traderId)
+            int traderId,
+            int clientId)
     {
         final String clientOrderId = BuilderUtil.fill(
             originalClientOrderId,
@@ -175,7 +181,7 @@ public class Client
             originalClientOrderId,
             OrderCancelReplaceRequestEncoder.origClientOrderIdLength());
 
-        DirectBuffer directBuffer = orderCancelReplaceRequestBuilder.compID(clientData.getCompID())
+        DirectBuffer directBuffer = orderCancelReplaceRequestBuilder.compID(clientId)
             .clientOrderId(clientOrderId.getBytes())
             .origClientOrderId(origClientOrderId.getBytes())
             .securityId(securityId)
@@ -195,41 +201,37 @@ public class Client
         return directBuffer;
     }
 
-    public DirectBuffer calcVWAP()
+    public DirectBuffer calcVWAP(final int securityId, final int clientId)
     {
-        final DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
-                .securityId(securityId)
-                .adminMessage(AdminTypeEnum.VWAP)
-                .build();
+        return adminBuilder.compID(clientId)
+            .securityId(securityId)
+            .adminMessage(AdminTypeEnum.VWAP)
+            .build();
 
-        return buffer;
     }
 
-    public DirectBuffer lobSnapshot()
+    public DirectBuffer lobSnapshot(final int securityId, final int clientId)
     {
-        final DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
+        return adminBuilder.compID(clientId)
             .securityId(securityId)
             .adminMessage(AdminTypeEnum.LOB)
             .build();
-        return buffer;
     }
 
-    public DirectBuffer marketDepth()
+    public DirectBuffer marketDepth(final int securityId, final int clientId)
     {
-        final DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
+        return adminBuilder.compID(clientId)
             .securityId(securityId)
             .adminMessage(AdminTypeEnum.MarketDepth)
             .build();
-        return buffer;
     }
 
-    public DirectBuffer bbo()
+    public DirectBuffer bbo(final int securityId, final int clientId)
     {
-        final DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
-                .securityId(securityId)
-                .adminMessage(AdminTypeEnum.BestBidOfferRequest)
-                .build();
-        return buffer;
+        return adminBuilder.compID(clientId)
+            .securityId(securityId)
+            .adminMessage(AdminTypeEnum.BestBidOfferRequest)
+            .build();
     }
 
     public int getLobSnapshotMessageLength()

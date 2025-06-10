@@ -157,9 +157,10 @@ public class PendingMessageManager
         future.complete(response);
     }
 
-    public void replyFail(final String correlationId, final BaseError error)
+    public void replyFail(final String correlationId, final BaseError error, final HttpStatus httpStatus)
     {
         var future = futures.remove(correlationId);
+        trackedMessagesMap.remove(correlationId);
 
         if (future == null)
         {
@@ -168,8 +169,9 @@ public class PendingMessageManager
 
         var response = new ResponseWrapper();
         response.setError(error);
-        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        response.setStatus(httpStatus.value());
         future.complete(response);
+
     }
 
     public void markMarketDataMessageAsReceived(String correlationId, MarketDepthDTO marketDepthDTO)

@@ -31,7 +31,8 @@ public class ContinuousTradingProcessorTest {
     private LongObjectHashMap<OrderBook> expectedOrderBooks;
 
     @BeforeEach
-    public void setup() throws IOException {
+    public void setup() throws IOException
+    {
         String dataPath = Paths.get("").toAbsolutePath().getParent() + "/data";
         orderBooks = OrderBookDAO.loadOrderBooks(dataPath);
         expectedOrderBooks = OrderBookDAO.loadOrderBooks(dataPath);

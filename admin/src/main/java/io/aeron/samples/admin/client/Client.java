@@ -7,18 +7,8 @@ import org.agrona.MutableDirectBuffer;
 import sbe.builder.*;
 import sbe.msg.*;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-
-public class Client {
-
-//    private GatewayClient tradingGatewayPub;
-//    private TradingGatewaySubscriber tradingGatewaySubscriber;
-//    private MulticastMDGSubscriber marketDataGatewaySubscriber;
-//    private ClientMDGSubscriber clientMDGSubscriber;
-//    private GatewayClient marketDataGatewayPub;
-
+public class Client
+{
     private NewOrderBuilder newOrderBuilder = new NewOrderBuilder().account("account123".getBytes())
             .capacity(CapacityEnum.Agency)
             .cancelOnDisconnect(CancelOnDisconnectEnum.DoNotCancel)
@@ -37,154 +27,25 @@ public class Client {
     private ListInstrumentsBuilder  listInstrumentsBuilder = new ListInstrumentsBuilder();
 
     private ClientData clientData;
-    private long bid;
-    private long bidQuantity;
-    private long offer;
-    private long offerQuantity;
     private int securityId;
-    private boolean auction = false;
-    private long staticPriceReference;
-    private long dynamicPriceReference;
 
-    public Client(ClientData clientData, int securityId){
+    public Client(final ClientData clientData, final int securityId)
+    {
         this.clientData = clientData;
         this.securityId = securityId;
     }
 
     private static final IntObjectMap<ClientData> clientDataMap = new IntObjectHashMap<>();
 
-    public static Client newInstance(int clientId, int securityId) throws Exception {
+    public static Client newInstance(int clientId, int securityId) throws Exception
+    {
         if(clientDataMap.isEmpty())
         {
-            Properties properties = loadedProperties( PROPERTIES_FILE);
-            String dataPath = properties.get("DATA_PATH").toString();
-            clientDataMap.putAll(ClientData.loadClientDataData(dataPath));
+            final ClientData clientData = new ClientData(clientId);
+            clientDataMap.put(clientId, clientData);
         }
         return new Client(clientDataMap.get(clientId), securityId);
     }
-
-    private static final String PROPERTIES_FILE =  "MatchingEngine.properties";
-
-    protected static Properties loadedProperties(String propertiesFile) throws IOException {
-        try(InputStream inputStream = Client.class.getClassLoader().getResourceAsStream(propertiesFile)) {
-
-            if (inputStream != null) {
-                Properties properties = new Properties();
-                properties.load(inputStream);
-
-                return properties;
-            } else {
-                throw new IOException("Unable to load properties file " + propertiesFile);
-            }
-        }
-    }
-
-/*
-    public void initTradingGatewaySub(){
-        String url = clientData.getNgOutputURL();
-        int streamId = clientData.getNgOutputStreamId();
-        tradingGatewaySubscriber = new TradingGatewaySubscriber(url, streamId);
-        Thread thread = new Thread(tradingGatewaySubscriber);
-        thread.start();
-    }
-*/
-
-/*    public void initMarketDataGatewayPub() {
-        String url = clientData.getMdgInputURL();
-        int streamId = clientData.getMdgInputStreamId();
-        marketDataGatewayPub = new GatewayClientImpl();
-        marketDataGatewayPub.connectInput(url, streamId);
-    }*/
-
-/*    public void initMulticastMarketDataGatewaySub(Properties properties) {
-        String url = properties.get("MDG_MULTICAST_URL").toString();
-        int streamId = Integer.parseInt(properties.get("MDG_MULTICAST_STREAM_ID").toString());
-        marketDataGatewaySubscriber = new MulticastMDGSubscriber(url, streamId, this, mktDataUpdateSemaphore);
-        Thread thread = new Thread(marketDataGatewaySubscriber);
-        thread.start();
-    }*/
-
-/*    public void initClientMarketDataGatewaySub() {
-        String url = clientData.getMdgOutputURL();
-        int streamId = clientData.getMdgOutputStreamId();
-        clientMDGSubscriber = new ClientMDGSubscriber(url, streamId, snapShotSemaphore, securityId);
-        Thread thread = new Thread(clientMDGSubscriber);
-        thread.start();
-    }*/
-
-/*    public void init(Properties properties) throws Exception {
-        initClientMarketDataGatewaySub();
-        initMulticastMarketDataGatewaySub(properties);
-        initTradingGatewaySub();
-        loginToTradingGatewayPub();
-        initMarketDataGatewayPub();
-    }*/
-
-/*    public void sendStartMessage() {
-        System.out.println("Session started at " + LocalDateTime.now() + ".");
-        DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
-                .securityId(securityId)
-                .adminMessage(AdminTypeEnum.StartMessage)
-                .build();
-        tradingGatewayPub.send(buffer);
-    }*/
-
-/*    public void loginToTradingGatewayPub() throws IOException {
-        String url = clientData.getNgInputURL();
-        int streamId = clientData.getNgInputStreamId();
-        int compId = clientData.getCompID();
-        String password = clientData.getPassword();
-
-        tradingGatewayPub = new GatewayClientImpl();
-        tradingGatewayPub.connectInput(url,streamId);
-
-        LogonBuilder logonBuilder = new LogonBuilder();
-        DirectBuffer buffer = logonBuilder.compID(compId)
-                .password(password.getBytes())
-                .newPassword(password.getBytes())
-                .build();
-        for(int i=0; i<3; i++) {
-            try {
-                Thread.sleep(1000);
-                System.out.println("Logging in.");
-                tradingGatewayPub.send(buffer);
-                Thread.sleep(2000);
-            } catch (Exception e) {
-                e.printStackTrace();
-                System.exit(0);
-            }
-        }
-        System.out.println("Logged in.");
-    }*/
-
-/*    public void sendEndMessage() {
-        System.out.println("Session ended at " + LocalDateTime.now() + ".");
-        DirectBuffer buffer = adminBuilder.compID(clientData.getCompID())
-                .securityId(securityId)
-                .adminMessage(AdminTypeEnum.EndMessage)
-                .build();
-        tradingGatewayPub.send(buffer);
-    }*/
-
-/*    public void close() {
-        while(!clientMDGSubscriber.isStop()) {
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        tradingGatewayPub.disconnectInput();
-        tradingGatewaySubscriber.close();
-        marketDataGatewaySubscriber.close();
-        clientMDGSubscriber.close();
-        marketDataGatewayPub.disconnectInput();
-        System.out.println("Logged out.");
-    }*/
-
-/*
-    public void waitForMarketDataUpdate() { while(!mktDataUpdateSemaphore.acquire()){} }
-*/
 
     public DirectBuffer placeOrder(
         final MutableDirectBuffer buffer,
@@ -202,7 +63,7 @@ public class Client {
     {
         clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
 
-        DirectBuffer directBuffer = newOrderBuilder.compID(clientData.getCompID())
+        final DirectBuffer directBuffer = newOrderBuilder.compID(clientData.getCompID())
                 .clientOrderId(clientOrderId.getBytes())
                 .securityId(securityId)
                 .orderType(OrdTypeEnum.valueOf(orderType))
@@ -250,15 +111,18 @@ public class Client {
         System.out.println("Message=ListInstruments|CorrelationId=" + correlationId);
     }
 
-    public int getNewOrderEncodedLength() {
+    public int getNewOrderEncodedLength()
+    {
         return newOrderBuilder.messageEncodedLength();
     }
 
-    public int getCancelOrderEncodedLength() {
+    public int getCancelOrderEncodedLength()
+    {
         return orderCancelRequestBuilder.getMessageEncodedLength();
     }
 
-    public int getReplaceOrderEncodedLength() {
+    public int getReplaceOrderEncodedLength()
+    {
         return orderCancelReplaceRequestBuilder.getMessageEncodedLength();
     }
 
@@ -268,8 +132,13 @@ public class Client {
         long price,
         int traderId)
     {
-        String origClientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelRequestEncoder.origClientOrderIdLength());
-        String clientOrderId = BuilderUtil.fill("-" + originalClientOrderId, OrderCancelRequestEncoder.clientOrderIdLength());
+        final String origClientOrderId = BuilderUtil.fill(
+            originalClientOrderId,
+            OrderCancelRequestEncoder.origClientOrderIdLength());
+
+        final String clientOrderId = BuilderUtil.fill(
+            "-" + originalClientOrderId,
+            OrderCancelRequestEncoder.clientOrderIdLength());
 
         DirectBuffer directBuffer = orderCancelRequestBuilder.compID(clientData.getCompID())
                 .clientOrderId(clientOrderId.getBytes())
@@ -298,25 +167,29 @@ public class Client {
             long stopPrice,
             int traderId)
     {
-        //String clientOrderId = BuilderUtil.fill(LocalDateTime.now().toString(), OrderCancelReplaceRequestEncoder.clientOrderIdLength());
-        String clientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelReplaceRequestEncoder.clientOrderIdLength());
-        String origClientOrderId = BuilderUtil.fill(originalClientOrderId, OrderCancelReplaceRequestEncoder.origClientOrderIdLength());
+        final String clientOrderId = BuilderUtil.fill(
+            originalClientOrderId,
+            OrderCancelReplaceRequestEncoder.clientOrderIdLength());
+
+        final String origClientOrderId = BuilderUtil.fill(
+            originalClientOrderId,
+            OrderCancelReplaceRequestEncoder.origClientOrderIdLength());
 
         DirectBuffer directBuffer = orderCancelReplaceRequestBuilder.compID(clientData.getCompID())
-                .clientOrderId(clientOrderId.getBytes())
-                .origClientOrderId(origClientOrderId.getBytes())
-                .securityId(securityId)
-                .traderId(traderId)
-                .orderType(OrdTypeEnum.valueOf(orderType))
-                .timeInForce(TimeInForceEnum.valueOf(timeInForce))
-                .expireTime("20211230-23:00:00".getBytes())
-                .side(SideEnum.valueOf(side))
-                .orderQuantity((int) volume)
-                .displayQuantity((int) displayQuantity)
-                .minQuantity((int) minQuantity)
-                .limitPrice(price)
-                .stopPrice(stopPrice)
-                .build();
+            .clientOrderId(clientOrderId.getBytes())
+            .origClientOrderId(origClientOrderId.getBytes())
+            .securityId(securityId)
+            .traderId(traderId)
+            .orderType(OrdTypeEnum.valueOf(orderType))
+            .timeInForce(TimeInForceEnum.valueOf(timeInForce))
+            .expireTime("20211230-23:00:00".getBytes())
+            .side(SideEnum.valueOf(side))
+            .orderQuantity((int) volume)
+            .displayQuantity((int) displayQuantity)
+            .minQuantity((int) minQuantity)
+            .limitPrice(price)
+            .stopPrice(stopPrice)
+            .build();
         System.out.println("Message=OrderModify|Time=" + clientOrderId + "|OrderId=" + origClientOrderId + "|Type=" + orderType + "|Side=" + side + "|Volume=" + volume + "(" + displayQuantity + ")" + "|Price=" + price + "|StopPrice=" + stopPrice + "|TIF=" + timeInForce + "|MES=" + minQuantity);
 
         return directBuffer;
@@ -359,77 +232,9 @@ public class Client {
         return buffer;
     }
 
-    public int getLobSnapshotMessageLength() {
+    public int getLobSnapshotMessageLength()
+    {
         return adminBuilder.getMessageLength();
     }
 
-    public void setBid(long bid) {
-        this.bid = bid;
-    }
-
-    public long getBid(){
-        return bid;
-    }
-
-    public long getOffer(){
-        return offer;
-    }
-
-    public void setOffer(long offer) {
-        this.offer = offer;
-    }
-
-    public long getBidQuantity() { return bidQuantity; }
-
-    public void setBidQuantity(long bidQuantity) {
-        this.bidQuantity = bidQuantity;
-    }
-
-    public long getOfferQuantity() {
-        return offerQuantity;
-    }
-
-    public void setOfferQuantity(long offerQuantity) {
-        this.offerQuantity = offerQuantity;
-    }
-
-    public int getSecurityId() {
-        return securityId;
-    }
-
-    public void setSecurityId(int securityId) {
-        this.securityId = securityId;
-    }
-
-/*    public GatewayClient getTradingGatewayPub() {
-        return tradingGatewayPub;
-    }*/
-
-    public boolean isAuction() {
-        return auction;
-    }
-
-    public void setAuction(boolean auction) {
-        this.auction = auction;
-    }
-
-/*    public int getClientId(){
-        return clientData.getCompID();
-    }*/
-
-    public void setStaticPriceReference(long staticPriceReference) {
-        this.staticPriceReference = staticPriceReference;
-    }
-
-    public long getStaticPriceReference() {
-        return staticPriceReference;
-    }
-
-    public void setDynamicPriceReference(long dynamicPriceReference) {
-        this.dynamicPriceReference = dynamicPriceReference;
-    }
-
-    public long getDynamicPriceReference() {
-        return dynamicPriceReference;
-    }
 }

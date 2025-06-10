@@ -7,17 +7,22 @@ import java.io.File;
 import java.io.PrintStream;
 import java.util.concurrent.TimeUnit;
 
-public enum HDRData {
+public enum HDRData
+{
     INSTANCE;
+
     //private static Histogram histogram = new Histogram(3600000000000L, 3); //1 hour
     private static Histogram histogram = new Histogram(TimeUnit.HOURS.toNanos(15), 3);
-    private String dataPath;
+
+    private String dir;
     private int requests;
 
-    public void setDataPath(String dataPath){
-        this.dataPath = dataPath;
+    public void setDir(final String dir)
+    {
+        this.dir = dir;
     }
-    public void reset(){
+    public void reset()
+    {
         histogram.reset();
         requests = 0;
         MatchingEngine.setStartTime(System.currentTimeMillis());
@@ -31,12 +36,12 @@ public enum HDRData {
         histogram.recordValue(System.nanoTime() - startTime);
     }
 
-    public void storeHDRStats() {
-
+    public void storeHDRStats()
+    {
         if (requests != 1_000 && requests != 5_000 && requests != 40_000 && requests != 100_000 && requests != 130_000) {
             return;
         }
-        File hdrLatency = new File(dataPath + File.separator + "hdrLatency-"+ requests + ".txt");
+        File hdrLatency = new File(dir + File.separator + "hdrLatency-"+ requests + ".txt");
         if (hdrLatency.exists()) {
             hdrLatency.delete();
         }

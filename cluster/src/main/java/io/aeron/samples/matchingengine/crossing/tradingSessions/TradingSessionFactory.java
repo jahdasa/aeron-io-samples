@@ -44,20 +44,26 @@ public class TradingSessionFactory {
 
     }
 
-    public static TradingSessionProcessor getTradingSessionProcessor(TradingSessionEnum tradingSessionEnum){
-        switch(tradingSessionEnum){
-            case StartOfTrading: return startOfTradingProcessor;
-            case OpeningAuctionCall: return openingAuctionCallProcessor;
-            case ContinuousTrading: return continuousTradingProcessor;
-            case FCOAuctionCall: return futureClosingAuctionCallProcessor;
-            case VolatilityAuctionCall: return volatilityAuctionCallProcessor;
-            case IntraDayAuctionCall: return intraDayAuctionCallProcessor;
-            case ClosingAuctionCall: return closingPriceCrossProcessor;
-            case ClosingPricePublication: return closingAuctionCallProcessor;
-            case ClosingPriceCross: return closingPricePublicationProcessor;
-            case PostClose: return postCloseProcessor;
-            default: return startOfTradingProcessor;
+    public static TradingSessionProcessor getTradingSessionProcessor(final TradingSessionEnum tradingSessionEnum)
+    {
+        if(tradingSessionEnum == null)
+        {
+            return null;
         }
+        return switch (tradingSessionEnum)
+        {
+            case StartOfTrading -> startOfTradingProcessor;
+            case OpeningAuctionCall -> openingAuctionCallProcessor;
+            case ContinuousTrading -> continuousTradingProcessor;
+            case FCOAuctionCall -> futureClosingAuctionCallProcessor;
+            case VolatilityAuctionCall -> volatilityAuctionCallProcessor;
+            case IntraDayAuctionCall -> intraDayAuctionCallProcessor;
+            case ClosingAuctionCall -> closingPriceCrossProcessor;
+            case ClosingPricePublication -> closingAuctionCallProcessor;
+            case ClosingPriceCross -> closingPricePublicationProcessor;
+            case PostClose -> postCloseProcessor;
+            default -> startOfTradingProcessor;
+        };
 
     }
 

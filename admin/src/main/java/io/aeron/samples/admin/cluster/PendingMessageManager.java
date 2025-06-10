@@ -210,7 +210,10 @@ public class PendingMessageManager
         else
         {
             final MarketDepthDTO aggData =  (MarketDepthDTO)responseWrapper.getData();
-            aggData.getLines().addAll(marketDepthDTO.getLines());
+            if(marketDepthDTO.getLines() != null && !marketDepthDTO.getLines().isEmpty())
+            {
+                aggData.getLines().addAll(marketDepthDTO.getLines());
+            }
             aggData.setAskTotalVolume(aggData.getAskTotalVolume() + marketDepthDTO.getAskTotalVolume());
             aggData.setBidTotalVolume(aggData.getBidTotalVolume() + marketDepthDTO.getBidTotalVolume());
             aggData.setAskTotal(aggData.getAskTotal() + marketDepthDTO.getAskTotal());
@@ -320,7 +323,10 @@ public class PendingMessageManager
 
             }
 
-            data.getLines().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed());
+            if(data.getLines()!=null && !data.getLines().isEmpty())
+            {
+                data.getLines().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed());
+            }
 
             replySuccess(correlationId, data);
             partialData.remove(correlationId);

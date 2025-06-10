@@ -101,7 +101,8 @@ public enum MatchingContext {
         orderBookTradingSession.put(securityId, tradingSession);
     }
 
-    public TradingSessionEnum getOrderBookTradingSession(long securityId){
+    public TradingSessionEnum getOrderBookTradingSession(long securityId)
+    {
         return orderBookTradingSession.get(securityId);
     }
 }

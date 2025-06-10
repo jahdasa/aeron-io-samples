@@ -16,16 +16,16 @@ import java.io.UnsupportedEncodingException;
 
 public class TradeGatewayParser
 {
-    private MessageHeaderDecoder messageHeader = new MessageHeaderDecoder();
+    private final MessageHeaderDecoder messageHeader;
 
-    private OrderEntry orderEntry;
-    private NewOrderParser newOrderParser;
-    private OrderCancelRequestParser orderCancelRequestParser;
-    private OrderCancelReplaceRequestParser orderCancelReplaceRequestParser;
-    private TradingSessionParser tradingSessionParser;
-    private AdminMessageParser adminMessageParser;
-    private NewInstrumentMessageParser newInstrumentMessageParser;
-    private ListInstrumentsMessageParser listInstrumentsMessageParser;
+    private final OrderEntry orderEntry;
+    private final NewOrderParser newOrderParser;
+    private final OrderCancelRequestParser orderCancelRequestParser;
+    private final OrderCancelReplaceRequestParser orderCancelReplaceRequestParser;
+    private final TradingSessionParser tradingSessionParser;
+    private final AdminMessageParser adminMessageParser;
+    private final NewInstrumentMessageParser newInstrumentMessageParser;
+    private final ListInstrumentsMessageParser listInstrumentsMessageParser;
 
     private TradingSessionEnum tradingSessionEnum;
     private AdminTypeEnum adminTypeEnum;
@@ -40,7 +40,8 @@ public class TradeGatewayParser
     private int actingBlockLength;
     private int actingVersion;
 
-    public TradeGatewayParser(){
+    public TradeGatewayParser()
+    {
         messageHeader = new MessageHeaderDecoder();
         orderEntry = OrderEntryFactory.getOrderEntry();
         newOrderParser = new NewOrderParser();
@@ -52,7 +53,8 @@ public class TradeGatewayParser
         listInstrumentsMessageParser = new ListInstrumentsMessageParser();
     }
 
-    private void init(DirectBuffer buffer){
+    private void init(final DirectBuffer buffer)
+    {
         bufferIndex = 0;
         messageHeader.wrap(buffer, 0);
         templateId = messageHeader.templateId();
@@ -64,12 +66,14 @@ public class TradeGatewayParser
         setReportData();
     }
 
-    private void initOrderEntry(){
+    private void initOrderEntry()
+    {
         orderEntry.clear();
         orderEntry.setSubmittedTime(System.nanoTime());
     }
 
-    public void parse(DirectBuffer buffer) throws UnsupportedEncodingException {
+    public void parse(DirectBuffer buffer) throws UnsupportedEncodingException
+    {
         init(buffer);
 
         if (templateId == NewOrderEncoder.TEMPLATE_ID)
@@ -156,7 +160,8 @@ public class TradeGatewayParser
         return BusinessRejectEnum.NULL_VAL;
     }
 
-    private void setReportData(){
+    private void setReportData()
+    {
         ExecutionReportData.INSTANCE.setCompID(messageHeader.compID());
         BusinessRejectReportData.INSTANCE.setCompID(messageHeader.compID());
         MarketData.INSTANCE.setCompID(messageHeader.compID());

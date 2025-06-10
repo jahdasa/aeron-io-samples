@@ -12,7 +12,8 @@ import sbe.msg.*;
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public enum ExecutionReportData {
+public enum ExecutionReportData
+{
     INSTANCE;
 
     private int compID;
@@ -38,7 +39,8 @@ public enum ExecutionReportData {
         this.listInstrumentsResponseBuilder = new ListInstrumentsResponseBuilder();
     }
 
-    public void reset(){
+    public void reset()
+    {
         compID = 0;
         executedPrice = 0L;
         fillGroups.clear();
@@ -121,7 +123,8 @@ public enum ExecutionReportData {
         this.compID = compID;
     }
 
-    public DirectBuffer buildExecutionReport(OrderEntry aggOrder, int securityId){
+    public DirectBuffer buildExecutionReport(final OrderEntry aggOrder, final int securityId)
+    {
         String execId = BuilderUtil.fill("Exec" + Instant.now().getMillis(), ExecutionReportEncoder.executionIDLength());
         String acc= BuilderUtil.fill("test123", ExecutionReportEncoder.accountLength());
 

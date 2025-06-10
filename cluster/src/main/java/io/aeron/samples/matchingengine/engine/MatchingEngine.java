@@ -13,8 +13,6 @@ import io.aeron.samples.matchingengine.crossing.CrossingProcessor;
 import io.aeron.samples.matchingengine.crossing.LOBManager;
 import io.aeron.samples.matchingengine.crossing.MatchingContext;
 import io.aeron.samples.matchingengine.crossing.tradingSessions.TradingSessionFactory;
-import dao.OrderBookDAO;
-import dao.TraderDAO;
 import io.aeron.samples.matchingengine.data.ExecutionReportData;
 import io.aeron.samples.matchingengine.data.HDRData;
 import io.aeron.samples.matchingengine.data.MarketData;
@@ -26,8 +24,6 @@ import sbe.msg.marketData.MessageHeaderDecoder;
 import sbe.msg.marketData.TradingSessionEnum;
 import sbe.msg.marketData.UnitHeaderDecoder;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Properties;
@@ -46,17 +42,6 @@ public class  MatchingEngine {
     private static AtomicBoolean running = new AtomicBoolean(false);
     private static long startTime;
 
-    protected void loadProperties(String propertiesFile) throws IOException {
-        try(InputStream inputStream = getClass().getClassLoader().getResourceAsStream(propertiesFile)) {
-
-            if (inputStream != null) {
-                properties = new Properties();
-                properties.load(inputStream);
-            } else {
-                throw new IOException("Unable to load properties file " + propertiesFile);
-            }
-        }
-    }
 
     public static long getStartTime(){
         return startTime;
@@ -66,34 +51,40 @@ public class  MatchingEngine {
         startTime = value;
     }
 
-    public void initialize(){
-        try {
-            loadProperties(PROPERTIES_FILE);
-            initTraders();
-//            orderBooks = initOrderBooks();
+    public void initialize()
+    {
+        try
+        {
             orderBooks = new LongObjectHashMap<>();
             initCrossingProcessor(orderBooks);
-//            initGatewaySubscriber();
-//            initTradingGatewayPublisher();
-//            initMarketDataPublisher();
             initHDR();
             TradingSessionFactory.initTradingSessionProcessors(orderBooks);
             initOrderBookTradingSessions();
+
             startTime = System.currentTimeMillis();
-        } catch (Exception e) {
+        }
+        catch (final Exception e)
+        {
             //TODO:Handle Exception
             e.printStackTrace();
         }
     }
 
-    private void initHDR(){
-        HDRData.INSTANCE.setDataPath(properties.getProperty("DATA_PATH"));
+    private void initHDR()
+    {
+        String dir = System.getenv("HDR_DIR");
+
+        if (null == dir || dir.isEmpty())
+        {
+            dir = System.getProperty("user.dir");
+        }
+        HDRData.INSTANCE.setDir(dir);
     }
 
-    public boolean start() {
+    public boolean start()
+    {
         System.out.println("Matching Engine Started");
         running.set(true);
-//        subscriber.start();
         return true;
     }
 
@@ -101,53 +92,16 @@ public class  MatchingEngine {
         running.set(value);
     }
 
-/*    private void initGatewaySubscriber(){
-        String mediaDriverConextDir = properties.getProperty("MEDIA_DRIVER_DIR");
-        subscriber = new AeronSubscriber(mediaDriverConextDir,this);
-
-        String url = properties.getProperty("SUB_GATEWAY_URL");
-        int streamId = Integer.parseInt(properties.getProperty("SUB_GATEWAY_STREAM_ID"));
-
-        subscriber.addSubscriber(url, streamId);
-    }*/
-
-/*    private void initTradingGatewayPublisher(){
-        String mediaDriverConextDir = properties.getProperty("MEDIA_DRIVER_DIR");
-        tradingGatewayPublisher = new AeronPublisher(mediaDriverConextDir);
-
-        String url = properties.getProperty("PUB_TRADING_GATEWAY_URL");
-        int streamId = Integer.parseInt(properties.getProperty("PUB_TRADING_GATEWAY_STREAM_ID"));
-
-        tradingGatewayPublisher.addPublication(url, streamId);
-    }*/
-
-/*    private void initMarketDataPublisher(){
-        String mediaDriverConextDir = properties.getProperty("MEDIA_DRIVER_DIR");
-        marketDataPublisher = new AeronPublisher(mediaDriverConextDir);
-
-        String url = properties.getProperty("PUB_MARKET_DATA_URL");
-        int streamId = Integer.parseInt(properties.getProperty("PUB_MARKET_DATA_STREAM_ID"));
-
-        marketDataPublisher.addPublication(url, streamId);
-    }*/
-
-    private LongObjectHashMap<OrderBook> initOrderBooks() throws IOException {
-        String dataPath = properties.getProperty("DATA_PATH");
-        return OrderBookDAO.loadOrderBooks(dataPath);
-    }
-
-    private void initTraders() throws IOException {
-        String dataPath = properties.getProperty("DATA_PATH");
-        TraderDAO.loadTraders(dataPath);
-    }
-
-    private void initCrossingProcessor(LongObjectHashMap<OrderBook> orderBooks){
+    private void initCrossingProcessor(final LongObjectHashMap<OrderBook> orderBooks)
+    {
         lobManager = new CrossingProcessor(orderBooks);
     }
 
-    private void initOrderBookTradingSessions(){
-        Iterator<LongObjectCursor<OrderBook>> iterator = orderBooks.iterator();
-        while (iterator.hasNext()) {
+    private void initOrderBookTradingSessions()
+    {
+        final Iterator<LongObjectCursor<OrderBook>> iterator = orderBooks.iterator();
+        while (iterator.hasNext())
+        {
             LongObjectCursor<OrderBook> orderBook = iterator.next();
             MatchingContext.INSTANCE.setOrderBookTradingSession(orderBook.value.getSecurityId(), TradingSessionEnum.ContinuousTrading);
         }
@@ -215,7 +169,7 @@ public class  MatchingEngine {
         context.reply(buffer, 0 , length);
     }
 
-    private void publishToMarketDataGateway(SessionMessageContext context)
+    private void publishToMarketDataGateway(final SessionMessageContext context)
     {
         DirectBuffer header = MarketData.INSTANCE.buildUnitHeader();
 
@@ -242,9 +196,9 @@ public class  MatchingEngine {
     UnitHeaderDecoder unitHeaderDecoder = new UnitHeaderDecoder();
     MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
 
-    private void publishClientMktData(SessionMessageContext context)
+    private void publishClientMktData(final SessionMessageContext context)
     {
-        DirectBuffer header = MarketData.INSTANCE.buildUnitHeader();
+        final DirectBuffer header = MarketData.INSTANCE.buildUnitHeader();
 
         unitHeaderDecoder.wrapAndApplyHeader(header, 0 , messageHeaderDecoder);
         context.reply(header, 0 , messageHeaderDecoder.encodedLength() + unitHeaderDecoder.encodedLength());
@@ -266,11 +220,5 @@ public class  MatchingEngine {
         {
             context.reply(cursor.value, 0 , mktDataLength.get(cursor.index));
         }
-    }
-
-    public static void main(String[] args){
-        MatchingEngine matchingEngine = new MatchingEngine();
-        matchingEngine.initialize();
-        matchingEngine.start();
     }
 }

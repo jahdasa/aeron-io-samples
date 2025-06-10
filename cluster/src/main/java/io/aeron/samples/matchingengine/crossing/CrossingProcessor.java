@@ -25,8 +25,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class CrossingProcessor implements LOBManager {
-
+public class CrossingProcessor implements LOBManager
+{
     public static AtomicInteger sequenceNumber = new AtomicInteger();
     private TradeGatewayParser tradeGatewayParser;
     private LongObjectHashMap<OrderBook> orderBooks;
@@ -34,11 +34,11 @@ public class CrossingProcessor implements LOBManager {
     private boolean clientMarketDepthRequest;
     private boolean adminRequest;
 
-    public CrossingProcessor(LongObjectHashMap<OrderBook> orderBooks){
+    public CrossingProcessor(final LongObjectHashMap<OrderBook> orderBooks)
+    {
         this.orderBooks = orderBooks;
         this.tradeGatewayParser = new TradeGatewayParser();
     }
-
 
     public OrderBook getOrderBook(int stockid){
         return orderBooks.get(stockid);
@@ -151,11 +151,25 @@ public class CrossingProcessor implements LOBManager {
 
     public void processOrder(final int template, final int securityId, final OrderEntry orderEntry)
     {
-        OrderBook orderBook = orderBooks.get(securityId);
+        final OrderBook orderBook = orderBooks.get(securityId);
+
+        if(orderBook == null)
+        {
+            //todo: return error report
+            return;
+        }
+
         MatchingContext.INSTANCE.setTemplateId(template);
 
-        TradingSessionProcessor tradingSessionProcessor = getOrderBookTradingSession(securityId);
-        if(tradingSessionProcessor.isOrderValid(orderEntry,template)) {
+        final TradingSessionProcessor tradingSessionProcessor = getOrderBookTradingSession(securityId);
+        if(tradingSessionProcessor == null)
+        {
+            //todo: return error report
+            return;
+        }
+
+        if(tradingSessionProcessor.isOrderValid(orderEntry,template))
+        {
             tradingSessionProcessor.process(orderBook, orderEntry);
         }
 
@@ -165,8 +179,9 @@ public class CrossingProcessor implements LOBManager {
         }
     }
 
-    private TradingSessionProcessor getOrderBookTradingSession(long securityId){
-        TradingSessionEnum tradingSessionEnum = MatchingContext.INSTANCE.getOrderBookTradingSession(securityId);
+    private TradingSessionProcessor getOrderBookTradingSession(long securityId)
+    {
+        final TradingSessionEnum tradingSessionEnum = MatchingContext.INSTANCE.getOrderBookTradingSession(securityId);
         return TradingSessionFactory.getTradingSessionProcessor(tradingSessionEnum);
     }
 

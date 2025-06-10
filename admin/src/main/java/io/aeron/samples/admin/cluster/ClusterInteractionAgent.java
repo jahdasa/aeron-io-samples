@@ -18,6 +18,8 @@ import org.agrona.concurrent.SystemEpochClock;
 import org.agrona.concurrent.ringbuffer.RingBuffer;
 import org.jline.reader.LineReader;
 import org.jline.utils.AttributedStyle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sbe.msg.*;
 
 import java.io.File;
@@ -31,6 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class ClusterInteractionAgent implements Agent, MessageHandler
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterInteractionAgent.class);
+
     private static final long HEARTBEAT_INTERVAL = 250;
     private static final long RETRY_COUNT = 10;
     private static final String INGRESS_CHANNEL = "aeron:udp?term-length=64k";
@@ -43,7 +47,6 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private AdminClientEgressListener adminClientEgressListener;
     private AeronCluster aeronCluster;
     private ConnectionState connectionState = ConnectionState.NOT_CONNECTED;
-    private LineReader lineReader;
     private MediaDriver mediaDriver;
 
     private final MessageHeaderDecoder messageHeaderDecoder = new MessageHeaderDecoder();
@@ -128,12 +131,12 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             case OrderCancelReplaceRequestDecoder.TEMPLATE_ID -> processReplaceOrder(messageHeaderDecoder, buffer, offset);
             case NewInstrumentDecoder.TEMPLATE_ID -> processNewInstrument(messageHeaderDecoder, buffer, offset);
             case ListInstrumentsMessageRequestDecoder.TEMPLATE_ID -> processListInstruments(messageHeaderDecoder, buffer, offset);
-            default -> log("Unknown message type: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+            default -> LOGGER.warn("Unknown message type: " + messageHeaderDecoder.templateId());
         }
     }
 
     private void processListInstruments(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        log("Process list instrument " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+        LOGGER.info("Process list instrument " + messageHeaderDecoder.templateId());
 
         listInstrumentsMessageRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -144,7 +147,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     }
 
     private void processNewInstrument(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        log("Process new instrument" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+        LOGGER.info("Process new instrument" + messageHeaderDecoder.templateId());
 
         newInstrumentDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -160,7 +163,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     }
 
     private void processReplaceOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        log("Process replace order" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+        LOGGER.info("Process replace order" + messageHeaderDecoder.templateId());
 
         orderCancelReplaceRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -178,7 +181,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     }
 
     private void processCancelOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        log("Process new order" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+        LOGGER.info("Process new order" + messageHeaderDecoder.templateId());
 
         orderCancelRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -196,7 +199,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     }
 
     private void processNowOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        log("Process new order" + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+        LOGGER.info("Process new order" + messageHeaderDecoder.templateId());
 
         newOrderDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -213,8 +216,9 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + newOrderDecoder.encodedLength());
     }
 
-    private void processAdminMessage(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        log("Process admin message: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+    private void processAdminMessage(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset)
+    {
+        LOGGER.info("Process admin message: " + messageHeaderDecoder.templateId());
 
         adminDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -249,10 +253,10 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
      */
     private void processDisconnectCluster()
     {
-        log("Disconnecting from cluster", AttributedStyle.WHITE);
+        LOGGER.info("Disconnecting from cluster");
         disconnectCluster();
         connectionState = ConnectionState.NOT_CONNECTED;
-        log("Cluster disconnected", AttributedStyle.GREEN);
+        LOGGER.info("Cluster disconnected");
     }
 
     /**
@@ -290,7 +294,6 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             hostnames, basePort, ClusterConfig.CLIENT_FACING_PORT_OFFSET);
         final String egressChannel = "aeron:udp?endpoint=" + localHostName + ":" + port;
         adminClientEgressListener = new AdminClientEgressListener(pendingMessageManager);
-        adminClientEgressListener.setLineReader(lineReader);
         mediaDriver = MediaDriver.launch(new MediaDriver.Context()
             .threadingMode(ThreadingMode.SHARED)
             .dirDeleteOnStart(true)
@@ -307,34 +310,12 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
                 .errorHandler(this::logError)
                 .aeronDirectoryName(mediaDriver.aeronDirectoryName()));
 
-        log("Connected to cluster leader, node " + aeronCluster.leaderMemberId(), AttributedStyle.GREEN);
+        LOGGER.info("Connected to cluster leader, node " + aeronCluster.leaderMemberId());
     }
 
     private void logError(final Throwable throwable)
     {
-        log("Error: " + throwable.getMessage(), AttributedStyle.RED);
-    }
-
-    /**
-     * Sets the line reader to use for input saving while logging
-     *
-     * @param lineReader line reader to use
-     */
-    public void setLineReader(final LineReader lineReader)
-    {
-        this.lineReader = lineReader;
-        pendingMessageManager.setLineReader(lineReader);
-    }
-
-    /**
-     * Logs a message to the terminal if available or to the logger if not
-     *
-     * @param message message to log
-     * @param color message color to use
-     */
-    private void log(final String message, final int color)
-    {
-        LineReaderHelper.log(lineReader, message, color);
+        LOGGER.error("Error: ", throwable);
     }
 
     /**
@@ -358,27 +339,25 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
                 }
                 else if (result == Publication.ADMIN_ACTION || result == Publication.BACK_PRESSURED)
                 {
-                    log("backpressure or admin action on cluster offer", AttributedStyle.YELLOW);
+                    LOGGER.error("backpressure or admin action on cluster offer");
                 }
                 else if (result == Publication.NOT_CONNECTED || result == Publication.MAX_POSITION_EXCEEDED)
                 {
-                    log("Cluster is not connected, or maximum position has been exceeded. Message lost.",
-                        AttributedStyle.RED);
+                    LOGGER.error("Cluster is not connected, or maximum position has been exceeded. Message lost.");
                     return;
                 }
 
                 idleStrategy.idle();
                 retries += 1;
-                log("failed to send message to cluster. Retrying (" + retries + " of " + RETRY_COUNT + ")",
-                    AttributedStyle.YELLOW);
+                LOGGER.error("failed to send message to cluster. Retrying (" + retries + " of " + RETRY_COUNT + ")");
             }
             while (retries < RETRY_COUNT);
 
-            log("Failed to send message to cluster. Message lost.", AttributedStyle.RED);
+            LOGGER.error("Failed to send message to cluster. Message lost.");
         }
         else
         {
-            log("Not connected to cluster. Connect first", AttributedStyle.RED);
+            LOGGER.error("Not connected to cluster. Connect first");
         }
     }
 

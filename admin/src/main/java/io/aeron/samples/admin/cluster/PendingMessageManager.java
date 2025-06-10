@@ -2,8 +2,6 @@ package io.aeron.samples.admin.cluster;
 
 import io.aeron.samples.admin.model.*;
 import org.agrona.concurrent.EpochClock;
-import org.jline.reader.LineReader;
-import org.jline.utils.AttributedStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -32,7 +30,6 @@ public class PendingMessageManager
     private final ConcurrentHashMap<String, PendingMessage> trackedMessagesMap = new ConcurrentHashMap<>();
 
     private final EpochClock current;
-    private LineReader lineReader;
 
     /**
      * Constructor
@@ -131,31 +128,12 @@ public class PendingMessageManager
         //after timeout
         if (currentTime >= timedOut.timeoutAt())
         {
-            log("Message with correlation id " + timedOut.correlationId() + " and type " +
-                timedOut.messageType() + " timed out.", AttributedStyle.RED);
+            LOGGER.error("Message with correlation id " + timedOut.correlationId() + " and type " +
+                timedOut.messageType() + " timed out.");
             trackedMessages.remove(timedOut);
         }
     }
 
-    /**
-     * Set the line reader
-     * @param lineReader the line reader used for logging
-     */
-    public void setLineReader(final LineReader lineReader)
-    {
-        this.lineReader = lineReader;
-    }
-
-    /**
-     * Logs a message to the terminal if available or to the logger if not
-     *
-     * @param message message to log
-     * @param color message color to use
-     */
-    private void log(final String message, final int color)
-    {
-        LineReaderHelper.log(lineReader, message, color);
-    }
 
     public CompletableFuture<ResponseWrapper> onComplete(final String correlationId)
     {
@@ -210,10 +188,7 @@ public class PendingMessageManager
         else
         {
             final MarketDepthDTO aggData =  (MarketDepthDTO)responseWrapper.getData();
-            if(marketDepthDTO.getLines() != null && !marketDepthDTO.getLines().isEmpty())
-            {
-                aggData.getLines().addAll(marketDepthDTO.getLines());
-            }
+            aggData.getLines().addAll(marketDepthDTO.getLines());
             aggData.setAskTotalVolume(aggData.getAskTotalVolume() + marketDepthDTO.getAskTotalVolume());
             aggData.setBidTotalVolume(aggData.getBidTotalVolume() + marketDepthDTO.getBidTotalVolume());
             aggData.setAskTotal(aggData.getAskTotal() + marketDepthDTO.getAskTotal());
@@ -291,42 +266,42 @@ public class PendingMessageManager
                         .sorted(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed())
                         .toList();
 
-                final MarketDepthDTO.MarketDepthLine firstBid = bidOrders.getFirst();
-                if(firstBid != null)
+                if (!bidOrders.isEmpty())
                 {
-                    firstBid.setTotal(firstBid.getQuantity());
+                    final MarketDepthDTO.MarketDepthLine firstBid = bidOrders.getFirst();
+                    if(firstBid != null)
+                    {
+                        firstBid.setTotal(firstBid.getQuantity());
+                    }
+                    for (int i = 1; i < bidOrders.size(); i++)
+                    {
+                        final MarketDepthDTO.MarketDepthLine current = bidOrders.get(i);
+                        current.setTotal(current.getQuantity().add(bidOrders.get(i - 1).getTotal()));
+                    }
                 }
 
-                for (int i = 1; i < bidOrders.size(); i++)
-                {
-                    final MarketDepthDTO.MarketDepthLine current = bidOrders.get(i);
-                    current.setTotal(current.getQuantity().add(bidOrders.get(i - 1).getTotal()));
-                }
 
                 final List<MarketDepthDTO.MarketDepthLine> askOrders = lines.stream()
                         .filter(line -> line.getSide() == SideEnum.Sell)
                         .sorted(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice))
                         .toList();
 
-
-                final MarketDepthDTO.MarketDepthLine firstAsk = askOrders.getFirst();
-                if(firstAsk != null)
+                if (!askOrders.isEmpty())
                 {
-                    firstAsk.setTotal(firstAsk.getQuantity());
-                }
+                    final MarketDepthDTO.MarketDepthLine firstAsk = askOrders.getFirst();
+                    if (firstAsk != null) {
+                        firstAsk.setTotal(firstAsk.getQuantity());
+                    }
 
-                for (int i = 1; i < askOrders.size(); i++)
-                {
-                    final MarketDepthDTO.MarketDepthLine current = askOrders.get(i);
-                    current.setTotal(current.getQuantity().add(askOrders.get(i - 1).getTotal()));
+                    for (int i = 1; i < askOrders.size(); i++) {
+                        final MarketDepthDTO.MarketDepthLine current = askOrders.get(i);
+                        current.setTotal(current.getQuantity().add(askOrders.get(i - 1).getTotal()));
+                    }
                 }
 
             }
 
-            if(data.getLines()!=null && !data.getLines().isEmpty())
-            {
-                data.getLines().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed());
-            }
+            data.getLines().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed());
 
             replySuccess(correlationId, data);
             partialData.remove(correlationId);

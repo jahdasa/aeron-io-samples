@@ -52,7 +52,6 @@ public class AdminClientEgressListener implements EgressListener
     private final sbe.msg.marketData.MessageHeaderDecoder sbeMarketDataMessageHeaderDecoder = new sbe.msg.marketData.MessageHeaderDecoder();
     private final sbe.msg.MessageHeaderDecoder sbeMsgMessageHeaderDecoder = new sbe.msg.MessageHeaderDecoder();
     private final PendingMessageManager pendingMessageManager;
-    private LineReader lineReader;
 
     /**
      * Constructor
@@ -117,8 +116,7 @@ public class AdminClientEgressListener implements EgressListener
                 NewInstrumentCompleteStatus status = completeDecoder.status();
 
 
-                log("New instrument complete: " + NewInstrumentCompleteDecoder.TEMPLATE_ID,
-                    AttributedStyle.YELLOW);
+                LOGGER.info("New instrument complete: " + NewInstrumentCompleteDecoder.TEMPLATE_ID);
 
                 final String correlationId = NewInstrumentDecoder.TEMPLATE_ID + "@" +
                         securityId + "@" +
@@ -164,10 +162,10 @@ public class AdminClientEgressListener implements EgressListener
                         offerTotal.addAndGet((long) (quantity*priceValue));
                     }
 
-                    log(
+                    LOGGER.info(
                         "securityId: " + securityId +
-                                " side: " + side +
-                                "@" + count + "@" + quantity + "@" + priceValue, AttributedStyle.YELLOW);
+                        " side: " + side +
+                        "@" + count + "@" + quantity + "@" + priceValue);
 
                     final MarketDepthDTO.MarketDepthLine line = new MarketDepthDTO.MarketDepthLine();
                     line.setCount(count);
@@ -177,9 +175,9 @@ public class AdminClientEgressListener implements EgressListener
                     lines.add(line);
                 });
 
-                log(
+                LOGGER.info(
                     "securityId: " + securityId +
-                                " b-t/v: " + bidTotal + "@" + bidTotalVolume + " o-t/v: " + offerTotal + "@" + offerTotalVolume , AttributedStyle.YELLOW);
+                    " b-t/v: " + bidTotal + "@" + bidTotalVolume + " o-t/v: " + offerTotal + "@" + offerTotalVolume);
 
                 marketDepthDTO.setBidTotalVolume(bidTotalVolume.get());
                 marketDepthDTO.setBidTotal(bidTotal.get());
@@ -196,7 +194,7 @@ public class AdminClientEgressListener implements EgressListener
 
                 pendingMessageManager.markMarketDataMessageAsReceived(correlationId, marketDepthDTO);
 
-                log("correlationId: " + correlationId, AttributedStyle.YELLOW);
+                LOGGER.info("correlationId: " + correlationId);
 
             }
             case VWAPDecoder.TEMPLATE_ID -> {
@@ -209,9 +207,8 @@ public class AdminClientEgressListener implements EgressListener
                 double priceBidValue = priceDecoderBid.mantissa() * Math.pow(10, priceDecoderBid.exponent());
                 double priceOfferValue = priceDecoderOffer.mantissa() * Math.pow(10, priceDecoderOffer.exponent());
 
-                log("VWAP: " + VWAPDecoder.TEMPLATE_ID +
-                        " bidVWAP/offerVWAP: " + priceBidValue + "@" + priceOfferValue
-                , AttributedStyle.YELLOW);
+                LOGGER.info("VWAP: " + VWAPDecoder.TEMPLATE_ID +
+                        " bidVWAP/offerVWAP: " + priceBidValue + "@" + priceOfferValue);
 
                 final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
                         "VWAP" + "@" +
@@ -277,8 +274,8 @@ public class AdminClientEgressListener implements EgressListener
                 int securityId = adminDecoder.securityId();
                 AdminTypeEnum adminTypeEnum = adminDecoder.adminMessage();
 
-                log("Admin Message:" + AdminDecoder.TEMPLATE_ID + " adminTypeEnum: " + adminTypeEnum +
-                    " securityId: " + securityId, AttributedStyle.YELLOW);
+                LOGGER.info("Admin Message:" + AdminDecoder.TEMPLATE_ID + " adminTypeEnum: " + adminTypeEnum +
+                    " securityId: " + securityId);
 
                 if(adminTypeEnum == AdminTypeEnum.EndMarketDepth)
                 {
@@ -333,10 +330,10 @@ public class AdminClientEgressListener implements EgressListener
                     double priceValue = priceDecoder.mantissa() * Math.pow(10, priceDecoder.exponent());
                     int fillQty = fillsGroupDecoder.fillQty();
 
-                    log(" fillQty/fillPrice: " + fillQty + "@" + priceValue, AttributedStyle.YELLOW);
+                    LOGGER.info(" fillQty/fillPrice: " + fillQty + "@" + priceValue);
                 });
 
-                log("Execution report: " + ExecutionReportDecoder.TEMPLATE_ID +
+                LOGGER.info("Execution report: " + ExecutionReportDecoder.TEMPLATE_ID +
                     " partitionId: " + partitionId +
                     " sequenceNumber: " + sequenceNumber +
                     " executionID: '" + executionID + "'" +
@@ -353,8 +350,7 @@ public class AdminClientEgressListener implements EgressListener
                     " account: '" + account + "'" +
                     " marketOpsRequest: '" + marketOpsRequest.name() + "'" +
                     " transactTime: '" + transactTime + "'" +
-                    " orderBookEnum: '" + orderBookEnum.name() + "'",
-                    AttributedStyle.YELLOW);
+                    " orderBookEnum: '" + orderBookEnum.name() + "'");
 
             }
             case OrderViewDecoder.TEMPLATE_ID -> {
@@ -373,11 +369,10 @@ public class AdminClientEgressListener implements EgressListener
                 int orderQuantity = orderViewDecoder.orderQuantity();
                 sbe.msg.SideEnum side = orderViewDecoder.side();
 
-                log("Order view: " + OrderViewDecoder.TEMPLATE_ID + " securityId: " +
+                LOGGER.info("Order view: " + OrderViewDecoder.TEMPLATE_ID + " securityId: " +
                     securityId + " clientOrderId: '" + clientOrderId + "' orderId: " + orderId +
                     " submittedTime: " + submittedTime + " side: " + side.name() +
-                    " orderQuantity: " + orderQuantity + " price: " + priceValue + " traderId: " + traderId,
-                    AttributedStyle.YELLOW);
+                    " orderQuantity: " + orderQuantity + " price: " + priceValue + " traderId: " + traderId);
 
                 // placeorder-tid@side@security@clientOrderId@trader@client
                 final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
@@ -399,7 +394,7 @@ public class AdminClientEgressListener implements EgressListener
                     side
                 );
 
-                log("correlationId: " + correlationId, AttributedStyle.YELLOW);
+                LOGGER.info("correlationId: " + correlationId);
 
             }
             case AddOrderDecoder.TEMPLATE_ID -> {
@@ -416,11 +411,10 @@ public class AdminClientEgressListener implements EgressListener
 
                 Flags flags = addOrderDecoder.flags();
 
-                log("Add order: " + messageTypeEnum.name() + " " +
+                LOGGER.info("Add order: " + messageTypeEnum.name() + " " +
                     orderId + " " + side.name() + " " + quantity + "@" + priceValue +
                     " instrumentId: " + instrumentId +
-                    " flags: " + flags.name(),
-                    AttributedStyle.YELLOW);
+                    " flags: " + flags.name());
             }
             case OrderExecutedWithPriceSizeDecoder.TEMPLATE_ID ->
             {
@@ -439,7 +433,7 @@ public class AdminClientEgressListener implements EgressListener
                 long clientOrderId = orderExecutedWithPriceSizeDecoder.clientOrderId();
                 long executedTime = orderExecutedWithPriceSizeDecoder.executedTime();
 
-                log("Order executed: " + OrderExecutedWithPriceSizeDecoder.TEMPLATE_ID +
+                LOGGER.info("Order executed: " + OrderExecutedWithPriceSizeDecoder.TEMPLATE_ID +
                     " messageTypeEnum: " + messageTypeEnum.name() +
                     " orderId: " + orderId +
                     " executedQuantity/price: " + executedQuantity + "@" + priceValue +
@@ -448,8 +442,7 @@ public class AdminClientEgressListener implements EgressListener
                     " printable: " + printable.name() +
                     " instrumentId: " + instrumentId +
                     " clientOrderId: " + clientOrderId +
-                    " executedTime: " + executedTime,
-                    AttributedStyle.YELLOW);
+                    " executedTime: " + executedTime);
 
             }
             case UnitHeaderDecoder.TEMPLATE_ID -> {
@@ -459,9 +452,8 @@ public class AdminClientEgressListener implements EgressListener
                 final int messageCount = unitHeaderDecoder.messageCount();
                 byte marketDataGroup = unitHeaderDecoder.marketDataGroup();
 
-                log("Unit header: " + messageHeaderDecoder.templateId() + " " +
-                    messageCount + " messages in group: " + marketDataGroup,
-                    AttributedStyle.YELLOW);
+                LOGGER.info("Unit header: " + messageHeaderDecoder.templateId() + " " +
+                    messageCount + " messages in group: " + marketDataGroup);
             }
             case BestBidOfferDecoder.TEMPLATE_ID ->
             {
@@ -477,10 +469,9 @@ public class AdminClientEgressListener implements EgressListener
                 PriceDecoder offer = bestBidOfferDecoder.offer();
                 final double offerValue = offer.mantissa() * Math.pow(10, offer.exponent());
 
-                log("BBO: " + BestBidOfferDecoder.TEMPLATE_ID + " security "+ instrumentId +
+                LOGGER.info("BBO: " + BestBidOfferDecoder.TEMPLATE_ID + " security "+ instrumentId +
                             " bidQuantity/bid: " + bidQuantity + "@" + bidValue +
-                            " offerQuantity/offerValue: " + offerQuantity + "@" + offerValue,
-                    AttributedStyle.YELLOW);
+                            " offerQuantity/offerValue: " + offerQuantity + "@" + offerValue);
 
                 final String correlationId = AdminDecoder.TEMPLATE_ID + "@" +
                         AdminTypeEnum.BestBidOfferRequest.name() + "@" +
@@ -491,7 +482,7 @@ public class AdminClientEgressListener implements EgressListener
 
                 pendingMessageManager.markBBOMessageAsReceived(correlationId, bidQuantity, offerQuantity, bidValue, offerValue);
             }
-            default -> log("unknown message type: " + messageHeaderDecoder.templateId(), AttributedStyle.RED);
+            default -> LOGGER.info("unknown message type: " + messageHeaderDecoder.templateId());
         }
     }
 
@@ -506,8 +497,7 @@ public class AdminClientEgressListener implements EgressListener
     {
         if (code != EventCode.OK)
         {
-            log("Session event: " + code.name() + " " + detail + ". leadershipTermId=" + leadershipTermId,
-                AttributedStyle.YELLOW);
+            LOGGER.info("Session event: " + code.name() + " " + detail + ". leadershipTermId=" + leadershipTermId);
         }
     }
 
@@ -518,27 +508,7 @@ public class AdminClientEgressListener implements EgressListener
         final int leaderMemberId,
         final String ingressEndpoints)
     {
-        log("New Leader: " + leaderMemberId + ". leadershipTermId=" + leadershipTermId, AttributedStyle.YELLOW);
+        LOGGER.info("New Leader: " + leaderMemberId + ". leadershipTermId=" + leadershipTermId);
     }
 
-    /**
-     * Sets the terminal
-     *
-     * @param lineReader the lineReader
-     */
-    public void setLineReader(final LineReader lineReader)
-    {
-        this.lineReader = lineReader;
-    }
-
-    /**
-     * Logs a message to the terminal if available or to the logger if not
-     *
-     * @param message message to log
-     * @param color   message color to use
-     */
-    private void log(final String message, final int color)
-    {
-        LineReaderHelper.log(lineReader, message, color);
-    }
 }

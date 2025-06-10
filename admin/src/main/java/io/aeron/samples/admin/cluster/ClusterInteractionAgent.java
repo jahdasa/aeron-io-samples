@@ -146,20 +146,25 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         final String correlationId = listInstrumentsMessageRequestDecoder.correlationId();
         pendingMessageManager.addMessage(correlationId.trim(), "list-instruments");
 
-        boolean success = retryingClusterOffer(
+        final boolean success = retryingClusterOffer(
                 buffer,
                 offset,
                 sbeMessageHeaderDecoder.encodedLength() + listInstrumentsMessageRequestDecoder.encodedLength());
 
         if(!success)
         {
-            HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
-            if (connectionState == ConnectionState.CONNECTED)
-            {
-                status = HttpStatus.BAD_GATEWAY;
-            }
-            pendingMessageManager.replyFail(correlationId.trim(), new BaseError("Not connected to cluster"), status);
+            replyFail(correlationId);
         }
+    }
+
+    private void replyFail(String correlationId)
+    {
+        HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+        if (connectionState == ConnectionState.CONNECTED)
+        {
+            status = HttpStatus.BAD_GATEWAY;
+        }
+        pendingMessageManager.replyFail(correlationId.trim(), new BaseError("Not connected to cluster"), status);
     }
 
     private void processNewInstrument(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
@@ -175,7 +180,15 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
         pendingMessageManager.addMessage(correlationId, "new-instrument");
 
-        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + newInstrumentDecoder.encodedLength());
+        final boolean success = retryingClusterOffer(
+            buffer,
+            offset,
+            sbeMessageHeaderDecoder.encodedLength() + newInstrumentDecoder.encodedLength());
+
+        if(!success)
+        {
+            replyFail(correlationId);
+        }
     }
 
     private void processReplaceOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
@@ -193,7 +206,15 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
         pendingMessageManager.addMessage(correlationId, "admin-message");
 
-        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + orderCancelReplaceRequestDecoder.encodedLength());
+        final boolean success = retryingClusterOffer(
+            buffer,
+            offset,
+            sbeMessageHeaderDecoder.encodedLength() + orderCancelReplaceRequestDecoder.encodedLength());
+
+        if(!success)
+        {
+            replyFail(correlationId);
+        }
     }
 
     private void processCancelOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
@@ -211,7 +232,15 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
         pendingMessageManager.addMessage(correlationId, "cancel-order");
 
-        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + orderCancelRequestDecoder.encodedLength());
+        final boolean success = retryingClusterOffer(
+            buffer,
+            offset,
+            sbeMessageHeaderDecoder.encodedLength() + orderCancelRequestDecoder.encodedLength());
+
+        if(!success)
+        {
+            replyFail(correlationId);
+        }
     }
 
     private void processNowOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
@@ -229,7 +258,15 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
         pendingMessageManager.addMessage(correlationId, "place-order");
 
-        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + newOrderDecoder.encodedLength());
+        final boolean success = retryingClusterOffer(
+            buffer,
+            offset,
+            sbeMessageHeaderDecoder.encodedLength() + newOrderDecoder.encodedLength());
+
+        if(!success)
+        {
+            replyFail(correlationId);
+        }
     }
 
     private void processAdminMessage(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset)
@@ -247,7 +284,15 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
                 sbeMessageHeaderDecoder.compID();
         pendingMessageManager.addMessage(correlationId, "admin-message");
 
-        retryingClusterOffer(buffer, offset, sbeMessageHeaderDecoder.encodedLength() + adminDecoder.encodedLength());
+        final boolean success = retryingClusterOffer(
+            buffer,
+            offset,
+            sbeMessageHeaderDecoder.encodedLength() + adminDecoder.encodedLength());
+
+        if(!success)
+        {
+            replyFail(correlationId);
+        }
     }
 
 

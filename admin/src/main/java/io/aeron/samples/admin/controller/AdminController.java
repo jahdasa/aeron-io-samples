@@ -174,7 +174,8 @@ public class AdminController
 
         instruments.forEach(instrumentDTO ->
         {
-            try {
+            try
+            {
                 final ResponseWrapper responseWrapper = adminService.newInstrument(
                         instrumentDTO.getSecurityId(),
                         instrumentDTO.getCode(),
@@ -182,7 +183,9 @@ public class AdminController
                         client);
 
                 response.getInstrumentResponses().add((NewInstrumentResponse) responseWrapper.getData());
-            } catch (final Exception e) {
+            }
+            catch (final Exception e)
+            {
                 throw new RuntimeException(e);
             }
         });

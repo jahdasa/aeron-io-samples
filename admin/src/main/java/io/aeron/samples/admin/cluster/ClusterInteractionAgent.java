@@ -41,7 +41,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     private static final String INGRESS_CHANNEL = "aeron:udp?term-length=64k";
     private final MutableDirectBuffer sendBuffer = new ExpandableDirectByteBuffer(1024);
     private long lastHeartbeatTime = Long.MIN_VALUE;
-    private final RingBuffer adminClusterComms;
+    private final RingBuffer channel;
     private final IdleStrategy idleStrategy;
     private final AtomicBoolean runningFlag;
     private final PendingMessageManager pendingMessageManager;
@@ -65,16 +65,16 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
     /**
      * Creates a new agent to interact with the cluster
-     * @param adminClusterChannel the channel to send messages to the cluster from the REPL
+     * @param channel the channel to send messages to the cluster from the REPL
      * @param idleStrategy the idle strategy to use
      * @param runningFlag the flag to indicate if the REPL is still running
      */
     public ClusterInteractionAgent(
-        final RingBuffer adminClusterChannel,
+        final RingBuffer channel,
         final IdleStrategy idleStrategy,
         final AtomicBoolean runningFlag)
     {
-        this.adminClusterComms = adminClusterChannel;
+        this.channel = channel;
         this.idleStrategy = idleStrategy;
         this.runningFlag = runningFlag;
         this.pendingMessageManager = new PendingMessageManager(SystemEpochClock.INSTANCE);
@@ -101,7 +101,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         }
 
         //poll inbound to this agent messages (from the REPL)
-        adminClusterComms.read(this);
+        channel.read(this);
 
         //poll outbound messages from the cluster
         if (null != aeronCluster && !aeronCluster.isClosed())

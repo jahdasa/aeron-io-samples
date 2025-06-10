@@ -198,7 +198,7 @@ public class AdminService
                 traderId + "@" +
                 clientId;
 
-        log.info("CorrelationId: {}", correlationId);
+        log.debug("CorrelationId: {}", correlationId);
 
         final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
@@ -225,7 +225,7 @@ public class AdminService
                 traderId + "@" +
                 clientId;
 
-        log.info("CorrelationId: {}", correlationId);
+        log.debug("CorrelationId: {}", correlationId);
 
         final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
@@ -272,7 +272,7 @@ public class AdminService
             traderId + "@" +
             clientId;
 
-        log.info("CorrelationId: {}", correlationId);
+        log.debug("CorrelationId: {}", correlationId);
 
         final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
@@ -357,7 +357,7 @@ public class AdminService
         try
         {
             final ResponseWrapper response = future.get(5, TimeUnit.SECONDS);
-            log.info("Response: {}", response);
+            log.debug("Response: {}", response);
 
             return response;
         }

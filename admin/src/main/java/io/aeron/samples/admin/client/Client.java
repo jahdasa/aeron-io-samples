@@ -64,18 +64,18 @@ public class Client
         clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
 
         final DirectBuffer directBuffer = newOrderBuilder.compID(clientId)
-                .clientOrderId(clientOrderId.getBytes())
-                .securityId(securityId)
-                .orderType(OrdTypeEnum.valueOf(orderType))
-                .timeInForce(TimeInForceEnum.valueOf(timeInForce))
-                .side(SideEnum.valueOf(side))
-                .orderQuantity((int) volume)
-                .displayQuantity((int) displayQuantity)
-                .minQuantity((int) minQuantity)
-                .limitPrice(price)
-                .stopPrice(stopPrice)
-                .traderId(traderId)
-                .build(buffer, claimIndex);
+            .clientOrderId(clientOrderId.getBytes())
+            .securityId(securityId)
+            .orderType(OrdTypeEnum.valueOf(orderType))
+            .timeInForce(TimeInForceEnum.valueOf(timeInForce))
+            .side(SideEnum.valueOf(side))
+            .orderQuantity((int) volume)
+            .displayQuantity((int) displayQuantity)
+            .minQuantity((int) minQuantity)
+            .limitPrice(price)
+            .stopPrice(stopPrice)
+            .traderId(traderId)
+            .build(buffer, claimIndex);
 
         System.out.println("Message=OrderAdd|OrderId=" + clientOrderId.trim() + "|Type=" + orderType + "|Side=" + side + "|Volume=" + volume + "(" + displayQuantity + ")" + "|Price=" + price + "|StopPrice=" + stopPrice + "|TIF=" + timeInForce + "|MES=" + minQuantity);
         return directBuffer;

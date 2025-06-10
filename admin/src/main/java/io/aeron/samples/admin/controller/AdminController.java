@@ -49,36 +49,37 @@ public class AdminController
      */
     @PostMapping(path = "/v1/place-order")
     public ResponseEntity<ResponseWrapper> placeOrder(
-            @RequestParam(defaultValue = "1") final int securityId,
-            @RequestParam final String clientOrderId,
-            @RequestParam final long volume,
-            @RequestParam final long price,
-            @RequestParam final String side,
-            @RequestParam final String orderType,
-            @RequestParam final String timeInForce,
-            @RequestParam final long displayQuantity,
-            @RequestParam final long minQuantity,
-            @RequestParam final long stopPrice,
-            @RequestParam final int traderId,
-            @RequestParam final int client
-            ) throws Exception
+        @RequestParam final int securityId,
+        @RequestParam final String clientOrderId,
+        @RequestParam final long volume,
+        @RequestParam final long price,
+        @RequestParam final String side,
+        @RequestParam final String orderType,
+        @RequestParam final String timeInForce,
+        @RequestParam final long displayQuantity,
+        @RequestParam final long minQuantity,
+        @RequestParam final long stopPrice,
+        @RequestParam final int traderId,
+        @RequestParam final int client
+        )
     {
         final ResponseWrapper responseWrapper = adminService.placeOrder(
-                securityId,
-                clientOrderId,
-                volume,
-                price,
-                side,
-                orderType,
-                timeInForce,
-                displayQuantity,
-                minQuantity,
-                stopPrice,
-                traderId,
-                client);
+            securityId,
+            clientOrderId,
+            volume,
+            price,
+            side,
+            orderType,
+            timeInForce,
+            displayQuantity,
+            minQuantity,
+            stopPrice,
+            traderId,
+            client);
 
         HttpStatus status = HttpStatus.OK;
-        if(responseWrapper.getStatus() < 0) {
+        if(responseWrapper.getStatus() < 0)
+        {
             status = HttpStatus.BAD_GATEWAY;
         }
         return new ResponseEntity<>(responseWrapper, status);

@@ -7,10 +7,13 @@ import sbe.msg.*;
 
 import java.nio.ByteBuffer;
 
-public class NewOrderBuilder {
+public class NewOrderBuilder
+{
     private int bufferIndex;
+
     private NewOrderEncoder newOrder;
     private MessageHeaderEncoder messageHeader;
+
     private int messageEncodedLength;
 
     private int compID;
@@ -56,18 +59,21 @@ public class NewOrderBuilder {
         return this;
     }
 
-    public NewOrderBuilder clientOrderId(String value){
+    public NewOrderBuilder clientOrderId(String value)
+    {
         value = BuilderUtil.fill(value, NewOrderEncoder.clientOrderIdLength());
         this.clientOrderId.wrap(value.getBytes());
         return this;
     }
 
-    public NewOrderBuilder securityId(int value){
+    public NewOrderBuilder securityId(int value)
+    {
         this.securityId = value;
         return this;
     }
 
-    public NewOrderBuilder account(byte[] value){
+    public NewOrderBuilder account(byte[] value)
+    {
         this.account.wrap(value);
         return this;
     }
@@ -136,7 +142,8 @@ public class NewOrderBuilder {
         return this;
     }
 
-    public DirectBuffer build(final MutableDirectBuffer buffer, final int offset){
+    public DirectBuffer build(final MutableDirectBuffer buffer, final int offset)
+    {
         bufferIndex = offset;
         messageHeader.wrap(buffer, bufferIndex)
                 .blockLength(newOrder.sbeBlockLength())

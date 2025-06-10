@@ -47,7 +47,7 @@ public class PendingMessageManager
      */
     public void addMessage(final String correlationId, final String messageType)
     {
-        LOGGER.info("addMessage to trackedMessages correlationId: {}, messageType: {}", correlationId, messageType);
+        LOGGER.debug("addMessage to trackedMessages correlationId: {}, messageType: {}", correlationId, messageType);
 
         final long timeoutAt = current.time() + TIMEOUT_MS;
         final PendingMessage message = new PendingMessage(timeoutAt, correlationId, messageType);
@@ -74,7 +74,7 @@ public class PendingMessageManager
     {
         final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        LOGGER.debug("markMessageAsReceived correlationId: {}", correlationId);
         if (exist)
         {
             OrderViewResponse responseData = new OrderViewResponse(
@@ -176,7 +176,7 @@ public class PendingMessageManager
 
     public void markMarketDataMessageAsReceived(String correlationId, MarketDepthDTO marketDepthDTO)
     {
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        LOGGER.debug("markMessageAsReceived correlationId: {}", correlationId);
 
         final ResponseWrapper responseWrapper = partialData.get(correlationId);
 
@@ -200,7 +200,7 @@ public class PendingMessageManager
 
     public void markLOBMessageAsReceived(String correlationId, LimitOrderBookDTO limitOrderBookDTO)
     {
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        LOGGER.debug("markMessageAsReceived correlationId: {}", correlationId);
 
         final ResponseWrapper responseWrapper = partialData.get(correlationId);
         if(responseWrapper == null)
@@ -227,7 +227,7 @@ public class PendingMessageManager
     {
         final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        LOGGER.debug("markMessageAsReceived correlationId: {}", correlationId);
         if (exist)
         {
             final ResponseWrapper wrapper = partialData.get(correlationId);
@@ -252,7 +252,7 @@ public class PendingMessageManager
     {
         final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        LOGGER.debug("markMessageAsReceived correlationId: {}", correlationId);
         if (exist)
         {
             final ResponseWrapper wrapper = partialData.get(correlationId);
@@ -325,7 +325,7 @@ public class PendingMessageManager
     {
         final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        LOGGER.debug("markMessageAsReceived correlationId: {}", correlationId);
         if (exist)
         {
             instruments.sort(Comparator.comparing(InstrumentDTO::getSecurityId));
@@ -347,7 +347,7 @@ public class PendingMessageManager
     {
         final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        LOGGER.debug("markMessageAsReceived correlationId: {}", correlationId);
         if (exist)
         {
             replySuccess(correlationId, new NewInstrumentResponse(correlationId, secutiryId, code, status));
@@ -367,7 +367,7 @@ public class PendingMessageManager
     {
         final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        LOGGER.debug("markMessageAsReceived correlationId: {}", correlationId);
         if (exist)
         {
             replySuccess(correlationId, new VWAPDTO(bidVWAP, offerVWAP));
@@ -390,7 +390,7 @@ public class PendingMessageManager
     {
         final boolean exist = trackedMessagesMap.containsKey(correlationId);
 
-        LOGGER.info("markMessageAsReceived correlationId: {}", correlationId);
+        LOGGER.debug("markMessageAsReceived correlationId: {}", correlationId);
         if (exist)
         {
             replySuccess(correlationId, new BBODTO(bidQuantity, offerQuantity,bidValue, offerValue));

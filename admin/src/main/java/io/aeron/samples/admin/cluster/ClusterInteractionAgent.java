@@ -126,23 +126,26 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     public void onMessage(final int msgTypeId, final MutableDirectBuffer buffer, final int offset, final int length)
     {
         messageHeaderDecoder.wrap(buffer, offset);
+
         switch (messageHeaderDecoder.templateId())
         {
             case ConnectClusterDecoder.TEMPLATE_ID -> processConnectCluster(buffer, offset);
             case DisconnectClusterDecoder.TEMPLATE_ID -> processDisconnectCluster();
-            case NewOrderDecoder.TEMPLATE_ID -> processNowOrder(messageHeaderDecoder, buffer, offset);
-            case AdminDecoder.TEMPLATE_ID -> processAdminMessage(messageHeaderDecoder, buffer, offset);
-            case OrderCancelRequestDecoder.TEMPLATE_ID -> processCancelOrder(messageHeaderDecoder, buffer, offset);
-            case OrderCancelReplaceRequestDecoder.TEMPLATE_ID -> processReplaceOrder(messageHeaderDecoder, buffer, offset);
-            case NewInstrumentDecoder.TEMPLATE_ID -> processNewInstrument(messageHeaderDecoder, buffer, offset);
-            case ListInstrumentsMessageRequestDecoder.TEMPLATE_ID -> processListInstruments(messageHeaderDecoder, buffer, offset);
+            case NewOrderDecoder.TEMPLATE_ID -> processNowOrder(buffer, offset);
+            case AdminDecoder.TEMPLATE_ID -> processAdminMessage(buffer, offset);
+            case OrderCancelRequestDecoder.TEMPLATE_ID -> processCancelOrder(buffer, offset);
+            case OrderCancelReplaceRequestDecoder.TEMPLATE_ID -> processReplaceOrder(buffer, offset);
+            case NewInstrumentDecoder.TEMPLATE_ID -> processNewInstrument(buffer, offset);
+            case ListInstrumentsMessageRequestDecoder.TEMPLATE_ID -> processListInstruments(buffer, offset);
             default -> LOGGER.warn("Unknown message type: " + messageHeaderDecoder.templateId());
         }
     }
 
-    private void processListInstruments(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset)
+    private void processListInstruments(final MutableDirectBuffer buffer, final int offset)
     {
-        LOGGER.info("Process list instrument " + messageHeaderDecoder.templateId());
+        sbeMessageHeaderDecoder.wrap(buffer, offset);
+
+        LOGGER.info("Process list instrument " + sbeMessageHeaderDecoder.templateId());
 
         listInstrumentsMessageRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -170,8 +173,11 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         pendingMessageManager.replyFail(correlationId.trim(), new BaseError("Not connected to cluster"), status);
     }
 
-    private void processNewInstrument(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        LOGGER.info("Process new instrument" + messageHeaderDecoder.templateId());
+    private void processNewInstrument(MutableDirectBuffer buffer, int offset)
+    {
+        sbeMessageHeaderDecoder.wrap(buffer, offset);
+
+        LOGGER.info("Process new instrument" + sbeMessageHeaderDecoder.templateId());
 
         newInstrumentDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -194,8 +200,11 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         }
     }
 
-    private void processReplaceOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        LOGGER.info("Process replace order" + messageHeaderDecoder.templateId());
+    private void processReplaceOrder(MutableDirectBuffer buffer, int offset)
+    {
+        sbeMessageHeaderDecoder.wrap(buffer, offset);
+
+        LOGGER.info("Process replace order " + sbeMessageHeaderDecoder.templateId());
 
         orderCancelReplaceRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -220,8 +229,11 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         }
     }
 
-    private void processCancelOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        LOGGER.info("Process new order" + messageHeaderDecoder.templateId());
+    private void processCancelOrder(final MutableDirectBuffer buffer, final int offset)
+    {
+        sbeMessageHeaderDecoder.wrap(buffer, offset);
+
+        LOGGER.info("Process cancel order " + sbeMessageHeaderDecoder.templateId());
 
         orderCancelRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -246,8 +258,11 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         }
     }
 
-    private void processNowOrder(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset) {
-        LOGGER.info("Process new order" + messageHeaderDecoder.templateId());
+    private void processNowOrder(final MutableDirectBuffer buffer, final int offset)
+    {
+        sbeMessageHeaderDecoder.wrap(buffer, offset);
+
+        LOGGER.info("Process new order " + sbeMessageHeaderDecoder.templateId());
 
         newOrderDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
@@ -272,9 +287,11 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         }
     }
 
-    private void processAdminMessage(MessageHeaderDecoder messageHeaderDecoder, MutableDirectBuffer buffer, int offset)
+    private void processAdminMessage(MutableDirectBuffer buffer, int offset)
     {
-        LOGGER.info("Process admin message: " + messageHeaderDecoder.templateId());
+        sbeMessageHeaderDecoder.wrap(buffer, offset);
+
+        LOGGER.info("Process admin message: " + sbeMessageHeaderDecoder.templateId());
 
         adminDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 

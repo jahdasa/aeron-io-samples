@@ -1,7 +1,5 @@
 package io.aeron.samples.matchingengine.engine;
 
-import aeron.AeronPublisher;
-import aeron.AeronSubscriber;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.LongObjectHashMap;
 import com.carrotsearch.hppc.ObjectArrayList;
@@ -26,16 +24,10 @@ import sbe.msg.marketData.UnitHeaderDecoder;
 
 import java.nio.ByteBuffer;
 import java.util.Iterator;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class  MatchingEngine {
 
-    protected Properties properties;
-    private static final String PROPERTIES_FILE =  "MatchingEngine.properties";
-    private AeronSubscriber subscriber;
-    private AeronPublisher tradingGatewayPublisher;
-    private AeronPublisher marketDataPublisher;
     private LOBManager lobManager;
     private UnsafeBuffer temp = new UnsafeBuffer(ByteBuffer.allocate(106));
     private LongObjectHashMap<OrderBook>  orderBooks;
@@ -115,10 +107,8 @@ public class  MatchingEngine {
         }
     }
 
-    public boolean stop() {
-        subscriber.stop();
-        tradingGatewayPublisher.stop();
-        marketDataPublisher.stop();
+    public boolean stop()
+    {
         clearOrderBooks();
         return true;
     }
@@ -155,7 +145,7 @@ public class  MatchingEngine {
                 stop();
             }
             System.out.println("Time taken to process order: " + (System.nanoTime() - startTime) + " ns" + ", l/i " + OrderListImpl.counter + "@" + OrderListImpl.OrderListIterator.counter);
-        } catch (Exception e)
+        } catch (final Exception e)
         {
             e.printStackTrace();
         }

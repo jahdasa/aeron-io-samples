@@ -303,7 +303,10 @@ public class PendingMessageManager
 
             }
 
-            data.getLines().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed());
+            if(data.getLines() != null)
+            {
+                data.getLines().sort(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed());
+            }
 
             replySuccess(correlationId, data);
             partialData.remove(correlationId);

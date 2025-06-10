@@ -270,3 +270,6 @@ Make sure you are connected to the cluster before running the test (either with 
 ```bash
 k6 run --vus 10 --duration 30s .k6-scripts/001.placeorder.js
 ```
+
+#admin envs:
+AERON_DRIVER_DIR=C:\code\github\aeron-io-samples\admin\aeron-driver;CONNECT_ON_BOOT=1;CLUSTER_ADDRESSES=localhost;CLUSTER_PORT_BASE=9000

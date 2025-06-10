@@ -36,10 +36,10 @@ import static org.agrona.concurrent.ringbuffer.RingBufferDescriptor.TRAILER_LENG
 @Service
 public class AdminService
 {
-    final UnsafeBuffer adminClusterBuffer =
+    final UnsafeBuffer channelBuffer =
             new UnsafeBuffer(BufferUtil.allocateDirectAligned(1024*1024*1024 + TRAILER_LENGTH, 8));
 
-    final RingBuffer adminClusterChannel = new ManyToOneRingBuffer(adminClusterBuffer);
+    final RingBuffer channel = new ManyToOneRingBuffer(channelBuffer);
 
     final AtomicBoolean running = new AtomicBoolean(true);
     final IdleStrategy idleStrategy = new SleepingMillisIdleStrategy();
@@ -54,11 +54,11 @@ public class AdminService
         try
         {
             clusterInteractionAgent = new ClusterInteractionAgent(
-                adminClusterChannel,
+                channel,
                 idleStrategy,
                 running);
         }
-        catch (Exception e)
+        catch (final Exception e)
         {
             throw new RuntimeException(e);
         }
@@ -70,6 +70,12 @@ public class AdminService
             clusterInteractionAgent);
 
         AgentRunner.startOnThread(clusterInteractionAgentRunner);
+
+        final String connectOnBoot = System.getenv("CONNECT_ON_BOOT");
+        if (connectOnBoot != null && connectOnBoot.equals("1"))
+        {
+           connect();
+        }
     }
 
     /**
@@ -78,7 +84,7 @@ public class AdminService
     public void connect()
     {
         final CliCommands parent = new CliCommands();
-        parent.setAdminChannel(adminClusterChannel);
+        parent.setAdminChannel(channel);
 
         final ConnectCluster command = new ConnectCluster();
         command.setParent(parent);
@@ -95,7 +101,7 @@ public class AdminService
     public void disconnect()
     {
         final CliCommands parent = new CliCommands();
-        parent.setAdminChannel(adminClusterChannel);
+        parent.setAdminChannel(channel);
 
         final DisconnectCluster command = new DisconnectCluster();
         command.setParent(parent);
@@ -120,7 +126,7 @@ public class AdminService
         final int traderId,
         final int clientId)
     {
-        final int claimIndex = adminClusterChannel.tryClaim(10, 114);
+        final int claimIndex = channel.tryClaim(10, 114);
 
         if (claimIndex < 0)
         {
@@ -128,7 +134,7 @@ public class AdminService
             return new ResponseWrapper(-2, null, new BaseError("Failed to accept more new order"));
         }
 
-        final MutableDirectBuffer buffer = adminClusterChannel.buffer();
+        final MutableDirectBuffer buffer = channel.buffer();
 
         client.placeOrder(
             securityId,
@@ -196,7 +202,7 @@ public class AdminService
 
         final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
-        adminClusterChannel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
+        channel.write(10, buffer, 0, client.getLobSnapshotMessageLength());
 
         return await(future);
     }
@@ -223,7 +229,7 @@ public class AdminService
 
         final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
-        adminClusterChannel.write(10, buffer, 0, client.getCancelOrderEncodedLength());
+        channel.write(10, buffer, 0, client.getCancelOrderEncodedLength());
 
         return await(future);
     }
@@ -270,7 +276,7 @@ public class AdminService
 
         final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
-        adminClusterChannel.write(10, buffer, 0, client.getReplaceOrderEncodedLength());
+        channel.write(10, buffer, 0, client.getReplaceOrderEncodedLength());
 
         return await(future);
     }
@@ -281,7 +287,7 @@ public class AdminService
         final String name,
         final int clientId)
     {
-        final int claimIndex = adminClusterChannel.tryClaim(10, 114);
+        final int claimIndex = channel.tryClaim(10, 114);
 
         if (claimIndex < 0)
         {
@@ -289,7 +295,7 @@ public class AdminService
             return new ResponseWrapper(-2, null, new BaseError("Failed to accept more new order"));
         }
 
-        final MutableDirectBuffer buffer = adminClusterChannel.buffer();
+        final MutableDirectBuffer buffer = channel.buffer();
 
         client.newInstrument(
                 clientId,
@@ -316,7 +322,7 @@ public class AdminService
 
     public ResponseWrapper listInstruments(final int clientId) throws Exception
     {
-        final int claimIndex = adminClusterChannel.tryClaim(10, 114);
+        final int claimIndex = channel.tryClaim(10, 114);
 
         if (claimIndex < 0)
         {
@@ -324,7 +330,7 @@ public class AdminService
             return new ResponseWrapper(-2, null, new BaseError("Failed to accept more new order"));
         }
 
-        final MutableDirectBuffer buffer = adminClusterChannel.buffer();
+        final MutableDirectBuffer buffer = channel.buffer();
 
         // newinstrument-tid@timestamp@client
         final String correlationId = ListInstrumentsMessageRequestDecoder.TEMPLATE_ID + "@" +
@@ -374,12 +380,12 @@ public class AdminService
     {
         try
         {
-            adminClusterChannel.commit(claimIndex);
+            channel.commit(claimIndex);
         }
         catch (final Exception e)
         {
             log.error("Failed to write command to ring buffer: {} ", e.getMessage(), e);
-            adminClusterChannel.abort(claimIndex);
+            channel.abort(claimIndex);
         }
     }
 }

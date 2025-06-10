@@ -4,6 +4,7 @@ import io.aeron.Publication;
 import io.aeron.cluster.client.AeronCluster;
 import io.aeron.driver.MediaDriver;
 import io.aeron.driver.ThreadingMode;
+import io.aeron.exceptions.TimeoutException;
 import io.aeron.samples.admin.model.BaseError;
 import io.aeron.samples.admin.model.ResponseWrapper;
 import io.aeron.samples.cluster.ClusterConfig;
@@ -387,14 +388,21 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
             .dirDeleteOnShutdown(true)
             .aeronDirectoryName(getAeronDriverDir().getAbsolutePath()));
 
-        aeronCluster = AeronCluster.connect(
-            new AeronCluster.Context()
-                .egressListener(adminClientEgressListener)
-                .egressChannel(egressChannel)
-                .ingressChannel(INGRESS_CHANNEL)
-                .ingressEndpoints(ingressEndpoints)
-                .errorHandler(this::logError)
-                .aeronDirectoryName(mediaDriver.aeronDirectoryName()));
+        final AeronCluster.Context context = new AeronCluster.Context()
+            .egressListener(adminClientEgressListener)
+            .egressChannel(egressChannel)
+            .ingressChannel(INGRESS_CHANNEL)
+            .ingressEndpoints(ingressEndpoints)
+            .errorHandler(this::logError)
+            .aeronDirectoryName(mediaDriver.aeronDirectoryName());
+        try
+        {
+            aeronCluster = AeronCluster.connect(context);
+        }
+        catch (final TimeoutException e)
+        {
+            LOGGER.error("Connect timeout, error: {}", e.getMessage());
+        }
 
         LOGGER.info("Connected to cluster leader, node " + aeronCluster.leaderMemberId());
     }

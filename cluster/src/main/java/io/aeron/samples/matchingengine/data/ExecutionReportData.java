@@ -163,7 +163,7 @@ public enum ExecutionReportData
                 .clientOrderId(clientOrderId.byteArray())
                 .orderQuantity(aggOrder.getQuantity())
                 .price(aggOrder.getPrice())
-                .side(aggOrder.getSide() == 1 ? SideEnum.Buy : SideEnum.Sell)
+                .side(aggOrder.getSide() == 1 ? SideEnum.BUY : SideEnum.SELL)
                 .submittedTime(java.time.Instant.now().toEpochMilli())
                 .securityId((int)securityId);
     }

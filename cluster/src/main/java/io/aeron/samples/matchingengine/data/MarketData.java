@@ -69,7 +69,7 @@ public enum MarketData {
                 .nanosecond(Instant.now().getMillis())
                 .orderId(orderEntry.getOrderId());
 
-        SideEnum sideEnum = orderEntry.getSide() == 1 ? SideEnum.Buy : SideEnum.Sell;
+        SideEnum sideEnum = orderEntry.getSide() == 1 ? SideEnum.BUY : SideEnum.SELL;
         addOrderBuilder.side(sideEnum)
                        .quantity(orderEntry.getDisplayQuantity())
                        .instrumentId(securityId)
@@ -377,7 +377,7 @@ public enum MarketData {
                     continue;
                 }
                 bidTotalVolume = bidList.total();
-                marketDepthBuilder.addDepth(sbe.msg.SideEnum.Buy, prices[i], bidCount, bidTotalVolume);
+                marketDepthBuilder.addDepth(sbe.msg.SideEnum.BUY, prices[i], bidCount, bidTotalVolume);
                 count++;
             }
 
@@ -417,7 +417,7 @@ public enum MarketData {
                 }
 
                 offerTotalVolume = offerList.total();
-                marketDepthBuilder.addDepth(sbe.msg.SideEnum.Sell, prices[i], offerCount, offerTotalVolume);
+                marketDepthBuilder.addDepth(sbe.msg.SideEnum.SELL, prices[i], offerCount, offerTotalVolume);
                 count++;
             }
 

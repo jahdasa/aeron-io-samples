@@ -37,7 +37,7 @@ public class LOBReaderTest {
                 .securityId(1);
 
         for(int i=0; i< 100; i++) {
-            lobBuilder.addOrder(i+1,i+1, 1, SideEnum.Buy, 100);
+            lobBuilder.addOrder(i+1,i+1, 1, SideEnum.BUY, 100);
         }
 
         return lobBuilder.build();

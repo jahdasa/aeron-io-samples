@@ -93,11 +93,11 @@ public class AdminController
     @CrossOrigin(origins = "*")
     public ResponseWrapper submitAdminMessage(
             @RequestParam final long requestId,
-            @RequestParam(defaultValue = "1") final int securityId,
+            @RequestParam final int securityId,
             @RequestParam final String adminMessageType,
             @RequestParam final long trader,
             @RequestParam final int client
-            ) throws Exception
+            )
     {
         return adminService.submitAdminMessage(securityId, adminMessageType, requestId, trader, client);
     }
@@ -108,13 +108,13 @@ public class AdminController
      */
     @PostMapping(path = "/v1/cancel-order")
     public ResponseWrapper cancelOrder(
-            @RequestParam(defaultValue = "1") final int securityId,
+            @RequestParam final int securityId,
             @RequestParam final String clientOrderId,
             @RequestParam final String side,
             @RequestParam final long price,
             @RequestParam final int traderId,
             @RequestParam final int client
-            ) throws Exception
+            )
     {
         return adminService.cancelOrder(securityId, clientOrderId, side, price, traderId, client);
     }
@@ -123,7 +123,7 @@ public class AdminController
     // replaceorder-tid@side@security@clientOrderId@trader@client
     @PostMapping(path = "/v1/replace-order")
     public ResponseWrapper replaceOrder(
-            @RequestParam(defaultValue = "1") final int securityId,
+            @RequestParam final int securityId,
             @RequestParam final String clientOrderId,
             @RequestParam final long volume,
             @RequestParam final long price,

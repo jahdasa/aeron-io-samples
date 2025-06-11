@@ -11,18 +11,21 @@ import java.nio.ByteBuffer;
 /**
  * Created by dharmeshsing on 18/02/17.
  */
-public class NewOrderBuilderTest {
+public class NewOrderBuilderTest
+{
     private NewOrderBuilder newOrderBuilder = new NewOrderBuilder();
     UnsafeBuffer encodeBuffer = new UnsafeBuffer(ByteBuffer.allocateDirect(114));
 
     @Test
-    public void testNewOrder(){
+    public void testNewOrder()
+    {
         LogonBuilder logonBuilder = new LogonBuilder();
-        DirectBuffer buffer = createNewOrder(1200, 2500, SideEnum.Buy, OrdTypeEnum.Limit);
+        DirectBuffer buffer = createNewOrder(1200, 2500, SideEnum.BUY, OrdTypeEnum.Limit);
         Assertions.assertNotNull(buffer);
     }
 
-    public DirectBuffer createNewOrder(long volume, long price,SideEnum side,OrdTypeEnum orderType){
+    public DirectBuffer createNewOrder(long volume, long price,SideEnum side,OrdTypeEnum orderType)
+    {
         String clientOrderId = "1234";
 
         DirectBuffer directBuffer = newOrderBuilder.compID(1)

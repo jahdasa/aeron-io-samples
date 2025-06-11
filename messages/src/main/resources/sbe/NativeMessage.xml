@@ -63,8 +63,8 @@
             <validValue name="CPX" description="Closing Price Cross">12</validValue>
         </enum>
         <enum name="SideEnum" encodingType="uint8">
-            <validValue name="Buy" description="Buy">1</validValue>
-            <validValue name="Sell" description="Sell">2</validValue>
+            <validValue name="BUY">1</validValue>
+            <validValue name="SELL">2</validValue>
         </enum>
         <enum name="CapacityEnum" encodingType="uint8">
             <validValue name="Principal" description="Principal">2</validValue>

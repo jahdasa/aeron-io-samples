@@ -40,7 +40,7 @@ public class AddOrderTest {
         assertEquals(MessageTypeEnum.AddOrder,addOrderDecoder.messageType());
         assertEquals(10,addOrderDecoder.nanosecond());
         assertEquals(1,addOrderDecoder.orderId());
-        assertEquals(SideEnum.Buy,addOrderDecoder.side());
+        assertEquals(SideEnum.BUY,addOrderDecoder.side());
         assertEquals(100,addOrderDecoder.quantity());
         assertEquals(10,addOrderDecoder.instrumentId());
         assertEquals(100,addOrderDecoder.price().mantissa());
@@ -48,8 +48,8 @@ public class AddOrderTest {
 
     }
 
-    private UnsafeBuffer encodeAddOrderMessage() throws UnsupportedEncodingException {
-
+    private UnsafeBuffer encodeAddOrderMessage()
+    {
         int bufferIndex = 0;
         AddOrderEncoder addOrderEncoder = new AddOrderEncoder();
         MessageHeaderEncoder messageHeaderEncoder = new MessageHeaderEncoder();
@@ -67,7 +67,7 @@ public class AddOrderTest {
                 .messageType(MessageTypeEnum.AddOrder)
                 .nanosecond(10)
                 .orderId(1)
-                .side(SideEnum.Buy)
+                .side(SideEnum.BUY)
                 .quantity(100)
                 .instrumentId(10);
 

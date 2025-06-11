@@ -35,8 +35,8 @@ public class MessageGenerator {
 
 
         orderCancelRequestBuilder.traderId(1)
-                .side(SideEnum.Buy)
-                .orderBook(OrderBookEnum.Regular);
+            .side(SideEnum.BUY)
+            .orderBook(OrderBookEnum.Regular);
 
         return orderCancelRequestBuilder.build();
     }
@@ -53,8 +53,8 @@ public class MessageGenerator {
         orderCancelRequestBuilder.securityId(99);
 
         orderCancelRequestBuilder.traderId(1)
-                .side(SideEnum.Buy)
-                .orderBook(OrderBookEnum.Regular);
+            .side(SideEnum.BUY)
+            .orderBook(OrderBookEnum.Regular);
 
         return orderCancelRequestBuilder.build();
     }
@@ -76,15 +76,15 @@ public class MessageGenerator {
         orderCancelReplaceRequestBuilder.account(account.getBytes());
 
         orderCancelReplaceRequestBuilder.orderType(OrdTypeEnum.Limit)
-                .timeInForce(TimeInForceEnum.Day)
-                .expireTime("20150823-10:00:00".getBytes())
-                .side(SideEnum.Buy)
-                .orderQuantity(1000)
-                .displayQuantity(1000)
-                .minQuantity(0)
-                .limitPrice(10000)
-                .stopPrice(0)
-                .orderBook(OrderBookEnum.Regular);
+            .timeInForce(TimeInForceEnum.Day)
+            .expireTime("20150823-10:00:00".getBytes())
+            .side(SideEnum.BUY)
+            .orderQuantity(1000)
+            .displayQuantity(1000)
+            .minQuantity(0)
+            .limitPrice(10000)
+            .stopPrice(0)
+            .orderBook(OrderBookEnum.Regular);
 
         return orderCancelReplaceRequestBuilder.build();
     }

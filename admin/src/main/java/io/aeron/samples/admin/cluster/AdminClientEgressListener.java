@@ -151,12 +151,12 @@ public class AdminClientEgressListener implements EgressListener
 
                     double priceValue = priceDecoder.mantissa() * Math.pow(10, priceDecoder.exponent());
 
-                    if(side == sbe.msg.SideEnum.Buy)
+                    if(side == sbe.msg.SideEnum.BUY)
                     {
                         bidTotalVolume.addAndGet(quantity);
                         bidTotal.addAndGet((long) (quantity*priceValue));
                     }
-                    else if(side == sbe.msg.SideEnum.Sell)
+                    else if(side == sbe.msg.SideEnum.SELL)
                     {
                         offerTotalVolume.addAndGet(quantity);
                         offerTotal.addAndGet((long) (quantity*priceValue));

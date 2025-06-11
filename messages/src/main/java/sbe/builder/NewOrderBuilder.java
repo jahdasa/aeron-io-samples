@@ -21,7 +21,7 @@ public class NewOrderBuilder
     private int orderQuantity;
     private int displayQuantity;
     private int minQuantity;
-    private UnsafeBuffer clientOrderId;
+    private String clientOrderId;
     private UnsafeBuffer account;
     private OrdTypeEnum orderType;
     private TimeInForceEnum timeInForce;
@@ -36,33 +36,29 @@ public class NewOrderBuilder
 
     public static int BUFFER_SIZE = 114;
 
-    public NewOrderBuilder(){
+    public NewOrderBuilder()
+    {
         newOrder = new NewOrderEncoder();
         messageHeader = new MessageHeaderEncoder();
 
-        clientOrderId = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.clientOrderIdLength()));
         account = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.accountLength()));
         expireTime = new UnsafeBuffer(ByteBuffer.allocateDirect(NewOrderEncoder.expireTimeLength()));
     }
 
-    public int messageEncodedLength(){
+    public int messageEncodedLength()
+    {
         return messageEncodedLength;
     }
 
-    public NewOrderBuilder compID(int value){
+    public NewOrderBuilder compID(int value)
+    {
         this.compID = value;
-        return this;
-    }
-
-    public NewOrderBuilder clientOrderId(byte[] value){
-        this.clientOrderId.wrap(value);
         return this;
     }
 
     public NewOrderBuilder clientOrderId(String value)
     {
-        value = BuilderUtil.fill(value, NewOrderEncoder.clientOrderIdLength());
-        this.clientOrderId.wrap(value.getBytes());
+        clientOrderId = BuilderUtil.fill(value, NewOrderEncoder.clientOrderIdLength());
         return this;
     }
 
@@ -92,7 +88,8 @@ public class NewOrderBuilder
         return this;
     }
 
-    public NewOrderBuilder side(SideEnum value){
+    public NewOrderBuilder side(SideEnum value)
+    {
         this.side = value;
         return this;
     }
@@ -146,25 +143,25 @@ public class NewOrderBuilder
     {
         bufferIndex = offset;
         messageHeader.wrap(buffer, bufferIndex)
-                .blockLength(newOrder.sbeBlockLength())
-                .templateId(newOrder.sbeTemplateId())
-                .schemaId(newOrder.sbeSchemaId())
-                .version(newOrder.sbeSchemaVersion())
-                .compID(compID);
+            .blockLength(newOrder.sbeBlockLength())
+            .templateId(newOrder.sbeTemplateId())
+            .schemaId(newOrder.sbeSchemaId())
+            .version(newOrder.sbeSchemaVersion())
+            .compID(compID);
 
         bufferIndex += messageHeader.encodedLength();
         newOrder.wrap(buffer, bufferIndex)
-                .putClientOrderId(clientOrderId.byteArray(),0)
-                .securityId(securityId)
-                .traderId(traderId)
-                .putAccount(account.byteArray(),0)
-                .orderType(orderType)
-                .timeInForce(timeInForce)
-                .putExpireTime(expireTime.byteArray(),0)
-                .side(side)
-                .orderQuantity(orderQuantity)
-                .displayQuantity(displayQuantity)
-                .minQuantity(minQuantity);
+            .putClientOrderId(clientOrderId.getBytes(),0)
+            .securityId(securityId)
+            .traderId(traderId)
+            .putAccount(account.byteArray(),0)
+            .orderType(orderType)
+            .timeInForce(timeInForce)
+            .putExpireTime(expireTime.byteArray(),0)
+            .side(side)
+            .orderQuantity(orderQuantity)
+            .displayQuantity(displayQuantity)
+            .minQuantity(minQuantity);
 
         newOrder.limitPrice().mantissa(limitPrice);
         newOrder.stopPrice().mantissa(stopPrice);

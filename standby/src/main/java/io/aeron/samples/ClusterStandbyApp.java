@@ -83,7 +83,7 @@ public class ClusterStandbyApp
             .archiveDir(new File(baseDir, ClusterConfig.ARCHIVE_SUB_DIR))
             .controlChannel("aeron:udp?endpoint=" + standbyArchiveEndpoint)
             .archiveClientContext(replicationArchiveContext)
-            .localControlChannel("aeron:ipc?term-length=64k")
+            .localControlChannel("aeron:ipc?term-length=512k")
             .replicationChannel("aeron:udp?endpoint=" + standbyDynamicEndpoint)
             .recordingEventsEnabled(false)
             .threadingMode(ArchiveThreadingMode.SHARED);

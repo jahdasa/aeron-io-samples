@@ -38,7 +38,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
     private static final long HEARTBEAT_INTERVAL = 250;
     private static final long RETRY_COUNT = 10;
-    private static final String INGRESS_CHANNEL = "aeron:udp?term-length=64k";
+    private static final String INGRESS_CHANNEL = "aeron:udp?term-length=512k";
     private final MutableDirectBuffer sendBuffer = new ExpandableDirectByteBuffer(1024);
     private long lastHeartbeatTime = Long.MIN_VALUE;
     private final RingBuffer channel;
@@ -126,6 +126,7 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
     public void onMessage(final int msgTypeId, final MutableDirectBuffer buffer, final int offset, final int length)
     {
         messageHeaderDecoder.wrap(buffer, offset);
+        sbeMessageHeaderDecoder.wrap(buffer, offset);
 
         switch (messageHeaderDecoder.templateId())
         {
@@ -237,6 +238,16 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
 
         orderCancelRequestDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
 
+        try
+        {
+            orderCancelRequestDecoder.side().value();
+        }
+        catch (final Exception e)
+        {
+            LOGGER.error("Error processing cancel order: " + e.getMessage(), e);
+            return;
+        }
+
         // cancelorder-tid@side@security@clientOrderId@trader@client
         final String correlationId = NewOrderEncoder.TEMPLATE_ID + "@" +
                 orderCancelRequestDecoder.side().value() + "@" +
@@ -265,6 +276,16 @@ public class ClusterInteractionAgent implements Agent, MessageHandler
         LOGGER.info("Process new order " + sbeMessageHeaderDecoder.templateId());
 
         newOrderDecoder.wrapAndApplyHeader(buffer, offset, sbeMessageHeaderDecoder);
+
+        try
+        {
+            newOrderDecoder.side().value();
+        }
+        catch (final Exception e)
+        {
+            LOGGER.error("Error processing new order: " + e.getMessage(), e);
+            return;
+        }
 
         // placeorder-tid@side@security@clientOrderId@trader@client
         final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +

@@ -50,7 +50,7 @@ public class CrossingProcessorPerfTest {
                 .orderType(OrdTypeEnum.Limit)
                 .timeInForce(TimeInForceEnum.Day)
                 .expireTime("20150813-23:00:00".getBytes())
-                .side(SideEnum.Buy)
+                .side(SideEnum.BUY)
                 .orderQuantity(10)
                 .displayQuantity(10)
                 .minQuantity(1000)

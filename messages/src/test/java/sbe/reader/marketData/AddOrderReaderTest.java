@@ -31,7 +31,7 @@ public class AddOrderReaderTest {
         return addOrderBuilder.messageType(MessageTypeEnum.AddOrder)
                 .nanosecond(913353552)
                 .orderId(1)
-                .side(SideEnum.Buy)
+                .side(SideEnum.BUY)
                 .quantity(100)
                 .instrumentId(1)
                 .price(1000)

@@ -34,8 +34,8 @@
             <type name="exponent" presence="constant" primitiveType="int8">-4</type>
         </composite>
         <enum name="SideEnum" encodingType="uint8">
-            <validValue name="Buy" description="Buy">1</validValue>
-            <validValue name="Sell" description="Sell">2</validValue>
+            <validValue name="BUY">1</validValue>
+            <validValue name="SELL">2</validValue>
         </enum>
         <type name="idString20" length="20" primitiveType="char" semanticType="String"/>
         <composite name="orderGroup" description="Repeating group of order entries" >

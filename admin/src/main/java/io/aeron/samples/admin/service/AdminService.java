@@ -4,20 +4,17 @@ import io.aeron.samples.admin.cli.*;
 import io.aeron.samples.admin.client.Client;
 import io.aeron.samples.admin.cluster.ClusterInteractionAgent;
 import io.aeron.samples.admin.model.BaseError;
+import io.aeron.samples.admin.model.Pair;
 import io.aeron.samples.admin.model.ResponseWrapper;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.agrona.BufferUtil;
 import org.agrona.DirectBuffer;
 import org.agrona.MutableDirectBuffer;
-import org.agrona.concurrent.AgentRunner;
-import org.agrona.concurrent.IdleStrategy;
-import org.agrona.concurrent.SleepingMillisIdleStrategy;
-import org.agrona.concurrent.UnsafeBuffer;
+import org.agrona.concurrent.*;
 import org.agrona.concurrent.ringbuffer.ManyToOneRingBuffer;
 import org.agrona.concurrent.ringbuffer.RingBuffer;
 import org.springframework.stereotype.Service;
-import sbe.builder.BuilderUtil;
 import sbe.msg.*;
 
 import java.util.UUID;
@@ -37,14 +34,14 @@ import static org.agrona.concurrent.ringbuffer.RingBufferDescriptor.TRAILER_LENG
 public class AdminService
 {
     final UnsafeBuffer channelBuffer =
-            new UnsafeBuffer(BufferUtil.allocateDirectAligned(1024*1024*1024 + TRAILER_LENGTH, 8));
+            new UnsafeBuffer(BufferUtil.allocateDirectAligned(64*1024*1024 + TRAILER_LENGTH, 8));
 
     final RingBuffer channel = new ManyToOneRingBuffer(channelBuffer);
 
     final AtomicBoolean running = new AtomicBoolean(true);
     final IdleStrategy idleStrategy = new SleepingMillisIdleStrategy();
 
-    final Client client = Client.newInstance(1);
+    final Client client = new Client();
 
     ClusterInteractionAgent clusterInteractionAgent;
 
@@ -114,7 +111,7 @@ public class AdminService
 
     public ResponseWrapper placeOrder(
         final int securityId,
-        String clientOrderId,
+        final String clientOrderId,
         final long volume,
         final long price,
         final String side,
@@ -126,7 +123,7 @@ public class AdminService
         final int traderId,
         final int clientId)
     {
-        final int claimIndex = channel.tryClaim(10, 114);
+        final int claimIndex = channel.tryClaim(10, 256);
 
         if (claimIndex < 0)
         {
@@ -134,7 +131,7 @@ public class AdminService
             return new ResponseWrapper(-2, null, new BaseError("Failed to accept more new order"));
         }
 
-        final MutableDirectBuffer buffer = channel.buffer();
+        final AtomicBuffer buffer = channel.buffer();
 
         client.placeOrder(
             securityId,
@@ -153,10 +150,8 @@ public class AdminService
             clientId
         );
 
-        clientOrderId = BuilderUtil.fill(clientOrderId, NewOrderEncoder.clientOrderIdLength());
-
         final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
-                SideEnum.valueOf(side).value() + "@" +
+                SideEnum.valueOf(side.toUpperCase()).value() + "@" +
                 securityId + "@" +
                 clientOrderId.trim() + "@" +
                 traderId + "@" +
@@ -208,28 +203,28 @@ public class AdminService
     }
 
     public ResponseWrapper cancelOrder(
-        int securityId,
-        String clientOrderId,
+        final int securityId,
+        final String clientOrderId,
         final String side,
         final long price,
         final int traderId,
         final int clientId)
     {
-        final DirectBuffer buffer = client.cancelOrder(securityId, clientOrderId, side, price, traderId, clientId);
+        Pair<DirectBuffer, Integer> directBufferLongPair = client.cancelOrder(securityId, clientOrderId, side, price, traderId, clientId);
 
         // cancelorder-tid@side@security@clientOrderId@trader@client
         final String correlationId = NewOrderEncoder.TEMPLATE_ID + "@" +
-                SideEnum.valueOf(side).value() + "@" +
+                SideEnum.valueOf(side.toUpperCase()).value() + "@" +
                 securityId + "@" +
                 "-" + clientOrderId.trim() + "@" +
                 traderId + "@" +
                 clientId;
 
-        log.debug("CorrelationId: {}", correlationId);
+        log.info("CorrelationId: {} , price: {}", correlationId, price);
 
         final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
-        channel.write(10, buffer, 0, client.getCancelOrderEncodedLength());
+        channel.write(10, directBufferLongPair.getFirst(), 0, directBufferLongPair.getSecond());
 
         return await(future);
     }
@@ -249,7 +244,7 @@ public class AdminService
         int traderId,
         int clientId)
     {
-        final DirectBuffer buffer = client.replaceOrder(
+        final Pair<DirectBuffer, Integer> directBufferIntegerPair = client.replaceOrder(
             securityId,
             clientOrderId,
             volume,
@@ -266,7 +261,7 @@ public class AdminService
 
         // neworder-tid@side@security@clientOrderId@trader@client
         final String correlationId = NewOrderDecoder.TEMPLATE_ID + "@" +
-            SideEnum.valueOf(side).value() + "@" +
+            SideEnum.valueOf(side.toUpperCase()).value() + "@" +
             securityId + "@" +
             clientOrderId.trim() + "@" +
             traderId + "@" +
@@ -276,7 +271,7 @@ public class AdminService
 
         final CompletableFuture<ResponseWrapper> future = clusterInteractionAgent.onComplete(correlationId);
 
-        channel.write(10, buffer, 0, client.getReplaceOrderEncodedLength());
+        channel.write(10, directBufferIntegerPair.getFirst(), 0, directBufferIntegerPair.getSecond());
 
         return await(future);
     }

@@ -264,7 +264,7 @@ public class PendingMessageManager
                 final List<MarketDepthDTO.MarketDepthLine> lines = data.getLines();
 
                 final List<MarketDepthDTO.MarketDepthLine> bidOrders = lines.stream()
-                        .filter(line -> line.getSide() == SideEnum.Buy)
+                        .filter(line -> line.getSide() == SideEnum.BUY)
                         .sorted(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice).reversed())
                         .toList();
 
@@ -284,7 +284,7 @@ public class PendingMessageManager
 
 
                 final List<MarketDepthDTO.MarketDepthLine> askOrders = lines.stream()
-                        .filter(line -> line.getSide() == SideEnum.Sell)
+                        .filter(line -> line.getSide() == SideEnum.SELL)
                         .sorted(Comparator.comparing(MarketDepthDTO.MarketDepthLine::getPrice))
                         .toList();
 

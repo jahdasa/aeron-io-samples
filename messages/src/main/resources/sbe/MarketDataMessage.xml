@@ -32,9 +32,9 @@
             <validValue name="BestBidAsk" description="Best Bid Ask">Z</validValue>
             <validValue name="SymbolStatus" description="Symbol Status">H</validValue>
         </enum>
-        <enum name="SideEnum" encodingType="char">
-            <validValue name="Buy" description="Buy">B</validValue>
-            <validValue name="Sell" description="Sell">S</validValue>
+        <enum name="SideEnum" encodingType="uint8">
+            <validValue name="BUY">1</validValue>
+            <validValue name="SELL">2</validValue>
         </enum>
         <composite name="Price" description="Decimal with constant exponent">
             <type name="mantissa" presence="optional" primitiveType="int64"/>

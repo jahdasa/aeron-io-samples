@@ -43,7 +43,7 @@ public class OrderCancelReplaceRequestReaderTest {
         orderCancelReplaceRequestBuilder.orderType(OrdTypeEnum.Limit)
                                         .timeInForce(TimeInForceEnum.Day)
                                         .expireTime("20150823-10:00:00".getBytes())
-                                        .side(SideEnum.Buy)
+                                        .side(SideEnum.BUY)
                                         .orderQuantity(1000)
                                         .displayQuantity(1000)
                                         .minQuantity(0)
